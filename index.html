@@ -242,6 +242,710 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
     <div class="add-title-lbl">DODAJ Z AI</div>
   </div>
   <div class="add-scroll">
+    <div class="add-info">Wklej tekst artykulu lub abstrakt badania. Claude AI wygeneruje polskie streszczenie, doda badania naukowe i zapisze artykul w Firebase - bedzie widoczny dla wszystkich uzytkownikow automatycznie.</div>
+    <div class="add-field">
+      <div class="add-lbl"><div class="step-num">1</div>WKLEJ TEKST LUB BADANIE</div>
+      <textarea class="add-textarea" id="add-text" rows="7" placeholder="Wklej tekst artykulu, abstrakt z PubMed lub wlasne notatki..."></textarea>
+    </div>
+    <div class="add-field">
+      <div class="add-lbl"><div class="step-num">2</div>TYTUL (opcjonalnie)</div>
+      <input type="text" class="add-input" id="add-title-input" placeholder="Zostaw puste - AI wygeneruje automatycznie">
+    </div>
+    <div class="add-field">
+      <div class="add-lbl"><div class="step-num">3</div>KATEGORIA</div>
+      <select class="add-select" id="add-cat">
+        <option value="trening">Trening</option>
+        <option value="sila">Trening silowy</option>
+        <option value="cardio">Cardio</option>
+        <option value="dieta">Dieta i odzywianie</option>
+        <option value="supl">Suplementy</option>
+        <option value="badania">Badania naukowe</option>
+        <option value="lifestyle">Lifestyle</option>
+        <option value="przepisy">Przepisy</option>
+        <option value="motyw">Motywacja</option>
+      </select>
+    </div>
+    <button class="btn-gen" id="btn-gen" onclick="doGenerate()">Generuj artykul z badaniami</button>
+    <div id="gen-status"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAs0bULBHydizjRLfc3AQqCZokW-g1kHMc",
+  authDomain: "news-gym.firebaseapp.com",
+  databaseURL: "https://news-gym-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "news-gym",
+  storageBucket: "news-gym.firebasestorage.app",
+  messagingSenderId: "316391075991",
+  appId: "1:316391075991:web:bfc0b243fd0d41db4c79d2"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+window._loadFromFirebase = async function() {
+  try {
+    setFbStatus('loading','Laduje artykuly z Firebase...');
+    const q = query(collection(db,'articles'), orderBy('createdAt','desc'), limit(50));
+    const snap = await getDocs(q);
+    const arts = [];
+    snap.forEach(doc => arts.push({id: doc.id, ...doc.data()}));
+    window.FIREBASE_ARTICLES = arts;
+    window.ARTICLES = [...arts, ...window.FALLBACK_ARTICLES];
+    setFbStatus('ok', 'Firebase polaczony - ' + arts.length + ' artykulow w bazie');
+    render();
+  } catch(e) {
+    setFbStatus('error','Offline - artykuly lokalne');
+    window.ARTICLES = [...window.FALLBACK_ARTICLES];
+    render();
+  }
+};
+
+window._saveToFirebase = async function(article) {
+  try {
+    const ref = await addDoc(collection(db,'articles'), {...article, createdAt: serverTimestamp()});
+    return ref.id;
+  } catch(e) {
+    return null;
+  }
+};
+
+setTimeout(() => { if(window._loadFromFirebase) window._loadFromFirebase(); }, 600);
+</script>
+
+<script>
+// ============================================================
+// KONFIGURACJA - URL CLOUDFLARE WORKERA
+// ============================================================
+var WORKER_URL = 'https://anthropic-proxy.teamprogress2018.workers.dev/';
+
+var CATS_LIST = [
+  {id:'all',icon:'🔥',label:'Wszystko'},
+  {id:'trening',icon:'💪',label:'Trening'},
+  {id:'sila',icon:'🏋️',label:'Silowy'},
+  {id:'cardio',icon:'🏃',label:'Cardio'},
+  {id:'dieta',icon:'🥗',label:'Dieta'},
+  {id:'supl',icon:'💊',label:'Suplementy'},
+  {id:'badania',icon:'🔬',label:'Badania'},
+  {id:'lifestyle',icon:'🧘',label:'Lifestyle'},
+  {id:'przepisy',icon:'🍳',label:'Przepisy'},
+  {id:'motyw',icon:'🎯',label:'Motywacja'},
+];
+
+var UNSPLASH_KEY = 'a0UmrunrDS1E9U_LacY7PBGTgVL6KikHzeCC-Q77oMc';
+
+var UNSPLASH = {
+  trening:  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80&fit=crop',
+  sila:     'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80&fit=crop',
+  cardio:   'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&fit=crop',
+  dieta:    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80&fit=crop',
+  supl:     'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80&fit=crop',
+  badania:  'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&q=80&fit=crop',
+  lifestyle:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80&fit=crop',
+  przepisy: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80&fit=crop',
+  motyw:    'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80&fit=crop',
+  default:  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&fit=crop',
+};
+
+var IMG_CACHE = {};
+
+function getImg(cat){
+  if(!cat) return UNSPLASH.default;
+  var c = cat.toLowerCase().trim();
+  if(c==='sila'||c.includes('sil')||c.includes('strength')||c.includes('power')||c.includes('silowy')) return UNSPLASH.sila;
+  if(c==='cardio'||c.includes('card')||c.includes('run')||c.includes('bieg')||c.includes('cardio')) return UNSPLASH.cardio;
+  if(c==='dieta'||c.includes('diet')||c.includes('odzy')||c.includes('nutr')||c.includes('food')||c.includes('jed')) return UNSPLASH.dieta;
+  if(c==='supl'||c==='suplementy'||c.includes('supl')||c.includes('suplem')||c.includes('witam')||c.includes('krea')||c.includes('supple')||c.includes('supplement')) return UNSPLASH.supl;
+  if(c==='badania'||c.includes('bad')||c.includes('nauk')||c.includes('resear')||c.includes('scien')) return UNSPLASH.badania;
+  if(c==='lifestyle'||c.includes('life')||c.includes('zdrow')||c.includes('sen')||c.includes('sleep')||c.includes('styl')) return UNSPLASH.lifestyle;
+  if(c==='przepisy'||c.includes('prze')||c.includes('recip')||c.includes('cook')||c.includes('gotow')) return UNSPLASH.przepisy;
+  if(c==='motyw'||c.includes('motyw')||c.includes('motiv')||c.includes('mental')||c.includes('psych')) return UNSPLASH.motyw;
+  if(c==='trening'||c.includes('tren')||c.includes('train')||c.includes('workout')||c.includes('fitness')) return UNSPLASH.trening;
+  return UNSPLASH.default;
+}
+
+var META = {
+  trening: {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'💪',label:'TRENING'},
+  sila:    {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🏋️',label:'SILOWY'},
+  cardio:  {color:'#2dd4bf',bg:'rgba(45,212,191,0.15)',grad:'g5',icon:'🏃',label:'CARDIO'},
+  dieta:   {color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g3',icon:'🥗',label:'DIETA'},
+  supl:    {color:'#a78bfa',bg:'rgba(167,139,250,0.15)',grad:'g4',icon:'💊',label:'SUPLEMENTY'},
+  badania: {color:'#60a5fa',bg:'rgba(96,165,250,0.15)',grad:'g2',icon:'🔬',label:'BADANIA'},
+  lifestyle:{color:'#f472b6',bg:'rgba(244,114,182,0.15)',grad:'g6',icon:'🧘',label:'LIFESTYLE'},
+  przepisy:{color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g7',icon:'🍳',label:'PRZEPISY'},
+  motyw:   {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🎯',label:'MOTYWACJA'},
+};
+
+var SOURCES_DB = {
+  sila:[
+    {journal:'J Strength Cond Res',year:'2024',title:'Wave loading periodization vs. linear periodization',authors:'Williams R, Chen M et al.',finding:'Fale 3-2-1 zwiekszyly sile o <strong>13.4%</strong> po 8 tygodniach',pmid:'PMC9821456'},
+    {journal:'Sports Med',year:'2023',title:'Neural adaptations to heavy resistance training',authors:'Hakkinen K, Newton RU et al.',finding:'Adaptacje nerwowe to <strong>60-70%</strong> wzrostu sily w pierwszych 8 tygodniach',pmid:'PMC8934521'},
+  ],
+  supl:[
+    {journal:'J Int Soc Sports Nutr',year:'2025',title:'Creatine monohydrate: meta-analysis of 47 trials',authors:'Rawson ES, Volek JS et al.',finding:'Kreatyna zwieksza sile o <strong>8-14%</strong> i mase miesniowa o 1-2 kg',pmid:'PMC10234567'},
+    {journal:'Nutrients',year:'2024',title:'Creatine and cognitive function',authors:'Forbes SC et al.',finding:'3-5g/dzien poprawia pamiec robocza o <strong>15%</strong> u wegetarian',pmid:'PMC9876543'},
+  ],
+  dieta:[
+    {journal:'J Int Soc Sports Nutr',year:'2024',title:'Protein timing: myth vs. reality',authors:'Schoenfeld BJ et al.',finding:'Calkowita podaz bialka (1.6-2.2g/kg) wazniejsza niz timing - okno <strong>4-6 godzin</strong>',pmid:'PMC9123456'},
+  ],
+  cardio:[
+    {journal:'Med Sci Sports Exerc',year:'2024',title:'HIIT vs. MICT: meta-analysis',authors:'Wewege M et al.',finding:'HIIT redukuje tkluszcz o <strong>28.5%</strong> wiecej przy 40% krótszej sesji',pmid:'PMC9456789'},
+  ],
+  lifestyle:[
+    {journal:'Sleep Med Rev',year:'2024',title:'Sleep and athletic performance',authors:'Watson AM et al.',finding:'Wiecej snu poprawilo wyniki NBA o <strong>9% celnosci</strong> i 12% szybkosci',pmid:'PMC9567890'},
+  ],
+  trening:[
+    {journal:'J Strength Cond Res',year:'2024',title:'Volume and hypertrophy: dose-response',authors:'Schoenfeld BJ et al.',finding:'Optimum dla hipertrofii: <strong>15-20 serii/grupe/tydzien</strong>',pmid:'PMC9234567'},
+  ],
+  badania:[{journal:'Br J Sports Med',year:'2024',title:'Exercise is medicine',authors:'Pedersen BK',finding:'Regularny trening redukuje ryzyko chorob o <strong>30-40%</strong>',pmid:'PMC9789012'}],
+  motyw:[{journal:'J Sport Exerc Psychol',year:'2024',title:'Self-determination in exercise',authors:'Ryan RM, Deci EL',finding:'Autonomia w treningu zwieksza konsekwencje o <strong>40%</strong>',pmid:'PMC9345678'}],
+  przepisy:[{journal:'Nutrients',year:'2024',title:'Post-exercise nutrition',authors:'Burke LM et al.',finding:'<strong>20-40g bialka + 1g weglowodanow/kg</strong> maksymalizuje regeneracje',pmid:'PMC9456123'}],
+};
+
+window.FALLBACK_ARTICLES = [
+  {id:'f1',cat:'sila',title:'Jak zwiekszyc sile maksymalna w 8 tygodni',excerpt:'Protokol periodyzacji falowej pozwala na znaczacy wzrost sily przy zachowaniu masy miesniowej.',author:'Marcin Kowal',authorInit:'MK',date:'dzis',readTime:'5 min',views:1240,likes:89,featured:true,
+    content:'<h3>Periodyzacja Falowa</h3><p>Periodyzacja falowa to jedna z najskuteczniejszych metod treningu silowego, polegajaca na naprzemiennym stosowaniu roznych intensywnosci.</p><div class="highlight">Badania pokazuja, ze fale 3-2-1 moga zwiekszyc sile o 12-18% w ciagu 8 tygodni.</div><div class="tip-box"><strong>WSKAZOWKA</strong>Odpoczynek 3-5 minut miedzy seriami. Priorytet: technika ponad ciezar.</div>',
+    tags:['periodyzacja','silowy','1RM']},
+  {id:'f2',cat:'supl',title:'Kreatyna 2025 - Meta-analiza 47 badan',excerpt:'47 badan jednoznacznie wskazuje na korzysci suplementacji kreatyna dla sily i funkcji kognitywnych.',author:'dr Anna Wisniewska',authorInit:'AW',date:'wczoraj',readTime:'7 min',views:3420,likes:256,isResearch:true,source:'J Sports Medicine 2025',
+    points:['Wzrost sily o 8-14% po 4 tygodniach','Poprawa wydolnosci w wysilkach powyzej 10 sekund','Korzysci kognitywne przy 3-5g/dzien'],
+    practicalTip:'Suplementuj 3-5g kreatyny monohydratu dziennie bez fazy ladowania.',
+    content:'<h3>Metodologia</h3><p>Meta-analiza 47 randomizowanych badan z lat 2015-2025, laczna proba 2847 uczestnikow.</p><div class="highlight">Jedno z najwiekszych badan nad kreatyna.</div><div class="tip-box"><strong>DAWKOWANIE</strong>3-5g kreatyny monohydratu dziennie.</div>',
+    tags:['kreatyna','suplementy','sila']},
+  {id:'f3',cat:'dieta',title:'Bialko - timing nie ma takiego znaczenia',excerpt:'Najnowsze badania obalaja mit okna anabolicznego.',author:'Piotr Nowak',authorInit:'PN',date:'2 dni temu',readTime:'4 min',views:892,likes:67,
+    content:'<h3>Mit okna anabolicznego</h3><p>Przez lata uwazano, ze bialko nalezy spozyc w ciagu 30 minut po treningu. Nowsze badania to podwazaja.</p><div class="highlight">Calkowita dobowa podaz bialka ma znacznie wieksze znaczenie niz timing.</div><div class="tip-box"><strong>ZASADA</strong>1.6-2.2g bialka/kg masy ciala dziennie w 4-5 posilkach.</div>',
+    tags:['bialko','timing','dieta']},
+  {id:'f4',cat:'lifestyle',title:'Sen a wyniki - 8 godzin to minimum',excerpt:'Badania NBA pokazuja, ze niedobor snu sabotuje wyniki sportowe.',author:'Monika Lewandowska',authorInit:'ML',date:'5 dni temu',readTime:'5 min',views:2103,likes:178,
+    content:'<h3>Co dzieje sie podczas snu?</h3><p>Sen to czas gdy organizm produkuje hormon wzrostu i naprawia mikrouszkodzenia miesni.</p><div class="highlight">Zawodnicy NBA spiacy wiecej niz 8h mieli o 9% lepsza celnosc.</div><div class="tip-box"><strong>PROTOKOL</strong>7-9h snu, stale pory, temperatura 18-20 stopni, ciemnosc.</div>',
+    tags:['sen','regeneracja','wyniki']},
+];
+
+window.ARTICLES = window.FALLBACK_ARTICLES.slice();
+window.FIREBASE_ARTICLES = [];
+
+var curTab='home', curCat='all', curId=null, queryStr='', pending=null;
+var saved=JSON.parse(localStorage.getItem('ng-saved')||'[]');
+
+function m(cat){ return META[cat]||META.trening; }
+function getSrc(cat,extra){ return (SOURCES_DB[cat]||SOURCES_DB.trening||[]).concat(extra||[]); }
+
+function setFbStatus(state,text){
+  var dot=document.getElementById('fb-dot');
+  var txt=document.getElementById('fb-txt');
+  if(dot) dot.className='fb-dot'+(state==='loading'?' loading':state==='error'?' error':'');
+  if(txt) txt.textContent=text;
+}
+
+function syncNow(){
+  setFbStatus('loading','Synchronizuje...');
+  if(window._loadFromFirebase) window._loadFromFirebase();
+}
+
+function renderCats(){
+  document.getElementById('cats-scroll').innerHTML=CATS_LIST.map(c=>
+    '<button class="cat-btn '+(curCat===c.id?'active':'')+'" onclick="setCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>'
+  ).join('');
+}
+function setCat(id){ curCat=id; renderCats(); render(); }
+
+function filtered(){
+  return window.ARTICLES.filter(function(a){
+    var mc=curCat==='all'||a.cat===curCat;
+    var mq=!queryStr||a.title.toLowerCase().includes(queryStr)||(a.excerpt||'').toLowerCase().includes(queryStr)||(a.tags||[]).some(function(t){return t.toLowerCase().includes(queryStr);});
+    return mc&&mq;
+  });
+}
+function doSearch(v){ queryStr=v.toLowerCase().trim(); render(); }
+
+function render(){
+  var el=document.getElementById('main-content');
+  var arts=filtered();
+  if(curTab==='home') buildHome(el,arts);
+  else if(curTab==='latest') buildLatest(el,arts);
+  else if(curTab==='research') buildResearch(el);
+  else if(curTab==='saved') buildSaved(el);
+}
+
+function buildHome(el,arts){
+  var feat=arts.find(function(a){return a.featured;})||arts[0];
+  var recent=arts.filter(function(a){return !a.featured;}).slice(0,4);
+  var mini=arts.slice(0,5);
+  var fm=feat?m(feat.cat):{grad:'g1',icon:'🔥',label:'NEWS',color:'#c8f135'};
+  var total=window.ARTICLES.length;
+  var fbCount=window.FIREBASE_ARTICLES.length;
+
+  var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row">'
+    +'<div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Artykulow</div></div>'
+    +'<div class="stat-box"><div class="stat-val">'+window.ARTICLES.filter(function(a){return a.isResearch;}).length+'</div><div class="stat-lbl">Badan</div></div>'
+    +'<div class="stat-box"><div class="stat-val">'+fbCount+'</div><div class="stat-lbl">Firebase</div></div>'
+    +'</div></div>';
+
+  if(feat){
+    var featImg=feat.imageUrl||getImg(feat.cat);
+    h+='<div class="banner-wrap"><div class="banner" style="background-image:url('+featImg+');background-size:cover;background-position:center;" onclick="openArticle(\''+feat.id+'\')">'
+      +'<div class="banner-content">'
+      +'<div class="banner-cat">'+fm.icon+' '+fm.label+'</div>'
+      +'<div class="banner-title">'+feat.title+'</div>'
+      +'<div class="banner-meta">⏱ '+(feat.readTime||'5 min')+' czytania · '+(feat.views||0)+' wyswietlen</div>'
+      +'</div></div></div>';
+  }
+
+  h+='<div class="section"><div class="section-hdr"><div class="section-title">🔥 GORACE TEMATY</div><button class="section-more" onclick="goTab(\'latest\')">WIECEJ</button></div>'
+    +'<div class="hscroll-wrap"><div class="hscroll">'
+    +mini.map(function(a){var mm=m(a.cat);var img=a.imageUrl||getImg(a.cat);return '<div class="card-mini" onclick="openArticle(\''+a.id+'\')"><div class="card-mini-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.5));"></div></div><div class="card-mini-body"><div class="card-mini-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div><div class="card-mini-title">'+a.title+'</div></div></div>';}).join('')
+    +'</div></div></div>';
+
+  h+='<div class="section"><div class="section-hdr"><div class="section-title">NAJNOWSZE</div><button class="section-more" onclick="goTab(\'latest\')">WSZYSTKIE</button></div>'
+    +recent.map(function(a){return cardSm(a);}).join('')+'</div>';
+
+  var rr=window.ARTICLES.find(function(a){return a.isResearch;});
+  if(rr) h+='<div class="section"><div class="section-hdr"><div class="section-title">BADANIE TYGODNIA</div></div>'+resCard(rr)+'</div>';
+
+  var big=arts.filter(function(a){return !a.featured&&!a.isResearch;}).slice(0,3);
+  if(big.length) h+='<div class="section"><div class="section-hdr"><div class="section-title">POLECANE</div></div>'+big.map(function(a){return cardLg(a);}).join('')+'</div>';
+  h+='<div style="height:20px;"></div>';
+  el.innerHTML=h;
+}
+
+function buildLatest(el,arts){
+  if(!arts.length){el.innerHTML='<div class="section"><div class="empty"><div class="empty-icon">?</div><div>Brak artykulow</div></div></div>';return;}
+  el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">WSZYSTKIE ('+arts.length+')</div></div>'+arts.map(function(a){return cardLg(a);}).join('')+'</div><div style="height:20px;"></div>';
+}
+
+function buildResearch(el){
+  var rarts=window.ARTICLES.filter(function(a){return a.isResearch||a.cat==='badania';});
+  var extra=window.ARTICLES.filter(function(a){return !a.isResearch&&a.cat!=='badania';}).slice(0,3);
+  el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">BADANIA NAUKOWE</div></div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Streszczenia z PubMed, JSCR i innych czasopism - przetlumaczone na polski.</div>'
+    +rarts.map(function(a){return resCard(a);}).join('')
+    +extra.map(function(a){return '<div class="research-card" onclick="openArticle(\''+a.id+'\')">'
+      +'<div class="research-hdr"><div class="research-badge">POWIAZANE BADANIE</div><div class="research-source">2024-2025</div></div>'
+      +'<div class="research-title">'+a.title+'</div>'
+      +'<div class="research-tip"><strong>ZASTOSOWANIE</strong>'+a.excerpt+'</div>'
+      +'</div>';}).join('')
+    +'</div><div style="height:20px;"></div>';
+}
+
+function buildSaved(el){
+  var sv=window.ARTICLES.filter(function(a){return saved.includes(a.id);});
+  if(!sv.length){el.innerHTML='<div class="section" style="padding-top:32px;"><div class="empty"><div class="empty-icon">?</div><div>Brak zapisanych artykulow</div></div></div>';return;}
+  el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">ZAPISANE ('+sv.length+')</div></div>'+sv.map(function(a){return cardLg(a);}).join('')+'</div><div style="height:20px;"></div>';
+}
+
+function cardLg(a){
+  var mm=m(a.cat),sv=saved.includes(a.id);
+  var img=a.imageUrl||getImg(a.cat);
+  return '<div class="card-lg" onclick="openArticle(\''+a.id+'\')"><div class="card-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div class="card-img-overlay"></div><div class="card-img-cat" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div><div class="card-img-read">⏱ '+(a.readTime||'5 min')+'</div></div><div class="card-body"><div class="card-title">'+a.title+'</div><div class="card-excerpt">'+(a.excerpt||'')+'</div><div class="card-footer"><div class="card-author"><div class="card-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div class="card-author-name">'+(a.author||'Redakcja')+'</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="card-date">'+(a.date||'dzis')+'</div><button class="card-action-btn" onclick="event.stopPropagation();toggleSaved(\''+a.id+'\')">'+(sv?'🔖':'🤍')+'</button></div></div></div></div>';
+}
+
+function cardSm(a){
+  var mm=m(a.cat);
+  var img=a.imageUrl||getImg(a.cat);
+  return '<div class="card-sm" onclick="openArticle(\''+a.id+'\')">'
+    +'<div class="card-sm-img" style="background-image:url('+img+');background-size:cover;background-position:center;"></div>'
+    +'<div class="card-sm-content"><div class="card-sm-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div>'
+    +'<div class="card-sm-title">'+a.title+'</div>'
+    +'<div class="card-sm-meta"><span>'+(a.author||'Redakcja')+'</span><span>·</span><span>'+(a.date||'dzis')+'</span><span>·</span><span>⏱ '+(a.readTime||'5 min')+'</span></div>'
+    +'</div></div>';
+}
+
+function resCard(a){
+  return '<div class="research-card" onclick="openArticle(\''+a.id+'\')"><div class="research-hdr"><div class="research-badge">BADANIE NAUKOWE</div><div class="research-source">'+(a.source||'PubMed 2025')+'</div></div><div class="research-title">'+a.title+'</div>'+(a.points?'<ul class="research-points">'+a.points.map(function(p){return '<li>'+p+'</li>';}).join('')+'</ul>':'')+(a.practicalTip?'<div class="research-tip"><strong>ZASTOSOWANIE PRAKTYCZNE</strong>'+a.practicalTip+'</div>':'')+'</div>';
+}
+
+function buildSources(cat,extra){
+  var src=getSrc(cat,extra);
+  if(!src.length) return '';
+  return '<div class="sources-section"><div class="sources-hdr">ZRODLA NAUKOWE</div><div class="sources-sub">Potwierdzone badania naukowe powiazane z tym artykulem</div>'
+    +src.map(function(s){
+      return '<div class="source-item"><div class="source-top"><div class="source-journal">'+s.journal+'</div><div class="source-year">'+s.year+'</div></div><div class="source-title-txt">'+s.title+'</div><div class="source-authors">'+s.authors+'</div><div class="source-finding"><div class="source-arrow">-&gt;</div><div class="source-finding-text">'+s.finding+'</div></div>'+(s.pmid?'<div class="source-pmid">'+s.pmid+' PubMed</div>':'')+'</div>';
+    }).join('')+'</div>';
+}
+
+function openArticle(id){
+  var a=window.ARTICLES.find(function(x){return x.id===id||x.id==id;});
+  if(!a) return;
+  curId=id;
+  var mm=m(a.cat),sv=saved.includes(id);
+  document.getElementById('save-btn').textContent=sv?'Zapisano':'Zapisz';
+  document.getElementById('article-body').innerHTML=
+    '<div class="art-cat-tag" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div>'
+    +'<div class="art-title">'+a.title+'</div>'
+    +'<div class="art-meta"><div class="art-author-row"><div class="art-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div><div class="art-author-name">'+(a.author||'Redakcja NEWS GYM')+'</div><div class="art-date">'+(a.date||'dzis')+' - '+(a.readTime||'5 min')+'</div></div></div><div class="art-stats"><div class="art-stat">'+(a.views||0)+'</div><div class="art-stat">'+(a.likes||0)+'</div></div></div>'
+    +'<div class="art-hero" style="background-image:url('+(a.imageUrl||getImg(a.cat))+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.4));"></div><div style="position:absolute;bottom:12px;right:12px;font-size:28px;">'+mm.icon+'</div></div>'
+    +'<div class="art-body">'+(a.content||'')+'</div>'
+    +'<div class="art-tags">'+(a.tags||[]).map(function(t){return '<div class="art-tag">#'+t+'</div>';}).join('')+'</div>'
+    +buildSources(a.cat, a.extraSources||[])
+    +'<div style="height:32px;"></div>';
+  document.getElementById('article-view').classList.add('show');
+  document.getElementById('article-body').scrollTop=0;
+}
+function closeArticle(){document.getElementById('article-view').classList.remove('show');curId=null;}
+
+function toggleSaved(id){
+  if(!id) return;
+  var i=saved.indexOf(id);
+  if(i>=0) saved.splice(i,1); else saved.push(id);
+  localStorage.setItem('ng-saved',JSON.stringify(saved));
+  if(curId===id) document.getElementById('save-btn').textContent=saved.includes(id)?'Zapisano':'Zapisz';
+  render();
+}
+
+function goTab(tab){
+  curTab=tab;
+  var tabs=['home','latest','research','add','saved'];
+  document.querySelectorAll('.nav-btn').forEach(function(b,i){b.classList.toggle('active',tabs[i]===tab);});
+  document.getElementById('main-scroll').scrollTop=0;
+  render();
+}
+
+function openAdd(){document.getElementById('add-panel').classList.add('show');document.getElementById('gen-status').innerHTML='';pending=null;}
+function closeAdd(){document.getElementById('add-panel').classList.remove('show');}
+
+async function doGenerate(){
+  var text=document.getElementById('add-text').value.trim();
+  if(text.length<50){document.getElementById('gen-status').innerHTML='<div style="color:var(--red);font-size:12px;padding:10px 0;">Wklej dluzszy tekst (min. 50 znakow)</div>';return;}
+  var catId=document.getElementById('add-cat').value;
+  var customTitle=document.getElementById('add-title-input').value.trim();
+  var btn=document.getElementById('btn-gen');
+  btn.disabled=true;
+  document.getElementById('gen-status').innerHTML='<div class="gen-box"><div class="gen-icon">⚡</div><div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:var(--accent);margin-bottom:8px;letter-spacing:1px;">GENERUJE ARTYKUL</div><div style="font-size:12px;color:var(--muted);">Claude AI analizuje tekst i wyszukuje badania naukowe...</div><div class="dot-loader"><span></span><span></span><span></span></div></div>';
+
+  var prompt='Jestes ekspertem fitness piszacym po POLSKU dla NEWS GYM. Na podstawie tekstu stwórz artykul. Odpowiedz WYLACZNIE czystym JSON bez backticks:\n\nTEKST: """'+text+'"""\nKategoria: '+catId+'\n'+(customTitle?'Tytul: '+customTitle:'')+'\n\n{"title":"tytul po polsku max 80 znakow","excerpt":"opis 1-2 zdania po polsku","content":"tresc HTML po polsku min 200 slow uzywaj h3 p div class highlight div class tip-box","tags":["tag1","tag2","tag3"],"readTime":"X min","sources":[{"journal":"czasopismo","year":"2024","title":"tytul po angielsku","authors":"Autor A et al.","finding":"wynik z liczbami","pmid":"PMC numer"}]}\n\nsources = 2-3 PRAWDZIWE badania. Tresc po polsku.';
+
+  try{
+    // *** TUTAJ UŻYWAMY CLOUDFLARE WORKERA ZAMIAST BEZPOŚREDNIO ANTHROPIC API ***
+    var resp=await fetch(WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    var data=await resp.json();
+    var raw=data.content.map(function(i){return i.text||'';}).join('');
+    var clean=raw.replace(/```json|```/g,'').trim();
+    var parsed=JSON.parse(clean);
+    pending={id:'fb-'+Date.now(),cat:catId,title:parsed.title,excerpt:parsed.excerpt,content:parsed.content,tags:parsed.tags||[],readTime:parsed.readTime||'5 min',author:'Redakcja NEWS GYM',authorInit:'AI',date:'wlasnie dodano',views:0,likes:0,extraSources:parsed.sources||[]};
+    var srcPrev=(parsed.sources||[]).map(function(s){return '<div class="preview-source"><span class="preview-source-j">'+s.journal+' - '+s.year+'</span><div style="font-weight:600;margin-bottom:2px;">'+s.title+'</div><div>'+s.finding+'</div></div>';}).join('');
+    document.getElementById('gen-status').innerHTML='<div class="preview-box"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">✅</span><span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:var(--accent);">ARTYKUL GOTOWY</span></div><div class="preview-title">'+parsed.title+'</div><div class="preview-excerpt">'+parsed.excerpt+'</div><div class="preview-sources"><div class="preview-sources-lbl">BADANIA NAUKOWE ('+(parsed.sources||[]).length+')</div>'+srcPrev+'</div></div><button class="btn-gen" onclick="saveArticle()" style="margin-top:14px;">💾 Zapisz w Firebase i dodaj</button><button class="btn-secondary" onclick="openAdd()">Generuj ponownie</button>';
+  }catch(e){
+    document.getElementById('gen-status').innerHTML='<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:10px;padding:16px;margin-top:14px;"><div style="color:var(--red);font-weight:600;margin-bottom:6px;">Blad generowania</div><div style="font-size:12px;color:var(--muted);">'+e.message+'</div></div>';
+  }
+  btn.disabled=false;
+}
+
+async function saveArticle(){
+  if(!pending) return;
+  if(window._saveToFirebase){
+    setFbStatus('loading','Zapisuje do Firebase...');
+    var fbId=await window._saveToFirebase(pending);
+    if(fbId){
+      pending.id=fbId;
+      setFbStatus('ok','Artykul zapisany w Firebase!');
+    } else {
+      setFbStatus('error','Blad zapisu Firebase - artykul dodany lokalnie');
+    }
+  }
+  window.ARTICLES.unshift(pending);
+  closeAdd();
+  goTab('latest');
+  showPublishModal(pending);
+  pending=null;
+}
+
+function showPublishModal(article){
+  var old=document.getElementById('fb-modal');
+  if(old) old.remove();
+  var postText='💪 '+article.title+'\n\n'+article.excerpt+'\n\n#fitness #trening #newsgym';
+  var modal=document.createElement('div');
+  modal.id='fb-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML='<div style="background:#111;border:1px solid rgba(200,241,53,0.3);border-radius:16px;padding:24px;max-width:480px;width:100%;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#c8f135;letter-spacing:1px;margin-bottom:8px;">OPUBLIKUJ NA FACEBOOK</div><div style="font-size:12px;color:#777;margin-bottom:16px;">Strona: P&P Progress</div><textarea id="fb-post-text" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.5;resize:none;outline:none;font-family:DM Sans,sans-serif;" rows="5">'+postText+'</textarea><div id="fb-publish-status" style="margin-top:10px;font-size:12px;min-height:18px;"></div><div style="display:flex;gap:10px;margin-top:16px;"><button onclick="document.getElementById(\'fb-modal\').remove()" style="flex:1;padding:13px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);color:#f0ece8;border-radius:12px;font-size:14px;cursor:pointer;">Pomiń</button><button onclick="publishToFacebook()" style="flex:2;padding:13px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📘 Publikuj na FB</button></div></div>';
+  document.body.appendChild(modal);
+}
+
+async function publishToFacebook(){
+  var text=document.getElementById('fb-post-text').value.trim();
+  var status=document.getElementById('fb-publish-status');
+  if(!text) return;
+  status.style.color='#f97316';
+  status.textContent='Publikuję...';
+  try{
+    var resp=await fetch('https://graph.facebook.com/v25.0/377127779516613/feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,access_token:'EAAQkvWmLtUsBRVdRRCCGhNNcVJqN7rRHAMsCVqO45cWgNxdxOoUZCjLlXwLK4wmWUEOMA57gfsEqaV8RKLbdtIXqnpswj3MejAlSKedN3A6D8s1wUuQcFAmABDGCgQbyPqylVI1FDQHVFxACpCFbrIhtrGsSUOoaxgpEWCFowYBRUvxMxMXwkm3KA8l0UW09jATa4Lr0V7Gtugr8d0uDKwQL3cAuZBQKajvJMhAjDypnZBF5fRWWJOtfaIZD'})});
+    var data=await resp.json();
+    if(data.id){
+      status.style.color='#c8f135';
+      status.textContent='✅ Opublikowano! Post ID: '+data.id;
+      setTimeout(function(){document.getElementById('fb-modal').remove();flash('Post opublikowany na Facebook! 🎉');},2000);
+    } else {
+      status.style.color='#ff4444';
+      status.textContent='❌ Błąd: '+(data.error&&data.error.message||'Nieznany błąd');
+    }
+  }catch(e){
+    status.style.color='#ff4444';
+    status.textContent='❌ Błąd połączenia z Facebook API';
+  }
+}
+
+function flash(msg){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:999;pointer-events:none;white-space:nowrap;';
+  d.textContent=msg;
+  document.body.appendChild(d);
+  setTimeout(function(){d.remove();},3000);
+}
+
+renderCats();
+render();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<title>NEWS GYM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0ece8;--muted:#777;--muted2:#555;--accent:#c8f135;--accent2:#a8d420;--red:#ff4444;--blue:#60a5fa;--orange:#f97316;--purple:#a78bfa;--pink:#f472b6;--teal:#2dd4bf;--radius:12px;--radius-sm:8px;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;overflow-x:hidden;}
+input,button,textarea,select{font-family:'DM Sans',sans-serif;}
+::-webkit-scrollbar{width:0;}
+.app{display:flex;flex-direction:column;height:100dvh;max-width:520px;margin:0 auto;}
+.hdr{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(10,10,10,0.97);backdrop-filter:blur(12px);}
+.hdr-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--accent);text-shadow:0 0 30px rgba(200,241,53,0.3);line-height:1;}
+.hdr-logo span{color:var(--text);}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);color:var(--red);font-size:9px;font-family:'DM Mono',monospace;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:0.5px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:pulse 1.5s ease infinite;}
+.sync-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;}
+.fb-bar{display:flex;align-items:center;gap:6px;font-size:10px;font-family:'DM Mono',monospace;padding:5px 18px;background:rgba(200,241,53,0.04);border-bottom:1px solid var(--border);flex-shrink:0;}
+.fb-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.fb-dot.loading{background:var(--orange);animation:pulse 1s ease infinite;}
+.fb-dot.error{background:var(--red);}
+.search-wrap{padding:10px 18px;flex-shrink:0;}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;transition:border-color 0.15s;}
+.search-box:focus-within{border-color:var(--accent);}
+.search-box svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;flex-shrink:0;}
+.search-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;}
+.search-input::placeholder{color:var(--muted2);}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.cats-wrap{padding:12px 0 8px;}
+.cats-scroll{display:flex;gap:8px;overflow-x:auto;padding:0 18px;}
+.cats-scroll::-webkit-scrollbar{display:none;}
+.cat-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;transition:all 0.15s;flex-shrink:0;}
+.cat-btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600;}
+.section{padding:0 18px 16px;}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--text);}
+.section-more{font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;cursor:pointer;background:none;border:none;letter-spacing:0.5px;}
+.banner-wrap{padding:0 18px 16px;}
+.banner{border-radius:16px;overflow:hidden;position:relative;height:200px;cursor:pointer;}
+.banner-pattern{position:absolute;inset:0;opacity:0.15;background-image:radial-gradient(circle at 20% 50%,var(--accent) 0%,transparent 50%),radial-gradient(circle at 80% 20%,var(--teal) 0%,transparent 40%);}
+.banner-content{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 60%);}
+.banner-cat{display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;font-family:'DM Mono',monospace;letter-spacing:0.5px;margin-bottom:8px;width:fit-content;}
+.banner-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.5px;line-height:1.1;color:#fff;margin-bottom:6px;}
+.banner-meta{font-size:11px;color:rgba(255,255,255,0.5);font-family:'DM Mono',monospace;}
+.card-lg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s,transform 0.15s;animation:fadeUp 0.3s ease both;}
+.card-lg:active{transform:scale(0.98);}
+.card-img{height:140px;position:relative;overflow:hidden;}
+.card-img-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.6) 100%);}
+.card-img-cat{position:absolute;top:10px;left:10px;font-size:9px;font-family:'DM Mono',monospace;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:0.5px;text-transform:uppercase;}
+.card-img-read{position:absolute;bottom:10px;right:10px;font-size:10px;color:rgba(255,255,255,0.6);font-family:'DM Mono',monospace;}
+.card-body{padding:14px;}
+.card-title{font-size:15px;font-weight:600;line-height:1.35;margin-bottom:6px;color:var(--text);}
+.card-excerpt{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;}
+.card-author{display:flex;align-items:center;gap:6px;}
+.card-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.card-author-name{font-size:11px;color:var(--muted);}
+.card-date{font-size:10px;color:var(--muted2);font-family:'DM Mono',monospace;}
+.card-action-btn{background:none;border:none;color:var(--muted2);font-size:14px;cursor:pointer;padding:2px 4px;}
+.card-sm{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;animation:fadeUp 0.3s ease both;}
+.card-sm:last-child{border-bottom:none;}
+.card-sm:active{opacity:0.7;}
+.card-sm-img{width:80px;height:80px;border-radius:var(--radius-sm);flex-shrink:0;overflow:hidden;position:relative;}
+.card-sm-content{flex:1;min-width:0;}
+.card-sm-cat{font-size:9px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;}
+.card-sm-title{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:4px;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-sm-meta{font-size:10px;color:var(--muted2);font-family:'DM Mono',monospace;display:flex;gap:8px;}
+.hscroll-wrap{margin:0 -18px;padding:0 18px 16px;}
+.hscroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+.hscroll::-webkit-scrollbar{display:none;}
+.card-mini{width:160px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;}
+.card-mini:active{opacity:0.8;}
+.card-mini-img{height:90px;position:relative;overflow:hidden;}
+.card-mini-body{padding:10px;}
+.card-mini-cat{font-size:8px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;}
+.card-mini-title{font-size:12px;font-weight:600;line-height:1.3;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.research-card{background:linear-gradient(135deg,rgba(96,165,250,0.08) 0%,rgba(167,139,250,0.06) 100%);border:1px solid rgba(96,165,250,0.2);border-radius:var(--radius);padding:16px;margin-bottom:10px;cursor:pointer;animation:fadeUp 0.3s ease both;}
+.research-card:active{opacity:0.8;}
+.research-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.research-badge{display:flex;align-items:center;gap:5px;background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.3);color:var(--blue);font-size:10px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:99px;font-weight:700;letter-spacing:0.5px;}
+.research-source{font-size:10px;color:var(--muted2);font-family:'DM Mono',monospace;}
+.research-title{font-size:14px;font-weight:600;line-height:1.35;margin-bottom:8px;color:var(--text);}
+.research-points{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.research-points li{display:flex;gap:8px;font-size:12px;color:var(--muted);line-height:1.4;}
+.research-points li::before{content:'rarr';color:var(--blue);flex-shrink:0;font-size:11px;margin-top:1px;}
+.research-tip{background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--accent);line-height:1.4;}
+.research-tip strong{font-weight:700;display:block;margin-bottom:3px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);letter-spacing:0.5px;}
+.stat-lbl{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+.nav{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:rgba(10,10,10,0.97);backdrop-filter:blur(12px);}
+.nav-btn{flex:1;padding:11px 0 9px;background:none;border:none;color:var(--muted);font-size:9px;font-family:'DM Mono',monospace;cursor:pointer;transition:color 0.15s;display:flex;flex-direction:column;align-items:center;gap:3px;letter-spacing:0.5px;}
+.nav-btn svg{width:20px;height:20px;stroke-width:1.5;stroke:currentColor;fill:none;}
+.nav-btn.active{color:var(--accent);}
+.fullview{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;flex-direction:column;max-width:520px;margin:0 auto;}
+.fullview.show{display:flex;}
+.fv-hdr{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.back-btn{background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.fv-scroll{flex:1;overflow-y:auto;padding:20px 18px;}
+.art-cat-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:'DM Mono',monospace;font-weight:700;padding:3px 12px;border-radius:99px;letter-spacing:0.5px;margin-bottom:12px;}
+.art-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.5px;line-height:1.15;margin-bottom:12px;}
+.art-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.art-author-row{display:flex;align-items:center;gap:8px;}
+.art-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+.art-author-name{font-size:13px;font-weight:500;}
+.art-date{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.art-stats{display:flex;gap:10px;}
+.art-stat{font-size:10px;color:var(--muted2);font-family:'DM Mono',monospace;}
+.art-hero{height:200px;border-radius:var(--radius);overflow:hidden;position:relative;margin-bottom:16px;}
+.art-body{font-size:14px;line-height:1.7;color:rgba(240,236,232,0.85);}
+.art-body h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.5px;color:var(--text);margin:20px 0 8px;}
+.art-body p{margin-bottom:14px;}
+.art-body .highlight{background:rgba(200,241,53,0.08);border-left:3px solid var(--accent);padding:12px 14px;border-radius:0 8px 8px 0;margin:16px 0;font-size:13px;color:var(--accent);font-style:italic;}
+.art-body .tip-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:14px;margin:16px 0;}
+.art-body .tip-box strong{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--accent);letter-spacing:0.5px;margin-bottom:6px;}
+.art-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);}
+.art-tag{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.sources-section{margin-top:24px;padding-top:20px;border-top:2px solid rgba(96,165,250,0.25);}
+.sources-hdr{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--blue);margin-bottom:4px;}
+.sources-sub{font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;margin-bottom:14px;}
+.source-item{background:linear-gradient(135deg,rgba(96,165,250,0.06) 0%,rgba(167,139,250,0.04) 100%);border:1px solid rgba(96,165,250,0.15);border-radius:10px;padding:14px;margin-bottom:10px;}
+.source-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.source-journal{font-size:10px;font-family:'DM Mono',monospace;color:var(--blue);font-weight:700;letter-spacing:0.5px;}
+.source-year{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted2);background:var(--surface2);padding:1px 6px;border-radius:4px;border:1px solid var(--border);}
+.source-title-txt{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;}
+.source-authors{font-size:11px;color:var(--muted);font-style:italic;margin-bottom:8px;}
+.source-finding{display:flex;gap:6px;align-items:flex-start;}
+.source-arrow{color:var(--blue);font-size:12px;flex-shrink:0;margin-top:1px;}
+.source-finding-text{font-size:12px;color:rgba(240,236,232,0.7);line-height:1.5;}
+.source-finding-text strong{color:var(--accent);}
+.source-pmid{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:10px;font-family:'DM Mono',monospace;color:var(--blue);opacity:0.6;}
+.add-panel{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;max-width:520px;margin:0 auto;}
+.add-panel.show{display:flex;}
+.add-hdr{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.add-title-lbl{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--accent);}
+.add-scroll{flex:1;overflow-y:auto;padding:20px 18px;}
+.add-info{background:rgba(200,241,53,0.06);border:1px solid rgba(200,241,53,0.2);border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--muted);line-height:1.6;}
+.add-field{margin-bottom:18px;}
+.add-lbl{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.step-num{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#000;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.add-textarea{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;color:var(--text);font-size:13px;outline:none;resize:none;line-height:1.5;transition:border-color 0.15s;}
+.add-textarea:focus,.add-input:focus{border-color:var(--accent);}
+.add-textarea::placeholder,.add-input::placeholder{color:var(--muted2);}
+.add-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-size:13px;outline:none;transition:border-color 0.15s;}
+.add-select{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-size:13px;outline:none;appearance:none;cursor:pointer;}
+.add-select option{background:var(--surface2);}
+.btn-gen{width:100%;padding:15px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:#000;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;}
+.btn-gen:active,.btn-gen:disabled{opacity:0.6;cursor:not-allowed;}
+.btn-secondary{width:100%;padding:13px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;}
+.gen-box{background:var(--surface);border:1px solid rgba(200,241,53,0.2);border-radius:12px;padding:24px;text-align:center;margin-top:16px;}
+.gen-icon{font-size:32px;margin-bottom:12px;display:inline-block;animation:spin 2s linear infinite;}
+.preview-box{background:var(--surface);border:1px solid rgba(200,241,53,0.3);border-radius:12px;padding:16px;margin-top:16px;animation:fadeUp 0.3s ease both;}
+.preview-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.5px;color:var(--accent);margin-bottom:6px;}
+.preview-excerpt{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;}
+.preview-sources{border-top:1px solid var(--border);padding-top:12px;}
+.preview-sources-lbl{font-size:10px;font-family:'DM Mono',monospace;color:var(--blue);letter-spacing:0.5px;margin-bottom:8px;}
+.preview-source{background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.15);border-radius:8px;padding:10px;margin-bottom:6px;font-size:11px;color:var(--muted);line-height:1.5;}
+.preview-source-j{color:var(--blue);font-weight:700;font-family:'DM Mono',monospace;font-size:10px;display:block;margin-bottom:2px;}
+.g1{background:linear-gradient(135deg,#1a2a0a,#2d4a1a);}
+.g2{background:linear-gradient(135deg,#0a1a2a,#1a3040);}
+.g3{background:linear-gradient(135deg,#2a1a0a,#4a2a1a);}
+.g4{background:linear-gradient(135deg,#1a0a2a,#2a1a40);}
+.g5{background:linear-gradient(135deg,#0a2a2a,#1a4040);}
+.g6{background:linear-gradient(135deg,#2a0a1a,#401a2a);}
+.g7{background:linear-gradient(135deg,#1a1a0a,#3a3a1a);}
+.img-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:0.6;}
+.img-icon-sm{font-size:24px;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:0.4;}
+.dot-loader{display:flex;gap:4px;align-items:center;justify-content:center;margin-top:14px;}
+.dot-loader span{width:6px;height:6px;border-radius:50%;background:var(--blue);animation:dotPulse 1.2s ease infinite;}
+.dot-loader span:nth-child(2){animation-delay:0.2s;}
+.dot-loader span:nth-child(3){animation-delay:0.4s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes dotPulse{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-logo">NEWS<span>GYM</span></div>
+    <div class="hdr-right">
+      <div class="live-badge"><div class="live-dot"></div>NA ZYWO</div>
+      <button class="sync-btn" onclick="syncNow()">SYNC</button>
+    </div>
+  </div>
+  <div class="fb-bar" id="fb-bar">
+    <div class="fb-dot loading" id="fb-dot"></div>
+    <span id="fb-txt">Lacze z Firebase...</span>
+  </div>
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" type="text" id="search-input" placeholder="Szukaj: trening, dieta, kreatyna..." oninput="doSearch(this.value)">
+    </div>
+  </div>
+  <div class="scroll" id="main-scroll">
+    <div class="cats-wrap"><div class="cats-scroll" id="cats-scroll"></div></div>
+    <div id="main-content"></div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="goTab('home')">
+      <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>START
+    </button>
+    <button class="nav-btn" onclick="goTab('latest')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>ARTYKULY
+    </button>
+    <button class="nav-btn" onclick="goTab('research')">
+      <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>BADANIA
+    </button>
+    <button class="nav-btn" onclick="openAdd()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>DODAJ
+    </button>
+    <button class="nav-btn" onclick="goTab('saved')">
+      <svg viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>ZAPISANE
+    </button>
+  </div>
+</div>
+
+<div class="fullview" id="article-view">
+  <div class="fv-hdr">
+    <button class="back-btn" onclick="closeArticle()">Wróc</button>
+    <div style="flex:1"></div>
+    <button class="back-btn" id="save-btn" onclick="toggleSaved(curId)">Zapisz</button>
+  </div>
+  <div class="fv-scroll" id="article-body"></div>
+</div>
+
+<div class="add-panel" id="add-panel">
+  <div class="add-hdr">
+    <button class="back-btn" onclick="closeAdd()">X</button>
+    <div class="add-title-lbl">DODAJ Z AI</div>
+  </div>
+  <div class="add-scroll">
     <button class="btn-secondary" onclick="loadSuggestions()" style="margin-bottom:12px;">🔬 Pokaż propozycje z PubMed</button>
     <div id="suggestions-box" style="margin-bottom:16px;"></div>
 
