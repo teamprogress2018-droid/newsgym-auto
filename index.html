@@ -618,7 +618,7 @@ async function doGenerate(){
   var prompt='Jestes ekspertem fitness piszacym po POLSKU dla NEWS GYM. Na podstawie tekstu stwórz artykul. Odpowiedz WYLACZNIE czystym JSON bez backticks:\n\nTEKST: """'+text+'"""\nKategoria: '+catId+'\n'+(customTitle?'Tytul: '+customTitle:'')+'\n\n{"title":"tytul po polsku max 80 znakow","excerpt":"opis 1-2 zdania po polsku","content":"tresc HTML po polsku min 200 slow uzywaj h3 p div class highlight div class tip-box","tags":["tag1","tag2","tag3"],"readTime":"X min","sources":[{"journal":"czasopismo","year":"2024","title":"tytul po angielsku","authors":"Autor A et al.","finding":"wynik z liczbami","pmid":"PMC numer"}]}\n\nsources = 2-3 PRAWDZIWE badania. Tresc po polsku.';
 
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'sk-ant-api03-JpA0lsRprl4HFmnEdOXge9sN5H2S57xOBosPwLYdXACyqY6_RG08-LWpROTgR4euFi7GOvN74B2ebQsMvjGEBw-q9DzBAAA','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     var data=await resp.json();
     var raw=data.content.map(function(i){return i.text||'';}).join('');
     var clean=raw.replace(/```json|```/g,'').trim();
