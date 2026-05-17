@@ -348,16 +348,16 @@ var UNSPLASH = {
 function getImg(cat){
   if(!cat) return UNSPLASH.default;
   var c = cat.toLowerCase().trim();
-  // Mapowanie różnych nazw kategorii
-  if(c.includes('sil') || c.includes('strength') || c.includes('power')) return UNSPLASH.sila;
-  if(c.includes('card') || c.includes('run') || c.includes('bieg')) return UNSPLASH.cardio;
-  if(c.includes('diet') || c.includes('food') || c.includes('jed') || c.includes('odzy') || c.includes('nutr')) return UNSPLASH.dieta;
-  if(c.includes('supl') || c.includes('suplem') || c.includes('witam') || c.includes('krea')) return UNSPLASH.supl;
-  if(c.includes('bad') || c.includes('nauk') || c.includes('resear') || c.includes('scien')) return UNSPLASH.badania;
-  if(c.includes('life') || c.includes('zdrow') || c.includes('sen') || c.includes('sleep')) return UNSPLASH.lifestyle;
-  if(c.includes('prze') || c.includes('recip') || c.includes('cook') || c.includes('food')) return UNSPLASH.przepisy;
-  if(c.includes('motyw') || c.includes('motiv') || c.includes('mental') || c.includes('psych')) return UNSPLASH.motyw;
-  return UNSPLASH[c] || UNSPLASH.trening;
+  if(c==='sila'||c.includes('sil')||c.includes('strength')||c.includes('power')||c.includes('silowy')) return UNSPLASH.sila;
+  if(c==='cardio'||c.includes('card')||c.includes('run')||c.includes('bieg')||c.includes('cardio')) return UNSPLASH.cardio;
+  if(c==='dieta'||c.includes('diet')||c.includes('odzy')||c.includes('nutr')||c.includes('food')||c.includes('jed')) return UNSPLASH.dieta;
+  if(c==='supl'||c==='suplementy'||c.includes('supl')||c.includes('suplem')||c.includes('witam')||c.includes('krea')||c.includes('supple')||c.includes('supplement')) return UNSPLASH.supl;
+  if(c==='badania'||c.includes('bad')||c.includes('nauk')||c.includes('resear')||c.includes('scien')) return UNSPLASH.badania;
+  if(c==='lifestyle'||c.includes('life')||c.includes('zdrow')||c.includes('sen')||c.includes('sleep')||c.includes('styl')) return UNSPLASH.lifestyle;
+  if(c==='przepisy'||c.includes('prze')||c.includes('recip')||c.includes('cook')||c.includes('gotow')) return UNSPLASH.przepisy;
+  if(c==='motyw'||c.includes('motyw')||c.includes('motiv')||c.includes('mental')||c.includes('psych')) return UNSPLASH.motyw;
+  if(c==='trening'||c.includes('tren')||c.includes('train')||c.includes('workout')||c.includes('fitness')) return UNSPLASH.trening;
+  return UNSPLASH.default;
 }
 
 var META = {
