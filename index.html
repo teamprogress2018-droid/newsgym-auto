@@ -242,6 +242,9 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
     <div class="add-title-lbl">DODAJ Z AI</div>
   </div>
   <div class="add-scroll">
+    <button class="btn-secondary" onclick="loadSuggestions()" style="margin-bottom:12px;">🔬 Pokaż propozycje z PubMed</button>
+    <div id="suggestions-box" style="margin-bottom:16px;"></div>
+
     <div class="add-info">Wklej tekst artykulu lub abstrakt badania. Claude AI wygeneruje polskie streszczenie, doda badania naukowe i zapisze artykul w Firebase - bedzie widoczny dla wszystkich uzytkownikow automatycznie.</div>
     <div class="add-field">
       <div class="add-lbl"><div class="step-num">1</div>WKLEJ TEKST LUB BADANIE</div>
@@ -627,6 +630,41 @@ async function doGenerate(){
     document.getElementById('gen-status').innerHTML='<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:10px;padding:16px;margin-top:14px;"><div style="color:var(--red);font-weight:600;margin-bottom:6px;">Blad generowania</div><div style="font-size:12px;color:var(--muted);">Sprawdz polaczenie i sprobuj ponownie.</div></div>';
   }
   btn.disabled=false;
+}async function loadSuggestions(){
+  var box=document.getElementById('suggestions-box');
+  box.innerHTML='<div style="color:#f97316;font-size:12px;padding:8px 0;">⏳ Szukam badań z PubMed...</div>';
+  var topics=['resistance training hypertrophy','creatine supplementation athletes','HIIT cardiovascular fitness','protein intake muscle recovery','sleep athletic performance'];
+  var topic=topics[Math.floor(Math.random()*topics.length)];
+  try{
+    var url='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term='+encodeURIComponent(topic)+'&retmax=5&sort=date&retmode=json';
+    var r=await fetch(url);
+    var d=await r.json();
+    var ids=d.esearchresult.idlist;
+    if(!ids.length){box.innerHTML='<div style="color:#ff4444;font-size:12px;">Brak wyników</div>';return;}
+    var sumUrl='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id='+ids.join(',')+'&retmode=json';
+    var r2=await fetch(sumUrl);
+    var d2=await r2.json();
+    var html='<div style="font-size:11px;color:#777;margin-bottom:8px;font-family:DM Mono,monospace;">PROPOZYCJE Z PUBMED — kliknij żeby użyć:</div>';
+    ids.forEach(function(id){
+      var a=d2.result[id];
+      if(!a) return;
+      var title=a.title||'Brak tytułu';
+      var journal=a.fulljournalname||a.source||'';
+      var year=a.pubdate?a.pubdate.substring(0,4):'';
+      html+='<div onclick="useSuggestion(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+journal+'\',\''+year+'\')" style="background:#1a1a1a;border:1px solid rgba(200,241,53,0.2);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer;font-size:12px;line-height:1.4;" onmouseover="this.style.borderColor=\'#c8f135\'" onmouseout="this.style.borderColor=\'rgba(200,241,53,0.2)\'">'
+        +'<div style="color:#c8f135;font-weight:600;margin-bottom:3px;">'+title.substring(0,100)+(title.length>100?'...':'')+'</div>'
+        +'<div style="color:#555;font-family:DM Mono,monospace;">'+journal+' · '+year+'</div>'
+        +'</div>';
+    });
+    box.innerHTML=html;
+  }catch(e){
+    box.innerHTML='<div style="color:#ff4444;font-size:12px;">❌ Błąd połączenia z PubMed</div>';
+  }
+}
+
+function useSuggestion(title,journal,year){
+  document.getElementById('add-text').value=title+'\n\nŹródło: '+journal+' ('+year+')\n\nStwórz artykuł fitness na podstawie tego badania.';
+  document.getElementById('suggestions-box').innerHTML='<div style="color:#c8f135;font-size:12px;padding:4px 0;">✅ Wklejono! Kliknij Generuj.</div>';
 }
 
 async function saveArticle(){
