@@ -319,28 +319,44 @@ setTimeout(() => { if(window._loadFromFirebase) window._loadFromFirebase(); }, 6
 
 <script>
 var CATS_LIST = [
-  {id:'all',icon:'F',label:'Wszystko'},
-  {id:'trening',icon:'T',label:'Trening'},
-  {id:'sila',icon:'S',label:'Silowy'},
-  {id:'cardio',icon:'C',label:'Cardio'},
-  {id:'dieta',icon:'D',label:'Dieta'},
-  {id:'supl',icon:'P',label:'Suplementy'},
-  {id:'badania',icon:'B',label:'Badania'},
-  {id:'lifestyle',icon:'L',label:'Lifestyle'},
-  {id:'przepisy',icon:'R',label:'Przepisy'},
-  {id:'motyw',icon:'M',label:'Motywacja'},
+  {id:'all',icon:'🔥',label:'Wszystko'},
+  {id:'trening',icon:'💪',label:'Trening'},
+  {id:'sila',icon:'🏋️',label:'Silowy'},
+  {id:'cardio',icon:'🏃',label:'Cardio'},
+  {id:'dieta',icon:'🥗',label:'Dieta'},
+  {id:'supl',icon:'💊',label:'Suplementy'},
+  {id:'badania',icon:'🔬',label:'Badania'},
+  {id:'lifestyle',icon:'🧘',label:'Lifestyle'},
+  {id:'przepisy',icon:'🍳',label:'Przepisy'},
+  {id:'motyw',icon:'🎯',label:'Motywacja'},
 ];
 
+// Zdjecia Unsplash per kategoria (darmowe, bez klucza API)
+var UNSPLASH = {
+  trening:  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
+  sila:     'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80',
+  cardio:   'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
+  dieta:    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80',
+  supl:     'https://images.unsplash.com/photo-1579722821273-0f6c1d44362f?w=400&q=80',
+  badania:  'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&q=80',
+  lifestyle:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80',
+  przepisy: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80',
+  motyw:    'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80',
+  default:  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80',
+};
+
+function getImg(cat){ return UNSPLASH[cat]||UNSPLASH.default; }
+
 var META = {
-  trening: {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'T',label:'TRENING'},
-  sila:    {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'S',label:'SILOWY'},
-  cardio:  {color:'#2dd4bf',bg:'rgba(45,212,191,0.15)',grad:'g5',icon:'C',label:'CARDIO'},
-  dieta:   {color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g3',icon:'D',label:'DIETA'},
-  supl:    {color:'#a78bfa',bg:'rgba(167,139,250,0.15)',grad:'g4',icon:'P',label:'SUPLEMENTY'},
-  badania: {color:'#60a5fa',bg:'rgba(96,165,250,0.15)',grad:'g2',icon:'B',label:'BADANIA'},
-  lifestyle:{color:'#f472b6',bg:'rgba(244,114,182,0.15)',grad:'g6',icon:'L',label:'LIFESTYLE'},
-  przepisy:{color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g7',icon:'R',label:'PRZEPISY'},
-  motyw:   {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'M',label:'MOTYWACJA'},
+  trening: {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'💪',label:'TRENING'},
+  sila:    {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🏋️',label:'SILOWY'},
+  cardio:  {color:'#2dd4bf',bg:'rgba(45,212,191,0.15)',grad:'g5',icon:'🏃',label:'CARDIO'},
+  dieta:   {color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g3',icon:'🥗',label:'DIETA'},
+  supl:    {color:'#a78bfa',bg:'rgba(167,139,250,0.15)',grad:'g4',icon:'💊',label:'SUPLEMENTY'},
+  badania: {color:'#60a5fa',bg:'rgba(96,165,250,0.15)',grad:'g2',icon:'🔬',label:'BADANIA'},
+  lifestyle:{color:'#f472b6',bg:'rgba(244,114,182,0.15)',grad:'g6',icon:'🧘',label:'LIFESTYLE'},
+  przepisy:{color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g7',icon:'🍳',label:'PRZEPISY'},
+  motyw:   {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🎯',label:'MOTYWACJA'},
 };
 
 var SOURCES_DB = {
@@ -436,7 +452,7 @@ function buildHome(el,arts){
   var feat=arts.find(function(a){return a.featured;})||arts[0];
   var recent=arts.filter(function(a){return !a.featured;}).slice(0,4);
   var mini=arts.slice(0,5);
-  var fm=feat?m(feat.cat):{grad:'g1',icon:'F',label:'NEWS',color:'#c8f135'};
+  var fm=feat?m(feat.cat):{grad:'g1',icon:'🔥',label:'NEWS',color:'#c8f135'};
   var total=window.ARTICLES.length;
   var fbCount=window.FIREBASE_ARTICLES.length;
 
@@ -447,18 +463,18 @@ function buildHome(el,arts){
     +'</div></div>';
 
   if(feat){
-    h+='<div class="banner-wrap"><div class="banner '+(fm.grad||'g1')+'" onclick="openArticle(\''+feat.id+'\')">'
-      +'<div class="banner-pattern"></div>'
+    var featImg=feat.imageUrl||getImg(feat.cat);
+    h+='<div class="banner-wrap"><div class="banner" style="background-image:url('+featImg+');background-size:cover;background-position:center;" onclick="openArticle(\''+feat.id+'\')">'
       +'<div class="banner-content">'
       +'<div class="banner-cat">'+fm.icon+' '+fm.label+'</div>'
       +'<div class="banner-title">'+feat.title+'</div>'
-      +'<div class="banner-meta">'+( feat.readTime||'5 min')+' czytania</div>'
+      +'<div class="banner-meta">⏱ '+(feat.readTime||'5 min')+' czytania · '+(feat.views||0)+' wyswietlen</div>'
       +'</div></div></div>';
   }
 
-  h+='<div class="section"><div class="section-hdr"><div class="section-title">GORACE TEMATY</div><button class="section-more" onclick="goTab(\'latest\')">WIECEJ</button></div>'
+  h+='<div class="section"><div class="section-hdr"><div class="section-title">🔥 GORACE TEMATY</div><button class="section-more" onclick="goTab(\'latest\')">WIECEJ</button></div>'
     +'<div class="hscroll-wrap"><div class="hscroll">'
-    +mini.map(function(a){var mm=m(a.cat);return '<div class="card-mini" onclick="openArticle(\''+a.id+'\')"><div class="card-mini-img '+mm.grad+'"><div class="img-icon img-icon-sm">'+mm.icon+'</div></div><div class="card-mini-body"><div class="card-mini-cat" style="color:'+mm.color+'">'+mm.label+'</div><div class="card-mini-title">'+a.title+'</div></div></div>';}).join('')
+    +mini.map(function(a){var mm=m(a.cat);var img=a.imageUrl||getImg(a.cat);return '<div class="card-mini" onclick="openArticle(\''+a.id+'\')"><div class="card-mini-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.5));"></div></div><div class="card-mini-body"><div class="card-mini-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div><div class="card-mini-title">'+a.title+'</div></div></div>';}).join('')
     +'</div></div></div>';
 
   h+='<div class="section"><div class="section-hdr"><div class="section-title">NAJNOWSZE</div><button class="section-more" onclick="goTab(\'latest\')">WSZYSTKIE</button></div>'
@@ -500,16 +516,18 @@ function buildSaved(el){
 
 function cardLg(a){
   var mm=m(a.cat),sv=saved.includes(a.id);
-  return '<div class="card-lg" onclick="openArticle(\''+a.id+'\')"><div class="card-img '+mm.grad+'"><div class="card-img-overlay"></div><div class="img-icon">'+mm.icon+'</div><div class="card-img-cat" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.label+'</div><div class="card-img-read">'+(a.readTime||'5 min')+'</div></div><div class="card-body"><div class="card-title">'+a.title+'</div><div class="card-excerpt">'+(a.excerpt||'')+'</div><div class="card-footer"><div class="card-author"><div class="card-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div class="card-author-name">'+(a.author||'Redakcja')+'</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="card-date">'+(a.date||'dzis')+'</div><button class="card-action-btn" onclick="event.stopPropagation();toggleSaved(\''+a.id+'\')">'+(sv?'[S]':'[+]')+'</button></div></div></div></div>';
+  var img=a.imageUrl||getImg(a.cat);
+  return '<div class="card-lg" onclick="openArticle(\''+a.id+'\')"><div class="card-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div class="card-img-overlay"></div><div class="card-img-cat" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div><div class="card-img-read">⏱ '+(a.readTime||'5 min')+'</div></div><div class="card-body"><div class="card-title">'+a.title+'</div><div class="card-excerpt">'+(a.excerpt||'')+'</div><div class="card-footer"><div class="card-author"><div class="card-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div class="card-author-name">'+(a.author||'Redakcja')+'</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="card-date">'+(a.date||'dzis')+'</div><button class="card-action-btn" onclick="event.stopPropagation();toggleSaved(\''+a.id+'\')">'+(sv?'🔖':'🤍')+'</button></div></div></div></div>';
 }
 
 function cardSm(a){
   var mm=m(a.cat);
+  var img=a.imageUrl||getImg(a.cat);
   return '<div class="card-sm" onclick="openArticle(\''+a.id+'\')">'
-    +'<div class="card-sm-img '+mm.grad+'"><div class="img-icon img-icon-sm">'+mm.icon+'</div></div>'
-    +'<div class="card-sm-content"><div class="card-sm-cat" style="color:'+mm.color+'">'+mm.label+'</div>'
+    +'<div class="card-sm-img" style="background-image:url('+img+');background-size:cover;background-position:center;"></div>'
+    +'<div class="card-sm-content"><div class="card-sm-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div>'
     +'<div class="card-sm-title">'+a.title+'</div>'
-    +'<div class="card-sm-meta"><span>'+(a.author||'Redakcja')+'</span><span>·</span><span>'+(a.date||'dzis')+'</span><span>·</span><span>'+(a.readTime||'5 min')+'</span></div>'
+    +'<div class="card-sm-meta"><span>'+(a.author||'Redakcja')+'</span><span>·</span><span>'+(a.date||'dzis')+'</span><span>·</span><span>⏱ '+(a.readTime||'5 min')+'</span></div>'
     +'</div></div>';
 }
 
@@ -536,7 +554,7 @@ function openArticle(id){
     '<div class="art-cat-tag" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div>'
     +'<div class="art-title">'+a.title+'</div>'
     +'<div class="art-meta"><div class="art-author-row"><div class="art-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div><div class="art-author-name">'+(a.author||'Redakcja NEWS GYM')+'</div><div class="art-date">'+(a.date||'dzis')+' - '+(a.readTime||'5 min')+'</div></div></div><div class="art-stats"><div class="art-stat">'+( a.views||0)+'</div><div class="art-stat">'+(a.likes||0)+'</div></div></div>'
-    +'<div class="art-hero '+mm.grad+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;opacity:0.5;">'+mm.icon+'</div></div>'
+    +'<div class="art-hero" style="background-image:url('+(a.imageUrl||getImg(a.cat))+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.4));"></div><div style="position:absolute;bottom:12px;right:12px;font-size:28px;">'+mm.icon+'</div></div>'
     +'<div class="art-body">'+(a.content||'')+'</div>'
     +'<div class="art-tags">'+(a.tags||[]).map(function(t){return '<div class="art-tag">#'+t+'</div>';}).join('')+'</div>'
     +buildSources(a.cat, a.extraSources||[])
