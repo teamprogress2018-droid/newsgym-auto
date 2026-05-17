@@ -1,0 +1,16 @@
+{
+  "name": "newsgym-auto",
+  "version": "1.0.0",
+  "description": "Automatyczne pobieranie artykułów fitness dla NEWS GYM",
+  "main": "fetch-articles.js",
+  "scripts": {
+    "start": "node fetch-articles.js",
+    "test": "echo \"Skrypt działa\" && exit 0"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "NEWS GYM",
+  "license": "MIT"
+}

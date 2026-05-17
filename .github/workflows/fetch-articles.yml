@@ -1,0 +1,28 @@
+name: Pobierz artykuły fitness co 2 dni
+
+on:
+  schedule:
+    - cron: '0 8 */2 * *'  # Co 2 dni o 8:00 rano
+  workflow_dispatch:         # Możliwość ręcznego uruchomienia
+
+jobs:
+  fetch-articles:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v4
+      
+      - name: Zainstaluj Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Zainstaluj zależności
+        run: npm install
+      
+      - name: Pobierz i zapisz artykuły
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+        run: node fetch-articles.js
