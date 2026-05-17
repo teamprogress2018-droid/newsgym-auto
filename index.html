@@ -622,7 +622,7 @@ async function doGenerate(){
     var parsed=JSON.parse(clean);
     pending={id:'fb-'+Date.now(),cat:catId,title:parsed.title,excerpt:parsed.excerpt,content:parsed.content,tags:parsed.tags||[],readTime:parsed.readTime||'5 min',author:'Redakcja NEWS GYM',authorInit:'AI',date:'wlasnie dodano',views:0,likes:0,extraSources:parsed.sources||[]};
     var srcPrev=(parsed.sources||[]).map(function(s){return '<div class="preview-source"><span class="preview-source-j">'+s.journal+' - '+s.year+'</span><div style="font-weight:600;margin-bottom:2px;">'+s.title+'</div><div>'+s.finding+'</div></div>';}).join('');
-    document.getElementById('gen-status').innerHTML='<div class="preview-box"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">OK</span><span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:var(--accent);">ARTYKUL GOTOWY</span></div><div class="preview-title">'+parsed.title+'</div><div class="preview-excerpt">'+parsed.excerpt+'</div><div class="preview-sources"><div class="preview-sources-lbl">BADANIA NAUKOWE ('+(parsed.sources||[]).length+')</div>'+srcPrev+'</div></div><button class="btn-gen" onclick="saveArticle()" style="margin-top:14px;">Zapisz w Firebase i dodaj</button><button class="btn-secondary" onclick="openAdd()">Generuj ponownie</button>';
+    document.getElementById('gen-status').innerHTML='<div class="preview-box"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">OK</span><span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:var(--accent);">ARTYKUL GOTOWY</span></div><div class="preview-title">'+parsed.title+'</div><div class="preview-excerpt">'+parsed.excerpt+'</div><div class="preview-sources"><div class="preview-sources-lbl">BADANIA NAUKOWE ('+(parsed.sources||[]).length+')</div>'+srcPrev+'</div></div><button class="btn-gen" onclick="xx()" style="margin-top:14px;">Zapisz w Firebase i dodaj</button><button class="btn-secondary" onclick="openAdd()">Generuj ponownie</button>';
   }catch(e){
     document.getElementById('gen-status').innerHTML='<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:10px;padding:16px;margin-top:14px;"><div style="color:var(--red);font-weight:600;margin-bottom:6px;">Blad generowania</div><div style="font-size:12px;color:var(--muted);">Sprawdz polaczenie i sprobuj ponownie.</div></div>';
   }
@@ -637,16 +637,49 @@ async function saveArticle(){
     if(fbId){
       pending.id=fbId;
       setFbStatus('ok','Artykul zapisany w Firebase!');
-      flash('Zapisano w Firebase i dodano do aplikacji!');
     } else {
       setFbStatus('error','Blad zapisu Firebase - artykul dodany lokalnie');
-      flash('Firebase niedostepny - artykul dodany lokalnie');
     }
   }
   window.ARTICLES.unshift(pending);
-  pending=null;
   closeAdd();
   goTab('latest');
+  showPublishModal(pending);
+  pending=null;
+}
+
+function showPublishModal(article){
+  var old=document.getElementById('fb-modal');
+  if(old) old.remove();
+  var postText='💪 '+article.title+'\n\n'+article.excerpt+'\n\n#fitness #trening #newsgym';
+  var modal=document.createElement('div');
+  modal.id='fb-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML='<div style="background:#111;border:1px solid rgba(200,241,53,0.3);border-radius:16px;padding:24px;max-width:480px;width:100%;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#c8f135;letter-spacing:1px;margin-bottom:8px;">OPUBLIKUJ NA FACEBOOK</div><div style="font-size:12px;color:#777;margin-bottom:16px;">Strona: P&P Progress</div><textarea id="fb-post-text" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.5;resize:none;outline:none;font-family:DM Sans,sans-serif;" rows="5">'+postText+'</textarea><div id="fb-publish-status" style="margin-top:10px;font-size:12px;min-height:18px;"></div><div style="display:flex;gap:10px;margin-top:16px;"><button onclick="document.getElementById(\'fb-modal\').remove()" style="flex:1;padding:13px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);color:#f0ece8;border-radius:12px;font-size:14px;cursor:pointer;">Pomiń</button><button onclick="publishToFacebook()" style="flex:2;padding:13px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📘 Publikuj na FB</button></div></div>';
+  document.body.appendChild(modal);
+}
+
+async function publishToFacebook(){
+  var text=document.getElementById('fb-post-text').value.trim();
+  var status=document.getElementById('fb-publish-status');
+  if(!text) return;
+  status.style.color='#f97316';
+  status.textContent='Publikuję...';
+  try{
+    var resp=await fetch('https://graph.facebook.com/v25.0/377127779516613/feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,access_token:'EAAQkvWmLtUsBRVdRRCCGhNNcVJqN7rRHAMsCVqO45cWgNxdxOoUZCjLlXwLK4wmWUEOMA57gfsEqaV8RKLbdtIXqnpswj3MejAlSKedN3A6D8s1wUuQcFAmABDGCgQbyPqylVI1FDQHVFxACpCFbrIhtrGsSUOoaxgpEWCFowYBRUvxMxMXwkm3KA8l0UW09jATa4Lr0V7Gtugr8d0uDKwQL3cAuZBQKajvJMhAjDypnZBF5fRWWJOtfaIZD'})});
+    var data=await resp.json();
+    if(data.id){
+      status.style.color='#c8f135';
+      status.textContent='✅ Opublikowano! Post ID: '+data.id;
+      setTimeout(()=>{document.getElementById('fb-modal').remove();flash('Post opublikowany na Facebook! 🎉');},2000);
+    } else {
+      status.style.color='#ff4444';
+      status.textContent='❌ Błąd: '+(data.error?.message||'Nieznany błąd');
+    }
+  }catch(e){
+    status.style.color='#ff4444';
+    status.textContent='❌ Błąd połączenia z Facebook API';
+  }
 }
 
 function flash(msg){
