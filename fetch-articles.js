@@ -12,6 +12,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const FIREBASE_CONFIG   = JSON.parse(process.env.FIREBASE_CONFIG);
 const PROJECT_ID        = FIREBASE_CONFIG.projectId;
 const FIREBASE_API_KEY  = FIREBASE_CONFIG.apiKey;
+const UNSPLASH_KEY      = 'a0UmrunrDS1E9U_LacY7PBGTgVL6KikHzeCC-Q77oMc';
 
 // Tematy do wyszukania w PubMed
 const PUBMED_TOPICS = [
@@ -329,6 +330,26 @@ async function saveToFirebase(article) {
 }
 
 // ═══════════════════════════════════════
+// POBIERZ ZDJECIE Z UNSPLASH
+// ═══════════════════════════════════════
+async function fetchUnsplashPhoto(query) {
+  try {
+    const searchQuery = encodeURIComponent(query + ' fitness sport');
+    const url = `https://api.unsplash.com/search/photos?query=${searchQuery}&per_page=1&orientation=landscape&client_id=${UNSPLASH_KEY}`;
+    const res = await fetchUrl(url);
+    const data = JSON.parse(res.body);
+    if (data.results && data.results.length > 0) {
+      const photo = data.results[0];
+      console.log(`  📷 Znaleziono zdjecie: ${photo.urls.regular}`);
+      return photo.urls.regular + '&w=400&q=80';
+    }
+  } catch(e) {
+    console.log(`  ⚠️ Brak zdjecia Unsplash: ${e.message}`);
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════
 // GŁÓWNA FUNKCJA
 // ═══════════════════════════════════════
 async function main() {
@@ -366,6 +387,11 @@ async function main() {
     
     const article = await generateArticle(raw);
     if (!article) continue;
+    
+    // Pobierz zdjecie z Unsplash
+    const photoQuery = raw.topic || article.cat || 'fitness workout';
+    const imageUrl = await fetchUnsplashPhoto(photoQuery);
+    if (imageUrl) article.imageUrl = imageUrl;
     
     console.log(`  📝 Wygenerowano: "${article.title}"`);
     
