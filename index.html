@@ -480,9 +480,20 @@ function buildHome(el,arts){
   var total=window.ARTICLES.length;
   var fbCount=window.FIREBASE_ARTICLES.length;
 
+  function isResearchArticle(a){
+    if(a.isResearch) return true;
+    if(a.cat==='badania') return true;
+    var t=(a.title||'').toLowerCase();
+    var e=(a.excerpt||'').toLowerCase();
+    var keywords=['badanie','badania','meta-analiza','analiza','research','study','trial','journal','pubmed','przegląd','review','randomized','kohort','bibliometr'];
+    return keywords.some(function(k){return t.includes(k)||e.includes(k);});
+  }
+
+  var researchCount=window.ARTICLES.filter(isResearchArticle).length;
+
   var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row" style="grid-template-columns:repeat(2,1fr);">'
     +'<div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Artykulow</div></div>'
-    +'<div class="stat-box"><div class="stat-val">'+window.ARTICLES.filter(function(a){return a.isResearch||a.cat==='badania';}).length+'</div><div class="stat-lbl">Badan</div></div>'
+    +'<div class="stat-box"><div class="stat-val">'+researchCount+'</div><div class="stat-lbl">Badan</div></div>'
     +'</div></div>';
 
   if(feat){
@@ -1312,7 +1323,9 @@ async function doGenerate(){
 
     var sources=[{journal:meta.journal||'Sports Medicine',year:meta.year||'2024',title:text.substring(0,60),authors:meta.authors||'et al.',finding:meta.finding||'',pmid:''}];
 
-    pending={id:'fb-'+Date.now(),cat:catId,title:meta.title,excerpt:meta.excerpt,content:content,tags:meta.tags||[],readTime:meta.readTime||'5 min',author:'Redakcja NEWS GYM',authorInit:'AI',date:'wlasnie dodano',views:0,likes:0,extraSources:sources};
+    var journal=(meta.journal||'').toLowerCase();
+    pending={id:'fb-'+Date.now(),cat:catId,title:meta.title,excerpt:meta.excerpt,content:content,tags:meta.tags||[],readTime:meta.readTime||'5 min',author:'Redakcja NEWS GYM',authorInit:'AI',date:'wlasnie dodano',views:0,likes:0,extraSources:sources,
+      isResearch:(catId==='badania'||journal.includes('journal')||journal.includes('med')||journal.includes('nutrients')||journal.includes('sports')||journal.includes('pubmed')||journal.includes('lancet')||journal.includes('nature'))};
 
     var srcPrev=sources.map(function(s){return '<div class="preview-source"><span class="preview-source-j">'+s.journal+' - '+s.year+'</span><div>'+s.finding+'</div></div>';}).join('');
     document.getElementById('gen-status').innerHTML='<div class="preview-box"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">✅</span><span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:var(--accent);">ARTYKUL GOTOWY</span></div><div class="preview-title">'+meta.title+'</div><div class="preview-excerpt">'+meta.excerpt+'</div><div class="preview-sources"><div class="preview-sources-lbl">ŹRÓDŁO</div>'+srcPrev+'</div></div><button class="btn-gen" onclick="saveArticle()" style="margin-top:14px;">💾 Zapisz w Firebase i dodaj</button><button class="btn-secondary" onclick="openAdd()">Generuj ponownie</button>';
