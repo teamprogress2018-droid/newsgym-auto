@@ -480,10 +480,9 @@ function buildHome(el,arts){
   var total=window.ARTICLES.length;
   var fbCount=window.FIREBASE_ARTICLES.length;
 
-  var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row">'
+  var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row" style="grid-template-columns:repeat(2,1fr);">'
     +'<div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Artykulow</div></div>'
-    +'<div class="stat-box"><div class="stat-val">'+window.ARTICLES.filter(function(a){return a.isResearch;}).length+'</div><div class="stat-lbl">Badan</div></div>'
-    +'<div class="stat-box"><div class="stat-val">'+fbCount+'</div><div class="stat-lbl">Firebase</div></div>'
+    +'<div class="stat-box"><div class="stat-val">'+window.ARTICLES.filter(function(a){return a.isResearch||a.cat==='badania';}).length+'</div><div class="stat-lbl">Badan</div></div>'
     +'</div></div>';
 
   if(feat){
