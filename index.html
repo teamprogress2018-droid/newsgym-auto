@@ -705,10 +705,10 @@ function generateProtocolInfographic(id){
     +'</div>'
     +'<canvas id="proto-canvas" width="1080" height="1080" style="width:100%;border-radius:12px;border:1px solid #222;"></canvas>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">'
-    +'<button onclick="downloadSlide(\'proto-canvas\',\'newsgym_protokol\')" style="padding:14px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">⬇️ Pobierz PNG</button>'
-    +'<button onclick="shareProtocolInfographic()" style="padding:14px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">💬 WhatsApp</button>'
+    +'<button onclick="downloadSlide(\'proto-canvas\',\'newsgym_protokol\')" style="padding:14px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">⬇️ Pobierz PNG</button>'
+    +'<button onclick="shareToFacebook()" style="padding:14px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">📘 Facebook</button>'
     +'</div>'
-    +'<button onclick="copyProtocolForIG()" style="width:100%;margin-top:8px;padding:14px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📸 Kopiuj tekst na Instagram</button>'
+    +'<button onclick="shareToInstagram()" style="width:100%;margin-top:8px;padding:14px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📸 Pobierz na Instagram</button>'
     +'<div style="height:32px;"></div>'
     +'</div>';
   document.body.appendChild(modal);
@@ -751,9 +751,26 @@ function copyProtocolForIG(){
   }
 }
 
-function shareProtocolInfographic(){
+function shareToFacebook(){
+  // Pobierz PNG + otwórz Facebook
+  downloadSlide('proto-canvas','newsgym_protokol_fb');
+  setTimeout(function(){
+    flash('PNG pobrane! Wgraj je na Facebook 📘');
+    window.open('https://www.facebook.com/profile.php','_blank');
+  }, 800);
+}
+
+function shareToInstagram(){
+  // Pobierz PNG + pokaż instrukcję
+  downloadSlide('proto-canvas','newsgym_protokol_ig');
+  setTimeout(function(){
+    flash('PNG pobrane! Otwórz Instagram i wgraj 📸');
+  }, 500);
+  // Kopiuj też hashtagi
   var text=window._currentProtocolText||'';
-  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text);
+  }
 }
 
 function drawProtocolInfographic(canvas, article, p, mm){
