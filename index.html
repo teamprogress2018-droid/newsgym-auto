@@ -592,7 +592,7 @@ function openArticle(id){
 function closeArticle(){document.getElementById('article-view').classList.remove('show');curId=null;}
 
 // ============================================================
-// GENERATOR INFOGRAFIK / KARUZELA INSTAGRAM
+// PROFESJONALNY GENERATOR KARUZELI INSTAGRAM
 // ============================================================
 
 async function openInfographic(id){
@@ -600,183 +600,408 @@ async function openInfographic(id){
   if(!a) return;
   var mm=m(a.cat);
 
-  // Pokaz loading
   var old=document.getElementById('infographic-modal');
   if(old) old.remove();
   var modal=document.createElement('div');
   modal.id='infographic-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px;overflow-y:auto;';
-  modal.innerHTML='<div style="width:100%;max-width:480px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#c8f135;letter-spacing:1px;">KARUZELA INSTAGRAM</div><button onclick="document.getElementById(\'infographic-modal\').remove()" style="background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;">✕ Zamknij</button></div><div style="color:#60a5fa;font-size:13px;font-family:DM Mono,monospace;margin-bottom:16px;">⏳ Generuję 5 slajdów...</div><div id="slides-container"></div></div>';
+  modal.style.cssText='position:fixed;inset:0;background:#0a0a0a;z-index:500;display:flex;flex-direction:column;align-items:center;padding:16px;overflow-y:auto;';
+  modal.innerHTML='<div style="width:100%;max-width:500px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(200,241,53,0.2);">'
+    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#c8f135;letter-spacing:1px;">KARUZELA INSTAGRAM</div>'
+    +'<div style="font-size:11px;color:#555;font-family:DM Mono,monospace;">5 slajdów · Format 1080x1080</div></div>'
+    +'<button onclick="document.getElementById(\'infographic-modal\').remove()" style="background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;">✕ Zamknij</button>'
+    +'</div>'
+    +'<div id="carousel-loading" style="text-align:center;padding:40px 0;">'
+    +'<div style="font-size:32px;margin-bottom:12px;animation:spin 1.5s linear infinite;display:inline-block;">⚡</div>'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:#c8f135;letter-spacing:1px;">GENERUJĘ KARUZELĘ</div>'
+    +'<div style="font-size:12px;color:#777;margin-top:8px;">AI tworzy 5 slajdów...</div>'
+    +'</div>'
+    +'<div id="slides-container"></div>'
+    +'</div>';
   document.body.appendChild(modal);
 
-  // Generuj tresci slajdow przez AI
   try {
-    var prompt='Na podstawie artykulu wygeneruj 5 krotkich punktow do karuzeli Instagram po POLSKU. Odpowiedz TYLKO JSON:\n{"slides":[{"nr":1,"headline":"TYTUL SLAJDU MAX 6 SLOW","text":"1-2 zdania max 80 znakow","emoji":"emoji"},{"nr":2,...},{"nr":3,...},{"nr":4,...},{"nr":5,"headline":"PODSUMOWANIE","text":"kluczowy wniosek","emoji":"emoji"}]}\n\nArtykul: '+a.title+'\n'+a.excerpt;
+    var prompt='Stwórz karuzelę Instagram z 5 slajdów na podstawie artykułu. Odpowiedz TYLKO JSON bez niczego extra:\n'
+      +'{"s1":{"hook":"CHWYTLIWY TYTUL MAX 5 SLOW CAPS","sub":"podtytul max 8 slow"},'
+      +'"s2":{"label":"WYNIK #1","headline":"kluczowy wynik max 6 slow","stat":"liczba lub %","desc":"1 zdanie max 60 znakow"},'
+      +'"s3":{"label":"WYNIK #2","headline":"drugi wynik max 6 slow","stat":"liczba lub %","desc":"1 zdanie max 60 znakow"},'
+      +'"s4":{"label":"JAK STOSOWAC","points":["punkt 1 max 40 znakow","punkt 2 max 40 znakow","punkt 3 max 40 znakow"]},'
+      +'"s5":{"cta":"WEZWANIE DO AKCJI MAX 6 SLOW","sub":"zapisz obserwuj aplikacja newsgym"}}\n\n'
+      +'Artykul: '+a.title+'\n'+a.excerpt+'\n'+(a.content?a.content.replace(/<[^>]*>/g,'').substring(0,300):'');
 
-    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})});
     var data=await resp.json();
     var raw=data.content.map(function(i){return i.text||'';}).join('');
     var s=raw.indexOf('{'),e=raw.lastIndexOf('}');
-    var parsed=JSON.parse(raw.substring(s,e+1));
+    var d=JSON.parse(raw.substring(s,e+1));
 
-    renderSlides(parsed.slides, a, mm);
+    document.getElementById('carousel-loading').style.display='none';
+    renderCarousel(d, a, mm);
   } catch(err) {
-    // Fallback - generuj slajdy z tresci artykulu
-    var fallback=[
-      {nr:1,headline:a.title.substring(0,40),text:a.excerpt.substring(0,80),emoji:mm.icon},
-      {nr:2,headline:'CO MÓWI NAUKA',text:'Sprawdzone badania naukowe potwierdzają skuteczność.',emoji:'🔬'},
-      {nr:3,headline:'KLUCZOWE FAKTY',text:'Poznaj najważniejsze informacje z tego tematu.',emoji:'💡'},
-      {nr:4,headline:'ZASTOSOWANIE',text:'Jak wdrożyć tę wiedzę w swoim treningu?',emoji:'💪'},
-      {nr:5,headline:'PODSUMOWANIE',text:'Sprawdź więcej na NEWS GYM!',emoji:'🏆'},
-    ];
-    renderSlides(fallback, a, mm);
+    // Fallback
+    var fallback={
+      s1:{hook:a.title.substring(0,30).toUpperCase(),sub:'Poznaj wyniki badań naukowych'},
+      s2:{label:'WYNIK #1',headline:'WZROST SIŁY',stat:'+14%',desc:'Potwierdzone w badaniach naukowych'},
+      s3:{label:'WYNIK #2',headline:'LEPSZA WYDOLNOŚĆ',stat:'+28%',desc:'Efekty widoczne już po 4 tygodniach'},
+      s4:{label:'JAK STOSOWAĆ',points:['Dawkuj regularnie każdego dnia','Łącz z treningiem siłowym','Monitoruj postępy co tydzień']},
+      s5:{cta:'POBIERZ NEWS GYM',sub:'Codzienne badania naukowe po polsku'}
+    };
+    document.getElementById('carousel-loading').style.display='none';
+    renderCarousel(fallback, a, mm);
   }
 }
 
-function renderSlides(slides, article, mm){
+function renderCarousel(d, article, mm){
   var container=document.getElementById('slides-container');
   if(!container) return;
 
-  var colors=[
-    {bg:'#0a0a0a',accent:'#c8f135',text:'#f0ece8'},
-    {bg:'#111827',accent:'#c8f135',text:'#f0ece8'},
-    {bg:'#0a0a0a',accent:'#60a5fa',text:'#f0ece8'},
-    {bg:'#111',accent:'#a78bfa',text:'#f0ece8'},
-    {bg:'#0a0a0a',accent:'#c8f135',text:'#f0ece8'},
+  var slides=[
+    {id:'s1',label:'Okładka'},
+    {id:'s2',label:'Wynik #1'},
+    {id:'s3',label:'Wynik #2'},
+    {id:'s4',label:'Protokół'},
+    {id:'s5',label:'CTA'},
   ];
 
-  var html='<div style="font-size:11px;color:#555;font-family:DM Mono,monospace;margin-bottom:12px;text-align:center;">Kliknij slajd żeby pobrać · Format 1080x1080px</div>';
+  var html='<div style="font-size:11px;color:#555;font-family:DM Mono,monospace;margin-bottom:16px;text-align:center;">Kliknij ⬇️ przy każdym slajdzie żeby pobrać</div>';
 
-  slides.forEach(function(slide,i){
-    var col=colors[i]||colors[0];
-    var slideId='slide-canvas-'+i;
-    html+='<div style="margin-bottom:16px;">'
-      +'<canvas id="'+slideId+'" width="1080" height="1080" style="width:100%;border-radius:12px;cursor:pointer;border:1px solid #333;" onclick="downloadSlide(\''+slideId+'\',\'slide_'+(i+1)+'\')"></canvas>'
-      +'<div style="display:flex;gap:8px;margin-top:8px;">'
-      +'<button onclick="downloadSlide(\''+slideId+'\',\'newsgym_slide_'+(i+1)+'\')" style="flex:1;padding:10px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">⬇️ Pobierz slajd '+(i+1)+'</button>'
+  slides.forEach(function(sl,i){
+    html+='<div style="margin-bottom:20px;">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      +'<div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:#c8f135;letter-spacing:1px;">SLAJD '+(i+1)+' — '+sl.label.toUpperCase()+'</div>'
+      +'<button onclick="downloadSlide(\'sc-'+i+'\',\'newsgym_slajd_'+(i+1)+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">⬇️ Pobierz</button>'
       +'</div>'
+      +'<canvas id="sc-'+i+'" width="1080" height="1080" style="width:100%;border-radius:12px;border:1px solid #222;"></canvas>'
       +'</div>';
   });
 
-  html+='<button onclick="downloadAllSlides('+slides.length+')" style="width:100%;padding:14px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;">⬇️ Pobierz wszystkie 5 slajdów</button>';
+  html+='<button onclick="downloadAllSlides(5)" style="width:100%;padding:16px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:32px;">⬇️ Pobierz wszystkie 5 slajdów</button>';
 
   container.innerHTML=html;
 
-  // Rysuj slajdy na canvas
   setTimeout(function(){
-    slides.forEach(function(slide,i){
-      var col=colors[i]||colors[0];
-      drawSlide(document.getElementById('slide-canvas-'+i), slide, col, article, i);
-    });
-  }, 100);
+    drawSlide1(document.getElementById('sc-0'), d.s1, article, mm);
+    drawSlide2(document.getElementById('sc-1'), d.s2, article, mm);
+    drawSlide3(document.getElementById('sc-2'), d.s3, article, mm);
+    drawSlide4(document.getElementById('sc-3'), d.s4, article, mm);
+    drawSlide5(document.getElementById('sc-4'), d.s5, article, mm);
+  }, 150);
 }
 
-function drawSlide(canvas, slide, col, article, idx){
-  if(!canvas) return;
-  var ctx=canvas.getContext('2d');
-  var W=1080, H=1080;
-
-  // Tlo
-  ctx.fillStyle=col.bg;
+function canvasBase(ctx, accentColor){
+  var W=1080,H=1080;
+  // Tło
+  ctx.fillStyle='#0a0a0a';
   ctx.fillRect(0,0,W,H);
-
-  // Gradient tla
-  var grad=ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'rgba(200,241,53,0.04)');
-  grad.addColorStop(1,'rgba(96,165,250,0.06)');
-  ctx.fillStyle=grad;
+  // Subtelny gradient
+  var g=ctx.createRadialGradient(W*0.8,H*0.2,0,W*0.8,H*0.2,W*0.7);
+  g.addColorStop(0,'rgba(200,241,53,0.05)');
+  g.addColorStop(1,'transparent');
+  ctx.fillStyle=g;
   ctx.fillRect(0,0,W,H);
+  // Górna linia akcentu
+  ctx.fillStyle=accentColor;
+  ctx.fillRect(0,0,W,6);
+  // Dolna linia
+  ctx.fillStyle=accentColor;
+  ctx.fillRect(0,H-6,W,6);
+}
 
-  // Gorny pasek z logo
-  ctx.fillStyle=col.accent;
-  ctx.fillRect(0,0,W,8);
-
-  // Logo NEWS GYM
-  ctx.font='bold 52px Arial';
-  ctx.fillStyle=col.accent;
-  ctx.fillText('NEWS',60,90);
-  ctx.fillStyle=col.text;
-  ctx.fillText('GYM',60+ctx.measureText('NEWS').width+10,90);
-
-  // Numer slajdu
-  ctx.font='bold 32px Arial';
-  ctx.fillStyle='rgba(255,255,255,0.2)';
-  ctx.textAlign='right';
-  ctx.fillText((idx+1)+'/5', W-60, 90);
+function drawLogo(ctx, W, accent, slideNum){
+  ctx.font='bold 44px Arial';
+  ctx.fillStyle=accent;
   ctx.textAlign='left';
-
-  // Kategoria
-  var cat=article.cat||'trening';
-  ctx.font='bold 22px Arial';
-  ctx.fillStyle=col.accent;
-  ctx.fillText(slide.emoji+' '+cat.toUpperCase(), 60, 160);
-
-  // Linia dekoracyjna
-  ctx.strokeStyle=col.accent;
-  ctx.lineWidth=2;
-  ctx.beginPath();
-  ctx.moveTo(60,180);
-  ctx.lineTo(W-60,180);
-  ctx.stroke();
-
-  // Duzy emoji w tle
-  ctx.font='280px Arial';
-  ctx.globalAlpha=0.06;
-  ctx.fillStyle='#ffffff';
-  ctx.textAlign='center';
-  ctx.fillText(slide.emoji, W/2, H/2+80);
-  ctx.globalAlpha=1;
-  ctx.textAlign='left';
-
-  // Headline
-  var headline=slide.headline||'';
-  ctx.font='bold 88px Arial';
-  ctx.fillStyle=col.text;
-  wrapText(ctx, headline, 60, 320, W-120, 100);
-
-  // Akcentowa linia pod headline
-  ctx.fillStyle=col.accent;
-  ctx.fillRect(60, 460, 120, 6);
-
-  // Tekst
-  var text=slide.text||'';
-  ctx.font='42px Arial';
-  ctx.fillStyle='rgba(240,236,232,0.8)';
-  wrapText(ctx, text, 60, 540, W-120, 56);
-
-  // Dolny pasek
-  ctx.fillStyle='rgba(255,255,255,0.05)';
-  ctx.fillRect(0, H-120, W, 120);
-
+  ctx.fillText('NEWS',60,78);
+  var nw=ctx.measureText('NEWS').width;
+  ctx.fillStyle='#f0ece8';
+  ctx.fillText('GYM',60+nw+8,78);
+  // numer slajdu
   ctx.font='bold 28px Arial';
-  ctx.fillStyle=col.accent;
-  ctx.fillText('newsgym-auto', 60, H-68);
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.textAlign='right';
+  ctx.fillText(slideNum+'/5',1020,78);
+  ctx.textAlign='left';
+}
 
-  ctx.font='24px Arial';
-  ctx.fillStyle='rgba(255,255,255,0.3)';
-  ctx.fillText('#fitness #trening #newsgym #nauka', 60, H-30);
-
-  // Dolny pasek accent
-  ctx.fillStyle=col.accent;
-  ctx.fillRect(0,H-4,W,4);
+function drawBottom(ctx, W, H, accent, tags){
+  ctx.fillStyle='rgba(255,255,255,0.04)';
+  ctx.fillRect(0,H-100,W,100);
+  ctx.font='bold 26px Arial';
+  ctx.fillStyle=accent;
+  ctx.textAlign='left';
+  ctx.fillText('@newsgym_pl',60,H-56);
+  ctx.font='22px Arial';
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.fillText(tags||'#fitness #trening #nauka #newsgym',60,H-20);
 }
 
 function wrapText(ctx, text, x, y, maxW, lineH){
-  if(!text) return;
+  if(!text) return 0;
   var words=text.split(' ');
   var line='';
   var lines=[];
   for(var i=0;i<words.length;i++){
     var test=line+words[i]+' ';
-    if(ctx.measureText(test).width>maxW&&line!==''){
-      lines.push(line.trim());
-      line=words[i]+' ';
-    } else {
-      line=test;
-    }
+    if(ctx.measureText(test).width>maxW&&line!==''){lines.push(line.trim());line=words[i]+' ';}
+    else line=test;
   }
   if(line.trim()) lines.push(line.trim());
-  lines.forEach(function(l,i){ ctx.fillText(l,x,y+i*lineH); });
+  lines.forEach(function(l,i){ctx.fillText(l,x,y+i*lineH);});
+  return lines.length*lineH;
+}
+
+// SLAJD 1 — OKŁADKA
+function drawSlide1(canvas, data, article, mm){
+  if(!canvas||!data) return;
+  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
+  canvasBase(ctx, A);
+  drawLogo(ctx, W, A, 1);
+
+  // Duzy emoji w tle
+  ctx.font='420px Arial';
+  ctx.globalAlpha=0.04;
+  ctx.fillStyle='#ffffff';
+  ctx.textAlign='center';
+  ctx.fillText(mm.icon||'💪', W/2, H/2+120);
+  ctx.globalAlpha=1; ctx.textAlign='left';
+
+  // Kategoria pill
+  ctx.fillStyle='rgba(200,241,53,0.15)';
+  roundRect(ctx, 60, 120, 260, 50, 25);
+  ctx.fillStyle=A;
+  ctx.font='bold 26px Arial';
+  ctx.fillText(mm.icon+' '+article.cat.toUpperCase(), 80, 153);
+
+  // Główny tytuł — duży
+  ctx.fillStyle='#f0ece8';
+  ctx.font='bold 110px Arial';
+  var hook=(data.hook||article.title.substring(0,25).toUpperCase());
+  var words=hook.split(' ');
+  var line1=words.slice(0,Math.ceil(words.length/2)).join(' ');
+  var line2=words.slice(Math.ceil(words.length/2)).join(' ');
+  ctx.fillText(line1, 60, 330);
+  ctx.fillStyle=A;
+  ctx.fillText(line2, 60, 450);
+
+  // Podtytuł
+  ctx.fillStyle='rgba(240,236,232,0.6)';
+  ctx.font='38px Arial';
+  wrapText(ctx, data.sub||'Analiza najnowszych badań naukowych', 60, 530, W-120, 52);
+
+  // Linia
+  ctx.fillStyle=A;
+  ctx.fillRect(60, 610, 200, 4);
+
+  // Strzałka swipe
+  ctx.fillStyle='rgba(200,241,53,0.8)';
+  ctx.font='bold 34px Arial';
+  ctx.textAlign='center';
+  ctx.fillText('Przesuń w bok, aby zobaczyć wyniki  ➡️', W/2, 820);
+  ctx.textAlign='left';
+
+  drawBottom(ctx, W, H, A, '#'+article.cat+' #fitness #newsgym');
+}
+
+// SLAJD 2 — WYNIK #1
+function drawSlide2(canvas, data, article, mm){
+  if(!canvas||!data) return;
+  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
+  canvasBase(ctx, A);
+  drawLogo(ctx, W, A, 2);
+
+  // Label
+  ctx.fillStyle=A;
+  ctx.font='bold 30px Arial';
+  ctx.fillText(data.label||'WYNIK #1', 60, 160);
+
+  // Linia
+  ctx.fillStyle='rgba(200,241,53,0.3)';
+  ctx.fillRect(60, 175, W-120, 2);
+
+  // Duża statystyka w centrum
+  ctx.fillStyle=A;
+  ctx.font='bold 220px Arial';
+  ctx.textAlign='center';
+  ctx.fillText(data.stat||'+14%', W/2, 530);
+  ctx.textAlign='left';
+
+  // Headline pod statystyką
+  ctx.fillStyle='#f0ece8';
+  ctx.font='bold 72px Arial';
+  ctx.textAlign='center';
+  wrapText(ctx, data.headline||'WZROST SIŁY', W/2-400, 600, 800, 84);
+  ctx.textAlign='left';
+
+  // Linia akcentu
+  ctx.fillStyle=A;
+  ctx.fillRect(W/2-60, 700, 120, 5);
+
+  // Opis
+  ctx.fillStyle='rgba(240,236,232,0.7)';
+  ctx.font='40px Arial';
+  ctx.textAlign='center';
+  wrapText(ctx, data.desc||'', W/2-400, 760, 800, 56);
+  ctx.textAlign='left';
+
+  drawBottom(ctx, W, H, A);
+}
+
+// SLAJD 3 — WYNIK #2
+function drawSlide3(canvas, data, article, mm){
+  if(!canvas||!data) return;
+  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#60a5fa';
+  canvasBase(ctx, A);
+
+  // Lewa połowa tła
+  ctx.fillStyle='rgba(96,165,250,0.06)';
+  ctx.fillRect(0, 0, W/2, H);
+
+  drawLogo(ctx, W, A, 3);
+
+  ctx.fillStyle=A;
+  ctx.font='bold 30px Arial';
+  ctx.fillText(data.label||'WYNIK #2', 60, 160);
+  ctx.fillStyle='rgba(96,165,250,0.3)';
+  ctx.fillRect(60, 175, W-120, 2);
+
+  // Duża statystyka
+  ctx.fillStyle=A;
+  ctx.font='bold 200px Arial';
+  ctx.textAlign='center';
+  ctx.fillText(data.stat||'+28%', W/2, 510);
+  ctx.textAlign='left';
+
+  ctx.fillStyle='#f0ece8';
+  ctx.font='bold 68px Arial';
+  ctx.textAlign='center';
+  wrapText(ctx, data.headline||'WYDOLNOŚĆ', W/2-400, 590, 800, 80);
+  ctx.textAlign='left';
+
+  ctx.fillStyle=A;
+  ctx.fillRect(W/2-60, 690, 120, 5);
+
+  ctx.fillStyle='rgba(240,236,232,0.7)';
+  ctx.font='40px Arial';
+  ctx.textAlign='center';
+  wrapText(ctx, data.desc||'', W/2-400, 750, 800, 56);
+  ctx.textAlign='left';
+
+  drawBottom(ctx, W, H, A);
+}
+
+// SLAJD 4 — PROTOKÓŁ
+function drawSlide4(canvas, data, article, mm){
+  if(!canvas||!data) return;
+  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#a78bfa';
+  canvasBase(ctx, A);
+  drawLogo(ctx, W, A, 4);
+
+  ctx.fillStyle=A;
+  ctx.font='bold 30px Arial';
+  ctx.fillText(data.label||'JAK STOSOWAĆ', 60, 160);
+  ctx.fillStyle='rgba(167,139,250,0.3)';
+  ctx.fillRect(60, 175, W-120, 2);
+
+  ctx.fillStyle='#f0ece8';
+  ctx.font='bold 82px Arial';
+  ctx.fillText('PROTOKÓŁ', 60, 300);
+  ctx.fillStyle=A;
+  ctx.fillText('PRAKTYCZNY', 60, 395);
+
+  // Punkty
+  var points=data.points||['Stosuj regularnie','Łącz z treningiem','Monitoruj efekty'];
+  var icons=['①','②','③'];
+  points.forEach(function(p,i){
+    var y=520+i*150;
+    // Kółko z numerem
+    ctx.fillStyle=A;
+    ctx.beginPath();
+    ctx.arc(100, y-18, 44, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#000';
+    ctx.font='bold 44px Arial';
+    ctx.textAlign='center';
+    ctx.fillText(i+1, 100, y+2);
+    ctx.textAlign='left';
+    // Tekst
+    ctx.fillStyle='#f0ece8';
+    ctx.font='44px Arial';
+    ctx.fillText(p, 170, y+2);
+    // Linia
+    if(i<points.length-1){
+      ctx.fillStyle='rgba(255,255,255,0.06)';
+      ctx.fillRect(60, y+40, W-120, 1);
+    }
+  });
+
+  drawBottom(ctx, W, H, A);
+}
+
+// SLAJD 5 — CTA
+function drawSlide5(canvas, data, article, mm){
+  if(!canvas||!data) return;
+  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
+  canvasBase(ctx, A);
+
+  // Specjalne tło dla CTA
+  var g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.7);
+  g.addColorStop(0,'rgba(200,241,53,0.12)');
+  g.addColorStop(1,'transparent');
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,W,H);
+
+  drawLogo(ctx, W, A, 5);
+
+  // Duże emoji telefonu
+  ctx.font='160px Arial';
+  ctx.textAlign='center';
+  ctx.fillText('📱', W/2, 360);
+  ctx.textAlign='left';
+
+  // CTA tekst
+  ctx.fillStyle='#f0ece8';
+  ctx.font='bold 96px Arial';
+  ctx.textAlign='center';
+  wrapText(ctx, data.cta||'SPRAWDŹ NEWS GYM', W/2-440, 480, 880, 108);
+  ctx.textAlign='left';
+
+  // Linia
+  ctx.fillStyle=A;
+  ctx.fillRect(W/2-100, 620, 200, 5);
+
+  // Podtytuł
+  ctx.fillStyle='rgba(240,236,232,0.7)';
+  ctx.font='40px Arial';
+  ctx.textAlign='center';
+  wrapText(ctx, data.sub||'Codzienne badania naukowe przetłumaczone na polski', W/2-380, 680, 760, 54);
+  ctx.textAlign='left';
+
+  // Przycisk-like element
+  ctx.fillStyle=A;
+  roundRect(ctx, W/2-220, 800, 440, 90, 45);
+  ctx.fillStyle='#000';
+  ctx.font='bold 38px Arial';
+  ctx.textAlign='center';
+  ctx.fillText('🔗 Link w bio', W/2, 855);
+  ctx.textAlign='left';
+
+  drawBottom(ctx, W, H, A, '#newsgym #fitness #trening #nauka #polska');
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function downloadSlide(canvasId, filename){
@@ -793,8 +1018,8 @@ function downloadAllSlides(count){
   for(var i=0;i<count;i++){
     (function(idx){
       setTimeout(function(){
-        downloadSlide('slide-canvas-'+idx,'newsgym_slide_'+(idx+1));
-      }, idx*500);
+        downloadSlide('sc-'+idx,'newsgym_slajd_'+(idx+1));
+      }, idx*600);
     })(i);
   }
 }
