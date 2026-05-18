@@ -1,8 +1,7 @@
 name: Pobierz artykuły fitness co 2 dni
 
 on:
-  schedule:
-    - cron: '0 */6 * * *' # Co 2 dni o 8:00 rano
+  schedule:- cron: '0 */2 * * *' # Co 2 godziny o 8:00 rano
   workflow_dispatch:         # Możliwość ręcznego uruchomienia
 
 jobs:
