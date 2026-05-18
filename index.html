@@ -582,7 +582,18 @@ function openArticle(id){
     +'<div class="art-body">'+(a.content||'')+'</div>'
     +'<div class="art-tags">'+(a.tags||[]).map(function(t){return '<div class="art-tag">#'+t+'</div>';}).join('')+'</div>'
     +buildSources(a.cat, a.extraSources||[])
-    +'<div style="margin-top:24px;padding:0 0 8px;">'
+    // PROTOKÓŁ ZASTOSOWANIA
+    +'<div id="protocol-section" style="margin-top:24px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:1px;color:#c8f135;">⚙️ PROTOKÓŁ ZASTOSOWANIA</div>'
+    +'<button onclick="generateProtocol(\''+id+'\')" id="protocol-btn" style="background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:#c8f135;border-radius:8px;padding:6px 12px;font-size:11px;font-family:DM Mono,monospace;cursor:pointer;font-weight:700;">GENERUJ AI ⚡</button>'
+    +'</div>'
+    +'<div id="protocol-content">'
+    +(a.protocol ? renderProtocolHTML(a.protocol) :
+      '<div style="background:rgba(200,241,53,0.04);border:1px dashed rgba(200,241,53,0.2);border-radius:10px;padding:16px;text-align:center;font-size:12px;color:#555;font-family:DM Mono,monospace;">Kliknij GENERUJ AI aby stworzyć gotowy protokół dla tego artykułu</div>')
+    +'</div></div>'
+    // KARUZELA
+    +'<div style="margin-top:16px;padding:0 0 8px;">'
     +'<button onclick="openInfographic(\''+id+'\')" style="width:100%;padding:14px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📊 Generuj karuzelę Instagram (5 slajdów)</button>'
     +'</div>'
     +'<div style="height:32px;"></div>';
@@ -590,6 +601,65 @@ function openArticle(id){
   document.getElementById('article-body').scrollTop=0;
 }
 function closeArticle(){document.getElementById('article-view').classList.remove('show');curId=null;}
+
+function renderProtocolHTML(p){
+  if(!p) return '';
+  var rows=[
+    {icon:'💊',label:'DAWKA',val:p.dawka},
+    {icon:'⏰',label:'KIEDY',val:p.kiedy},
+    {icon:'🔄',label:'CZĘSTOTLIWOŚĆ',val:p.czestotliwosc},
+    {icon:'⚡',label:'EFEKTY PO',val:p.efekty},
+    {icon:'⚠️',label:'UWAGA',val:p.uwaga},
+  ].filter(function(r){return r.val;});
+
+  var tips=(p.wskazowki||[]).map(function(w){
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
+      +'<span style="color:#c8f135;flex-shrink:0;margin-top:2px;">✓</span>'
+      +'<span style="font-size:13px;color:rgba(240,236,232,0.85);line-height:1.5;">'+w+'</span>'
+      +'</div>';
+  }).join('');
+
+  return '<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.2);border-radius:12px;overflow:hidden;">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(200,241,53,0.1);">'
+    +rows.map(function(r){
+      return '<div style="background:#0a0a0a;padding:14px 16px;">'
+        +'<div style="font-size:9px;font-family:DM Mono,monospace;color:#555;letter-spacing:0.5px;margin-bottom:4px;">'+r.icon+' '+r.label+'</div>'
+        +'<div style="font-size:14px;font-weight:600;color:#f0ece8;line-height:1.3;">'+r.val+'</div>'
+        +'</div>';
+    }).join('')
+    +'</div>'
+    +(tips ? '<div style="padding:14px 16px;"><div style="font-size:10px;font-family:DM Mono,monospace;color:#c8f135;letter-spacing:0.5px;margin-bottom:4px;">💡 WSKAZÓWKI PRAKTYCZNE</div>'+tips+'</div>' : '')
+    +'</div>';
+}
+
+async function generateProtocol(id){
+  var a=window.ARTICLES.find(function(x){return x.id===id||x.id==id;});
+  if(!a) return;
+  var btn=document.getElementById('protocol-btn');
+  var content=document.getElementById('protocol-content');
+  if(btn) {btn.textContent='⏳ Generuję...';btn.disabled=true;}
+  if(content) content.innerHTML='<div style="text-align:center;padding:20px;color:#60a5fa;font-size:12px;font-family:DM Mono,monospace;"><div style="animation:spin 1s linear infinite;display:inline-block;font-size:24px;">⚡</div><div style="margin-top:8px;">AI tworzy protokół...</div></div>';
+
+  var prompt='Stwórz protokół zastosowania dla artykułu fitness. Odpowiedz TYLKO JSON:\n'
+    +'{"dawka":"np. 3-5g dziennie lub 3x30min/tydz","kiedy":"np. rano na czczo / przed treningiem","czestotliwosc":"np. codziennie / 3x w tygodniu","efekty":"np. 4-8 tygodni","uwaga":"np. konsultacja z lekarzem przy...","wskazowki":["wskazowka 1 max 60 znakow","wskazowka 2","wskazowka 3"]}\n\n'
+    +'Artykul: '+a.title+'\n'+a.excerpt;
+
+  try{
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    var data=await resp.json();
+    var raw=data.content.map(function(i){return i.text||'';}).join('');
+    var s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+    var protocol=JSON.parse(raw.substring(s,e+1));
+    a.protocol=protocol;
+    if(content) content.innerHTML=renderProtocolHTML(protocol);
+    if(btn){btn.textContent='✅ Gotowe';btn.style.color='#60a5fa';}
+    flash('Protokół wygenerowany! ✅');
+  }catch(err){
+    if(content) content.innerHTML='<div style="color:#ff4444;font-size:12px;padding:10px;">Błąd generowania — spróbuj ponownie</div>';
+    if(btn){btn.textContent='GENERUJ AI ⚡';btn.disabled=false;}
+  }
+}
 
 // ============================================================
 // PROFESJONALNY GENERATOR KARUZELI INSTAGRAM
