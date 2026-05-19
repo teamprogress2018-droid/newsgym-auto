@@ -181,10 +181,25 @@ button{cursor:pointer;}
 
 <!-- CLIENTS -->
 <div class="screen" id="screen-clients">
-  <div class="topbar"><div class="topbar-title">Klienci</div><div class="topbar-actions"><button class="btn btn-primary btn-sm" onclick="openM('m-client')">+ Dodaj klienta</button></div></div>
-  <div class="content">
-    <div class="card" style="padding:0;">
-      <div class="tbl-hdr" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 90px;"><span>Klient</span><span>Cel</span><span>Poziom</span><span>Status</span><span>Plany</span><span></span></div>
+  <div class="topbar"><div class="topbar-title">Klienci</div><div class="topbar-actions">
+    <button class="btn btn-ghost btn-sm" onclick="showWorkoutAnalytics()">&#128202; Analityka treningow</button>
+    <button class="btn btn-primary btn-sm" onclick="openM('m-client')">+ Dodaj klienta</button>
+  </div></div>
+  <div style="display:flex;flex:1;overflow:hidden;">
+    <!-- Lewa kolumna filtrów -->
+    <div style="width:200px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0;overflow-y:auto;">
+      <div style="padding:0 12px;margin-bottom:8px;"><input type="text" placeholder="Szukaj klienta..." id="client-search" oninput="filterClients()" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;"></div>
+      <div id="client-filter-list"></div>
+    </div>
+    <!-- Tabela klientów -->
+    <div style="flex:1;overflow-y:auto;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+        <div style="font-size:14px;font-weight:600;" id="clients-segment-title">Wszyscy klienci</div>
+        <span class="nav-badge" id="clients-segment-count">0</span>
+      </div>
+      <div class="tbl-hdr" style="grid-template-columns:2fr 120px 120px 120px 100px 100px 80px;">
+        <span>Klient</span><span>Ostatnia aktywnosc</span><span>7d Trening</span><span>30d Trening</span><span>7d Zadania</span><span>Status</span><span></span>
+      </div>
       <div id="clients-tbl"></div>
     </div>
   </div>
@@ -638,7 +653,7 @@ function goTo(n){
   if(n==='plans')renderPlans();
   if(n==='library')renderLib();
   if(n==='inbox')renderInbox();
-  if(n==='clients')renderClients();
+  if(n==='clients'){renderClientFilters();renderClients();}
   if(n==='dashboard')renderDash();
 }
 
@@ -687,21 +702,86 @@ function renderDash(){
     </div>`;}).join('');
 }
 
+var clientSegment='all';
+
+function renderClientFilters(){
+  const segments=[
+    {id:'all',label:'Wszyscy klienci',count:CL.length},
+    {id:'active',label:'Polaczeni',count:CL.filter(c=>c.status==='active').length},
+    {id:'pending',label:'Oczekujacy',count:CL.filter(c=>c.status==='pending').length},
+    {id:'inactive',label:'Offline',count:CL.filter(c=>c.status==='inactive').length},
+    {id:'waiting',label:'Oczekiwanie na aktywacje',count:CL.filter(c=>c.status==='waiting').length},
+    {id:'noprog',label:'Potrzebuja programu',count:CL.filter(c=>!PL.some(p=>p.clientId===c.id)).length},
+    {id:'archived',label:'Zarchiwizowani',count:CL.filter(c=>c.status==='archived').length},
+  ];
+  const el=document.getElementById('client-filter-list');
+  if(!el) return;
+  el.innerHTML=segments.map(s=>`<button onclick="setClientSegment('${s.id}')" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 12px;background:${clientSegment===s.id?'var(--adim)':'none'};border:none;border-left:2px solid ${clientSegment===s.id?'var(--accent)':'transparent'};color:${clientSegment===s.id?'var(--accent)':'var(--muted)'};font-size:12px;cursor:pointer;text-align:left;transition:all 0.1s;">
+    <span>${s.label}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:${clientSegment===s.id?'var(--accent)':'var(--muted2)'};">${s.count}</span>
+  </button>`).join('');
+}
+
+function setClientSegment(seg){
+  clientSegment=seg;
+  renderClientFilters();
+  renderClients();
+  const labels={all:'Wszyscy klienci',active:'Polaczeni',pending:'Oczekujacy',inactive:'Offline',waiting:'Oczekiwanie na aktywacje',noprog:'Potrzebuja programu',archived:'Zarchiwizowani'};
+  const el=document.getElementById('clients-segment-title');
+  if(el) el.textContent=labels[seg]||seg;
+}
+
+function filterClients(){renderClients();}
+
 function renderClients(){
+  renderClientFilters();
+  const search=(document.getElementById('client-search')||{}).value||'';
+  let filtered=CL.filter(c=>{
+    if(search&&!c.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if(clientSegment==='all') return true;
+    if(clientSegment==='active') return c.status==='active';
+    if(clientSegment==='pending') return c.status==='pending';
+    if(clientSegment==='inactive') return c.status==='inactive';
+    if(clientSegment==='waiting') return c.status==='waiting';
+    if(clientSegment==='noprog') return !PL.some(p=>p.clientId===c.id);
+    if(clientSegment==='archived') return c.status==='archived';
+    return true;
+  });
+  const countEl=document.getElementById('clients-segment-count');
+  if(countEl) countEl.textContent=filtered.length;
   const el=document.getElementById('clients-tbl');
-  el.innerHTML=!CL.length?'<div style="padding:40px;text-align:center;color:var(--muted);">Brak klientow</div>'
-    :CL.map((c,i)=>`<div class="tbl-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 90px;animation-delay:${i*0.04}s">
+  if(!filtered.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);">Brak klientow</div>';return;}
+  const now=new Date().toISOString().split('T')[0];
+  el.innerHTML=filtered.map((c,i)=>{
+    const plans=PL.filter(p=>p.clientId===c.id).length;
+    const tasks=TASKS.filter(t=>t.clientId===c.id).length;
+    const doneTasks=TASKS.filter(t=>t.clientId===c.id&&t.status==='done').length;
+    const taskPct=tasks?Math.round(doneTasks/tasks*100):0;
+    const lastSess=SE.filter(s=>s.clientId===c.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const daysSince=lastSess?Math.floor((new Date()-new Date(lastSess.date))/(1000*60*60*24)):null;
+    const statusCls=c.status==='inactive'?'pill-red':c.status==='pending'?'pill-orange':c.status==='archived'?'pill-muted':'pill-green';
+    const statusTxt=c.status==='inactive'?'Offline':c.status==='pending'?'Oczekujacy':c.status==='archived'?'Archiw.':'Polaczony';
+    return `<div class="tbl-row" style="grid-template-columns:2fr 120px 120px 120px 100px 100px 80px;animation-delay:${i*0.03}s">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;border-radius:50%;background:${COLS[i%5]}22;color:${COLS[i%5]};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;flex-shrink:0;">${getInit(c.name)}</div>
-        <div><div style="font-size:13px;font-weight:600;">${c.name}</div><div style="font-size:11px;color:var(--muted);">${c.email||'-'}</div></div>
+        <div><div style="font-size:13px;font-weight:600;">${c.name}</div><div style="font-size:11px;color:var(--muted);">${c.goal||'-'}</div></div>
       </div>
-      <div style="font-size:12px;color:var(--muted);align-self:center;">${c.goal||'-'}</div>
-      <div style="font-size:12px;color:var(--muted);align-self:center;">${c.level||'-'}</div>
-      <div style="align-self:center;"><span class="pill ${c.status==='inactive'?'pill-red':'pill-green'}"><span class="pill-dot"></span>${c.status==='inactive'?'Nieaktywny':'Aktywny'}</span></div>
-      <div style="font-size:12px;color:var(--muted);align-self:center;">${PL.filter(p=>p.clientId===c.id).length} planow</div>
-      <div style="display:flex;gap:4px;align-self:center;"><button class="btn btn-ghost btn-sm" onclick="notify('Klient: '+CL.find(x=>x.id==='${c.id}').name)">Szczeg.</button></div>
-    </div>`).join('');
+      <div style="font-size:12px;color:var(--muted);align-self:center;">${daysSince!==null?daysSince+'d':'-'}</div>
+      <div style="font-size:12px;color:var(--muted);align-self:center;">${plans>0?'100%':'-'}</div>
+      <div style="font-size:12px;color:var(--muted);align-self:center;">${plans>0?'100%':'-'}</div>
+      <div style="font-size:12px;color:var(--muted);align-self:center;">${tasks?taskPct+'%':'0%'}</div>
+      <div style="align-self:center;"><span class="pill ${statusCls}"><span class="pill-dot"></span>${statusTxt}</span></div>
+      <div style="display:flex;gap:4px;align-self:center;">
+        <button class="btn btn-ghost btn-sm" onclick="openClientDetail('${c.id}')">Profil</button>
+      </div>
+    </div>`;
+  }).join('');
 }
+
+function showWorkoutAnalytics(){
+  notify('Analityka treningow - wkrotce!');
+}
+window.setClientSegment=setClientSegment;window.filterClients=filterClients;window.showWorkoutAnalytics=showWorkoutAnalytics;
 
 async function saveClient(){
   const name=document.getElementById('ac-name').value.trim();
