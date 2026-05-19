@@ -182,7 +182,33 @@ button{cursor:pointer;}
 .wb-inp{background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:12px;width:100%;}
 .wb-inp:focus{border-color:var(--accent);}
 
-/* ── EXERCISE LIBRARY ENHANCED ── */
+/* ── PROGRAMS LIBRARY ── */
+.prog-nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s;}
+.prog-nav-item:hover{color:var(--text);background:rgba(255,255,255,0.02);}
+.prog-nav-item.active{color:var(--accent);background:var(--adim);border-left-color:var(--accent);}
+.prog-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;cursor:pointer;transition:border-color 0.15s,transform 0.15s;animation:fadeUp 0.2s ease both;}
+.prog-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.prog-card-top{height:6px;}
+.prog-card-body{padding:16px;}
+.prog-card-title{font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3;}
+.prog-card-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.prog-card-weeks{display:grid;gap:3px;margin:10px 0;}
+.prog-week-bar{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.prog-week-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:36px;flex-shrink:0;}
+.prog-week-fill{height:4px;border-radius:99px;flex:1;}
+.prog-week-label{font-size:10px;color:var(--muted);white-space:nowrap;}
+.prog-stats-row{display:flex;gap:0;border-top:1px solid var(--border);margin-top:10px;}
+.prog-stat{flex:1;text-align:center;padding:8px 4px;border-right:1px solid var(--border);}
+.prog-stat:last-child{border-right:none;}
+.prog-stat-val{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);line-height:1;}
+.prog-stat-lbl{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;}
+.prog-card-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border);background:rgba(0,0,0,0.15);}
+.prog-detail-week{padding:10px 0;border-bottom:1px solid var(--border);}
+.prog-detail-week:last-child{border-bottom:none;}
+.prog-detail-week-hdr{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.prog-detail-week-num{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--accent);width:50px;}
+.prog-detail-day{display:flex;gap:8px;padding:4px 0;font-size:12px;}
+.prog-detail-day-name{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);width:30px;flex-shrink:0;}
 .ex-cat-nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s;}
 .ex-cat-nav-item:hover{color:var(--text);background:rgba(255,255,255,0.02);}
 .ex-cat-nav-item.active{color:var(--accent);background:var(--adim);border-left-color:var(--accent);}
@@ -222,6 +248,7 @@ button{cursor:pointer;}
     <div class="nav-sec">Biblioteka</div>
     <button class="nav-item" onclick="goTo('workout-library')"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5l3.5-3 3.5 3"/><path d="M17 9.5l3.5-3L24 9.5" style="display:none"/><rect x="2" y="3" width="5" height="18" rx="1"/><rect x="17" y="3" width="5" height="18" rx="1"/><rect x="9" y="8" width="6" height="8" rx="1"/></svg>Treningi</button>
     <button class="nav-item" onclick="goTo('library')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Ćwiczenia</button>
+    <button class="nav-item" onclick="goTo('programs')"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Programy</button>
     <div class="nav-sec">Narzędzia</div>
     <button class="nav-item" onclick="goTo('tasks')"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Zadania</button>
     <button class="nav-item" onclick="goTo('forms')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Formularze</button>
@@ -510,6 +537,80 @@ button{cursor:pointer;}
   </div>
 </div>
 
+<!-- PROGRAMS LIBRARY -->
+<div class="screen" id="screen-programs">
+  <div class="topbar">
+    <div class="topbar-title">Biblioteka programów</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openM('m-program')">+ Własny program</button>
+    </div>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden;">
+
+    <!-- lewy panel -->
+    <div style="width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:10px;">
+        <input type="text" id="prog-search" placeholder="Szukaj programu..." oninput="renderPrograms()" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;">
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:4px 0;">
+        <div style="padding:6px 14px 2px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Widok</div>
+        <div class="prog-nav-item active" id="pn-all" onclick="setProgNav('all')"><span>Wszystkie</span><span class="wl-nav-count" id="pnc-all">0</span></div>
+        <div class="prog-nav-item" id="pn-demo" onclick="setProgNav('demo')"><span>Demo</span><span class="wl-nav-count" id="pnc-demo">0</span></div>
+        <div class="prog-nav-item" id="pn-moje" onclick="setProgNav('moje')"><span>Moje</span><span class="wl-nav-count" id="pnc-moje">0</span></div>
+        <div style="padding:6px 14px 2px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Cel</div>
+        <div class="prog-nav-item" id="pn-masa" onclick="setProgNav('masa')"><span>💪 Masa</span><span class="wl-nav-count" id="pnc-masa">0</span></div>
+        <div class="prog-nav-item" id="pn-sila" onclick="setProgNav('sila')"><span>🏋️ Siła</span><span class="wl-nav-count" id="pnc-sila">0</span></div>
+        <div class="prog-nav-item" id="pn-redukcja" onclick="setProgNav('redukcja')"><span>🔥 Redukcja</span><span class="wl-nav-count" id="pnc-redukcja">0</span></div>
+        <div class="prog-nav-item" id="pn-kondycja" onclick="setProgNav('kondycja')"><span>🏃 Kondycja</span><span class="wl-nav-count" id="pnc-kondycja">0</span></div>
+        <div style="padding:6px 14px 2px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Poziom</div>
+        <div class="prog-nav-item" id="pn-poczatkujacy" onclick="setProgNav('poczatkujacy')"><span>Początkujący</span><span class="wl-nav-count" id="pnc-poczatkujacy">0</span></div>
+        <div class="prog-nav-item" id="pn-sredni" onclick="setProgNav('sredni')"><span>Średni</span><span class="wl-nav-count" id="pnc-sredni">0</span></div>
+        <div class="prog-nav-item" id="pn-zaawansowany" onclick="setProgNav('zaawansowany')"><span>Zaawansowany</span><span class="wl-nav-count" id="pnc-zaawansowany">0</span></div>
+      </div>
+    </div>
+
+    <!-- główna treść -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;" id="prog-count-lbl">0 programów</span>
+        <div style="display:flex;gap:6px;" id="prog-dur-chips">
+          <div class="wl-filter-chip active" onclick="setProgDurFilter('')">Wszystkie</div>
+          <div class="wl-filter-chip" onclick="setProgDurFilter('4')">4 tyg.</div>
+          <div class="wl-filter-chip" onclick="setProgDurFilter('8')">8 tyg.</div>
+          <div class="wl-filter-chip" onclick="setProgDurFilter('12')">12 tyg.</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <select class="form-select" style="padding:4px 8px;font-size:11px;width:auto;" id="prog-equip-fil" onchange="renderPrograms()">
+            <option value="">Każdy sprzęt</option>
+            <option value="Siłownia">Siłownia</option>
+            <option value="Hantle">Hantle</option>
+            <option value="Bez sprzętu">Bez sprzętu</option>
+          </select>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;" id="prog-grid-container">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;" id="prog-grid"></div>
+      </div>
+    </div>
+
+    <!-- prawy panel — szczegóły programu -->
+    <div id="prog-detail" style="width:400px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.25s ease;position:absolute;right:0;top:56px;bottom:0;background:var(--s1);z-index:20;">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;" id="prd-title">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="prd-meta">—</div>
+        </div>
+        <button onclick="closeProgDetail()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:18px;" id="prd-body"></div>
+      <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn btn-primary" style="flex:1;" onclick="assignProgramToClient()">Przypisz klientowi</button>
+        <button class="btn btn-ghost" onclick="closeProgDetail()">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TASKS -->
 <div class="screen" id="screen-tasks">
   <div class="topbar"><div class="topbar-title">Zadania</div><div class="topbar-actions"><button class="btn btn-primary btn-sm" onclick="openM('m-task')">+ Zadanie</button></div></div>
@@ -679,6 +780,80 @@ button{cursor:pointer;}
   </div>
 </div>
 
+<!-- PROGRAM MODAL -->
+<div class="modal-ov" id="m-program">
+  <div class="modal modal-wide">
+    <div class="modal-hdr"><div class="modal-title">NOWY PROGRAM</div><button class="modal-close" onclick="closeM('m-program')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-lbl">Nazwa programu</label><input type="text" class="form-input" id="pm-name" placeholder="np. PPL 8-tygodniowy Masa"></div>
+        <div class="form-field"><label class="form-lbl">Cel</label>
+          <select class="form-select" id="pm-goal">
+            <option value="masa">Budowa masy</option><option value="sila">Wzrost siły</option>
+            <option value="redukcja">Redukcja</option><option value="kondycja">Kondycja</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-field"><label class="form-lbl">Poziom</label>
+          <select class="form-select" id="pm-level">
+            <option value="poczatkujacy">Początkujący</option>
+            <option value="sredni" selected>Średni</option>
+            <option value="zaawansowany">Zaawansowany</option>
+          </select>
+        </div>
+        <div class="form-field"><label class="form-lbl">Czas trwania</label>
+          <select class="form-select" id="pm-dur">
+            <option value="4">4 tygodnie</option><option value="8" selected>8 tygodni</option><option value="12">12 tygodni</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-field"><label class="form-lbl">Dni/tydzień</label>
+          <select class="form-select" id="pm-days">
+            <option value="3">3 dni</option><option value="4">4 dni</option>
+            <option value="5">5 dni</option><option value="6">6 dni</option>
+          </select>
+        </div>
+        <div class="form-field"><label class="form-lbl">Sprzęt</label>
+          <select class="form-select" id="pm-equip">
+            <option value="Siłownia">Siłownia (pełne wyposażenie)</option>
+            <option value="Hantle">Hantle</option><option value="Bez sprzętu">Bez sprzętu</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field"><label class="form-lbl">Opis programu</label><textarea class="form-textarea" id="pm-desc" rows="3" placeholder="Opisz program — cel, założenia, dla kogo jest przeznaczony..."></textarea></div>
+      <div class="form-field"><label class="form-lbl">Metodologia</label>
+        <select class="form-select" id="pm-method">
+          <option value="PPL">Push / Pull / Legs (PPL)</option>
+          <option value="FBW">Full Body (FBW)</option>
+          <option value="Upper/Lower">Upper / Lower Split</option>
+          <option value="Bro Split">Bro Split</option>
+          <option value="Arnold">Arnold Split</option>
+          <option value="HIIT">HIIT / Cardio</option>
+          <option value="Własna">Własna metodologia</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeM('m-program')">Anuluj</button><button class="btn btn-primary" onclick="saveUserProgram()">Zapisz program</button></div>
+  </div>
+</div>
+
+<!-- ASSIGN PROGRAM MODAL -->
+<div class="modal-ov" id="m-assign-prog">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="m-assign-prog-title">PRZYPISZ PROGRAM</div><button class="modal-close" onclick="closeM('m-assign-prog')">×</button></div>
+    <div class="modal-body">
+      <div class="form-field"><label class="form-lbl">Wybierz klienta</label><select class="form-select" id="assign-prog-client"></select></div>
+      <div class="form-field"><label class="form-lbl">Data rozpoczęcia</label><input type="date" class="form-input" id="assign-prog-date"></div>
+      <div style="background:var(--adim);border:1px solid rgba(200,241,53,0.15);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6;">
+        Program zostanie przypisany do klienta. Możesz go potem edytować w sekcji Plany treningowe.
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeM('m-assign-prog')">Anuluj</button><button class="btn btn-primary" onclick="confirmAssignProgram()">Przypisz</button></div>
+  </div>
+</div>
+
 <!-- Pakiet -->
 <div class="modal-ov" id="m-package">
   <div class="modal">
@@ -735,7 +910,7 @@ function goTo(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   const s=document.getElementById('screen-'+n);if(s)s.classList.add('active');
-  const navMap={'dashboard':0,'clients':1,'plans':2,'builder':3,'calendar':4,'inbox':5,'workout-library':6,'library':7,'tasks':8,'forms':9,'automation':10,'payments':11};
+  const navMap={'dashboard':0,'clients':1,'plans':2,'builder':3,'calendar':4,'inbox':5,'workout-library':6,'library':7,'programs':8,'tasks':9,'forms':10,'automation':11,'payments':12};
   const btns=document.querySelectorAll('.nav-item');
   if(navMap[n]!==undefined&&btns[navMap[n]])btns[navMap[n]].classList.add('active');
   if(n==='builder')initBuilder();
@@ -746,6 +921,7 @@ function goTo(n){
   if(n==='clients'){renderClientFilters();renderClients();}
   if(n==='dashboard')renderDash();
   if(n==='workout-library'){closeWLDetail();renderWL();}
+  if(n==='programs'){renderPrograms();}
   if(n==='tasks'){
     document.getElementById('task-client').innerHTML=CL.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('');
     renderTasks();
@@ -1499,8 +1675,273 @@ async function askAI(){
 }
 
 // ════════════════════════════════════════
-// TASKS
+// PROGRAMS LIBRARY
 // ════════════════════════════════════════
+var progNav='all';var progDurFilter='';var progSelId=null;
+window.USER_PROGRAMS=[];
+
+const GOAL_COLORS={masa:'var(--accent)',sila:'var(--orange)',redukcja:'var(--red)',kondycja:'var(--teal)'};
+const GOAL_LABELS={masa:'Budowa masy',sila:'Wzrost siły',redukcja:'Redukcja',kondycja:'Kondycja'};
+const LEVEL_COLORS_P={poczatkujacy:'var(--teal)',sredni:'var(--blue)',zaawansowany:'var(--purple)'};
+
+const DEMO_PROGRAMS=[
+  {
+    id:'dp1',type:'demo',name:'PPL Masa — 8 tygodni',goal:'masa',level:'sredni',duration:8,daysPerWeek:6,equip:'Siłownia',method:'PPL',
+    desc:'Klasyczny Push/Pull/Legs dla średnio-zaawansowanych ukierunkowany na hipertrofię. Periodyzacja falowana (DUP) z deloadem w 4. i 8. tygodniu. Zgodny z wytycznymi NSCA.',
+    highlights:['DUP — różna intensywność w ciągu tygodnia','Facepull i Hip Thrust w każdym cyklu','Deload co 4 tygodnie','Progresja: +2,5 kg co tydzień przy RPE ≤8'],
+    weeks:[
+      {nr:1,label:'Akumulacja I',rpe:'RPE 7',focus:'Budowa bazy objętościowej',days:[{d:'PON',name:'Push A — Klatka + Barki + Triceps'},{d:'WT',name:'Pull A — Plecy + Biceps'},{d:'ŚR',name:'Legs A — Czworogłowe'},{d:'CZ',name:'Push B — Objętość'},{d:'PT',name:'Pull B — Martwy ciąg'},{d:'SO',name:'Legs B — Pośladki + Dwugłowe'}]},
+      {nr:2,label:'Akumulacja I',rpe:'RPE 7-8',focus:'Progresja liniowa +2,5 kg',days:[{d:'PON',name:'Push A'},{d:'WT',name:'Pull A'},{d:'ŚR',name:'Legs A'},{d:'CZ',name:'Push B'},{d:'PT',name:'Pull B'},{d:'SO',name:'Legs B'}]},
+      {nr:3,label:'Akumulacja I',rpe:'RPE 8',focus:'+1 seria na partie priorytetowe',days:[{d:'PON',name:'Push A'},{d:'WT',name:'Pull A'},{d:'ŚR',name:'Legs A'},{d:'CZ',name:'Push B'},{d:'PT',name:'Pull B'},{d:'SO',name:'Legs B'}]},
+      {nr:4,label:'DELOAD',rpe:'RPE 6',focus:'-50% serii, -10% ciężaru — regeneracja CNS',days:[{d:'PON',name:'Push — lekki'},{d:'WT',name:'Pull — lekki'},{d:'ŚR',name:'REST'},{d:'CZ',name:'Legs — lekki'},{d:'PT',name:'REST'},{d:'SO',name:'Mobilność'}]},
+      {nr:5,label:'Akumulacja II',rpe:'RPE 7-8',focus:'Nowy blok — progresja od RPE 7',days:[{d:'PON',name:'Push A'},{d:'WT',name:'Pull A'},{d:'ŚR',name:'Legs A'},{d:'CZ',name:'Push B'},{d:'PT',name:'Pull B'},{d:'SO',name:'Legs B'}]},
+      {nr:6,label:'Akumulacja II',rpe:'RPE 8',focus:'Szczyt objętości — MRV',days:[{d:'PON',name:'Push A'},{d:'WT',name:'Pull A'},{d:'ŚR',name:'Legs A'},{d:'CZ',name:'Push B'},{d:'PT',name:'Pull B'},{d:'SO',name:'Legs B'}]},
+      {nr:7,label:'Intensyfikacja',rpe:'RPE 8-9',focus:'Redukcja objętości, wzrost intensywności',days:[{d:'PON',name:'Push — ciężki'},{d:'WT',name:'Pull — ciężki'},{d:'ŚR',name:'Legs — ciężki'},{d:'CZ',name:'Push — lekki'},{d:'PT',name:'Pull — lekki'},{d:'SO',name:'REST'}]},
+      {nr:8,label:'DELOAD + Ewaluacja',rpe:'RPE 6',focus:'Regeneracja + test 1RM',days:[{d:'PON',name:'Push — lekki'},{d:'WT',name:'Pull — lekki'},{d:'ŚR',name:'REST'},{d:'CZ',name:'Legs — lekki'},{d:'PT',name:'Test 1RM (opcja)'},{d:'SO',name:'REST'}]},
+    ]
+  },
+  {
+    id:'dp2',type:'demo',name:'Siła 5×5 — 12 tygodni',goal:'sila',level:'sredni',duration:12,daysPerWeek:3,equip:'Siłownia',method:'FBW',
+    desc:'Protokół oparty na StrongLifts / Starting Strength rozbudowany o periodyzację blokową. Trzy sesje FBW na tydzień. Nacisk na ćwiczenia wielostawowe: przysiad, martwy ciąg, OHP, wiosłowanie.',
+    highlights:['3 sesje FBW / tydzień','Progresja 2,5-5 kg co sesję','12-tygodniowe bloki siłowe','Przerwy 3-5 min między seriami'],
+    weeks:[
+      {nr:1,label:'Adaptacja',rpe:'RPE 7',focus:'Nauka techniki, lekkie ciężary',days:[{d:'PON',name:'FBW A — Przysiad 5×5, OHP 5×5, Martwy 1×5'},{d:'ŚR',name:'FBW B — Przysiad 5×5, Wiosłowanie 5×5, OHP 5×5'},{d:'PT',name:'FBW A — powtórzenie'}]},
+      {nr:2,label:'Liniowa progresja',rpe:'RPE 7-8',focus:'+2,5 kg przysiad i martwy, +2,5 kg reszta',days:[{d:'PON',name:'FBW A'},{d:'ŚR',name:'FBW B'},{d:'PT',name:'FBW A'}]},
+      {nr:3,label:'Liniowa progresja',rpe:'RPE 8',focus:'Kontynuacja — scięgna adaptują się wolniej!',days:[{d:'PON',name:'FBW A'},{d:'ŚR',name:'FBW B'},{d:'PT',name:'FBW A'}]},
+      {nr:4,label:'DELOAD',rpe:'RPE 6',focus:'-50% objętości, technika',days:[{d:'PON',name:'FBW lekki'},{d:'ŚR',name:'FBW lekki'},{d:'PT',name:'REST'}]},
+    ]
+  },
+  {
+    id:'dp3',type:'demo',name:'Redukcja 8 tygodni — Cardio + Siła',goal:'redukcja',level:'poczatkujacy',duration:8,daysPerWeek:4,equip:'Siłownia',method:'Upper/Lower',
+    desc:'Program łączący trening siłowy (Upper/Lower) z sesjami cardio HIIT. Zachowanie masy mięśniowej przy deficycie kalorycznym. Dla osób z wagą przekraczającą cel.',
+    highlights:['2× Upper + 2× Lower / tydzień','HIIT 2× tydzień (20-30 min)','Zachowanie siły przy redukcji','Deficyt kaloryczny 300-500 kcal'],
+    weeks:[
+      {nr:1,label:'Adaptacja + Cardio',rpe:'RPE 7',focus:'Poznanie struktury, umiarkowany deficyt',days:[{d:'PON',name:'Upper A — Klatka + Plecy'},{d:'WT',name:'HIIT 20 min'},{d:'ŚR',name:'Lower A — Nogi + Pośladki'},{d:'CZ',name:'REST'},{d:'PT',name:'Upper B'},{d:'SO',name:'HIIT 25 min'}]},
+      {nr:2,label:'Progresja',rpe:'RPE 7-8',focus:'Wzrost intensywności cardio',days:[{d:'PON',name:'Upper A'},{d:'WT',name:'HIIT 25 min'},{d:'ŚR',name:'Lower A'},{d:'CZ',name:'REST'},{d:'PT',name:'Upper B'},{d:'SO',name:'HIIT 30 min'}]},
+    ]
+  },
+  {
+    id:'dp4',type:'demo',name:'FBW Początkujący — 4 tygodnie',goal:'masa',level:'poczatkujacy',duration:4,daysPerWeek:3,equip:'Siłownia',method:'FBW',
+    desc:'Idealne wprowadzenie do treningu siłowego. Trzy sesje Full Body w tygodniu. Nacisk na naukę wzorców ruchowych i bezpieczną progresję. Dostosowane do wytycznych NSCA dla nowicjuszy.',
+    highlights:['Adaptacja nerwowo-mięśniowa','Nauka 6 podstawowych wzorców','Liniowa progresja +2,5 kg/tydzień','Scięgna: adaptacja 6-8 tygodni!'],
+    weeks:[
+      {nr:1,label:'Adaptacja — technika',rpe:'RPE 6-7',focus:'Nauka wzorców, lekkie ciężary 60% 1RM',days:[{d:'PON',name:'FBW — Przysiad Goblet, Pompki, Wiosłowanie hantlem, Hip Thrust, Plank'},{d:'ŚR',name:'FBW — powtórzenie dnia A'},{d:'PT',name:'FBW — powtórzenie dnia A'}]},
+      {nr:2,label:'Utrwalenie',rpe:'RPE 7',focus:'Ten sam ciężar lub +2,5 kg gdy RPE <7',days:[{d:'PON',name:'FBW B — +2,5 kg przysiad i wiosłowanie'},{d:'ŚR',name:'FBW B'},{d:'PT',name:'FBW B'}]},
+      {nr:3,label:'Progresja',rpe:'RPE 7-8',focus:'Progresja liniowa — NSCA: 60-70% 1RM',days:[{d:'PON',name:'FBW C'},{d:'ŚR',name:'FBW C'},{d:'PT',name:'FBW C'}]},
+      {nr:4,label:'DELOAD + Ocena',rpe:'RPE 6',focus:'-50% serii, ocena techniki, plan na kolejny blok',days:[{d:'PON',name:'FBW — lekki'},{d:'ŚR',name:'REST / Mobilność'},{d:'PT',name:'FBW — lekki + ocena'}]},
+    ]
+  },
+  {
+    id:'dp5',type:'demo',name:'Kondycja — Bieg + Siła 8 tygodni',goal:'kondycja',level:'sredni',duration:8,daysPerWeek:5,equip:'Bez sprzętu',method:'HIIT',
+    desc:'Hybrydowy program łączący bieganie interwałowe z treningiem siłowym na masę własnego ciała. Poprawa VO2max, wytrzymałości i ogólnej sprawności.',
+    highlights:['Trening kardio 3×/tydzień','Siła własna masa 2×/tydzień','Progresja dystansu biegowego','Brak sprzętu wymagany'],
+    weeks:[
+      {nr:1,label:'Baza aerobowa',rpe:'RPE 6-7',focus:'Łatwy bieg ciągły, poznanie tempa',days:[{d:'PON',name:'Bieg ciągły 20 min (strefa 2)'},{d:'WT',name:'Siła: Pompki 3×10, Przysiady 3×15, Plank 3×45s'},{d:'ŚR',name:'REST'},{d:'CZ',name:'Bieg ciągły 25 min'},{d:'PT',name:'Siła: Burpees, Mountain climbers, Dips'}]},
+      {nr:2,label:'Interwały',rpe:'RPE 7-8',focus:'Wprowadzenie interwałów 1:2',days:[{d:'PON',name:'Bieg interwałowy: 8×200m (przerwa 60s)'},{d:'WT',name:'Siła FBW'},{d:'ŚR',name:'Bieg ciągły 25 min'},{d:'CZ',name:'REST'},{d:'PT',name:'Siła FBW + core'}]},
+    ]
+  },
+  {
+    id:'dp6',type:'demo',name:'Arnold Split — Zaawansowany 12 tyg.',goal:'masa',level:'zaawansowany',duration:12,daysPerWeek:6,equip:'Siłownia',method:'Arnold',
+    desc:'Legendarny split Arnolda Schwarzeneggera zmodernizowany o periodyzację blokową i protokoły NSCA. Dla zaawansowanych szukających nowego bodźca treningowego.',
+    highlights:['6 sesji/tydzień','Każda partia 2× tygodniowo','Bloki: akumulacja → intensyfikacja → peak','Objętość: 18-22 serie/partia/tydzień'],
+    weeks:[
+      {nr:1,label:'Akumulacja — wysoka objętość',rpe:'RPE 7',focus:'Klatka+Plecy / Barki+Ramiona / Nogi — 2×/tydzień',days:[{d:'PON',name:'Klatka + Plecy — Wyciskanie, Wiosłowanie, Podciąganie'},{d:'WT',name:'Barki + Ramiona — OHP, Wznosy, Biceps, Triceps'},{d:'ŚR',name:'Nogi — Przysiad, RDL, Hip Thrust, Łydki'},{d:'CZ',name:'Klatka + Plecy — Objętościowo'},{d:'PT',name:'Barki + Ramiona — Objętościowo'},{d:'SO',name:'Nogi — Objętościowo'}]},
+      {nr:2,label:'Akumulacja + progresja',rpe:'RPE 8',focus:'+2,5 kg ciężarach podstawowych',days:[{d:'PON',name:'Klatka + Plecy'},{d:'WT',name:'Barki + Ramiona'},{d:'ŚR',name:'Nogi'},{d:'CZ',name:'Klatka + Plecy'},{d:'PT',name:'Barki + Ramiona'},{d:'SO',name:'Nogi'}]},
+    ]
+  },
+];
+
+function allPrograms(){return[...DEMO_PROGRAMS,...(window.USER_PROGRAMS||[])];}
+
+function setProgNav(n){
+  progNav=n;
+  document.querySelectorAll('.prog-nav-item').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('pn-'+n);if(el)el.classList.add('active');
+  renderPrograms();
+}
+
+function setProgDurFilter(d){
+  progDurFilter=d;
+  document.querySelectorAll('#prog-dur-chips .wl-filter-chip').forEach((el,i)=>{
+    el.classList.remove('active');
+    if((['','4','8','12'][i])===d)el.classList.add('active');
+  });
+  renderPrograms();
+}
+
+function updateProgCounts(){
+  const all=allPrograms();
+  const cnt=fn=>all.filter(fn).length;
+  const set=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n;};
+  set('pnc-all',all.length);
+  set('pnc-demo',cnt(p=>p.type==='demo'));
+  set('pnc-moje',cnt(p=>p.type==='moje'));
+  ['masa','sila','redukcja','kondycja'].forEach(g=>set('pnc-'+g,cnt(p=>p.goal===g)));
+  ['poczatkujacy','sredni','zaawansowany'].forEach(l=>set('pnc-'+l,cnt(p=>p.level===l)));
+}
+
+function renderPrograms(){
+  updateProgCounts();
+  const all=allPrograms();
+  const search=(document.getElementById('prog-search')||{}).value||'';
+  const equipFil=(document.getElementById('prog-equip-fil')||{}).value||'';
+  let res=all.filter(p=>{
+    if(search&&!p.name.toLowerCase().includes(search.toLowerCase())&&!(p.desc||'').toLowerCase().includes(search.toLowerCase()))return false;
+    if(equipFil&&p.equip!==equipFil)return false;
+    if(progDurFilter&&String(p.duration)!==progDurFilter)return false;
+    if(progNav==='all')return true;
+    if(progNav==='demo')return p.type==='demo';
+    if(progNav==='moje')return p.type==='moje';
+    if(['masa','sila','redukcja','kondycja'].includes(progNav))return p.goal===progNav;
+    if(['poczatkujacy','sredni','zaawansowany'].includes(progNav))return p.level===progNav;
+    return true;
+  });
+
+  const lbl=document.getElementById('prog-count-lbl');
+  if(lbl)lbl.textContent=res.length+' '+(res.length===1?'program':res.length<5?'programy':'programów');
+
+  const grid=document.getElementById('prog-grid');
+  if(!grid)return;
+  if(!res.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted);"><div style="font-size:40px;margin-bottom:12px;opacity:0.3;">📋</div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Brak programów</div><div style="font-size:12px;margin-bottom:20px;">Zmień filtry lub dodaj własny program</div><button class="btn btn-primary" onclick="openM(\'m-program\')">+ Nowy program</button></div>';
+    return;
+  }
+
+  grid.innerHTML=res.map((p,i)=>{
+    const gc=GOAL_COLORS[p.goal]||'var(--accent)';
+    const lc=LEVEL_COLORS_P[p.level]||'var(--muted)';
+    const ll={'poczatkujacy':'Początkujący','sredni':'Średni','zaawansowany':'Zaawansowany'}[p.level]||p.level;
+    const gl=GOAL_LABELS[p.goal]||p.goal;
+    // intensity bars for weeks
+    const weekBars=(p.weeks||[]).map(w=>{
+      const isDeload=w.label&&w.label.includes('DELOAD');
+      const fillPct=isDeload?20:Math.min(95,50+w.nr*6);
+      const col=isDeload?'var(--orange)':gc;
+      return `<div class="prog-week-bar">
+        <span class="prog-week-num">TYG ${w.nr}</span>
+        <div class="prog-week-fill" style="background:${col};opacity:${isDeload?0.6:0.8};width:${fillPct}%;max-width:100%;"></div>
+        <span class="prog-week-label">${w.label||''}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="prog-card" style="animation-delay:${i*0.05}s" onclick="openProgDetail('${p.id}')">
+      <div class="prog-card-top" style="background:${gc};"></div>
+      <div class="prog-card-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px;">
+          <div class="prog-card-title">${p.name}</div>
+          ${p.type==='demo'?'<span class="pill pill-blue" style="font-size:9px;white-space:nowrap;flex-shrink:0;">DEMO</span>':'<span class="pill pill-green" style="font-size:9px;white-space:nowrap;flex-shrink:0;">MOJE</span>'}
+        </div>
+        <div class="prog-card-sub">${p.method} · ${gl} · ${ll}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;">
+          <span class="pill" style="background:${gc}22;color:${gc};font-size:10px;">${gl}</span>
+          <span class="pill" style="background:${lc}22;color:${lc};font-size:10px;">${ll}</span>
+          <span class="pill pill-muted" style="font-size:10px;">${p.equip}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.desc||''}</div>
+        <div class="prog-card-weeks">${weekBars}</div>
+      </div>
+      <div class="prog-stats-row">
+        <div class="prog-stat"><div class="prog-stat-val">${p.duration}</div><div class="prog-stat-lbl">Tygodni</div></div>
+        <div class="prog-stat"><div class="prog-stat-val">${p.daysPerWeek}</div><div class="prog-stat-lbl">Dni/tyg</div></div>
+        <div class="prog-stat"><div class="prog-stat-val">${(p.weeks||[]).length}</div><div class="prog-stat-lbl">Bloków</div></div>
+      </div>
+      <div class="prog-card-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openProgDetail('${p.id}')">Szczegóły</button>
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="openAssignProg('${p.id}')">Przypisz</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProgDetail(id){
+  const p=allPrograms().find(x=>x.id===id);if(!p)return;
+  progSelId=id;
+  const gc=GOAL_COLORS[p.goal]||'var(--accent)';
+  const gl=GOAL_LABELS[p.goal]||p.goal;
+  const ll={'poczatkujacy':'Początkujący','sredni':'Średni','zaawansowany':'Zaawansowany'}[p.level]||p.level;
+  document.getElementById('prd-title').textContent=p.name;
+  document.getElementById('prd-meta').textContent=p.method+' · '+gl+' · '+ll+' · '+p.duration+' tyg. · '+p.daysPerWeek+' dni/tyg.';
+  document.getElementById('prd-body').innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+      <span class="pill" style="background:${gc}22;color:${gc};">${gl}</span>
+      <span class="pill pill-muted">${ll}</span>
+      <span class="pill pill-muted">${p.equip}</span>
+      <span class="pill pill-muted">${p.method}</span>
+      ${p.type==='demo'?'<span class="pill pill-blue">DEMO</span>':''}
+    </div>
+    <div style="font-size:12px;line-height:1.7;color:var(--muted);margin-bottom:16px;">${p.desc||''}</div>
+    ${p.highlights&&p.highlights.length?`<div style="margin-bottom:16px;">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Kluczowe założenia</div>
+      ${p.highlights.map(h=>`<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:12px;"><span style="color:${gc};flex-shrink:0;">✓</span><span>${h}</span></div>`).join('')}
+    </div>`:''}
+    <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Harmonogram tygodniowy</div>
+    ${(p.weeks||[]).map(w=>{
+      const isDeload=w.label&&w.label.includes('DELOAD');
+      return `<div class="prog-detail-week">
+        <div class="prog-detail-week-hdr">
+          <span class="prog-detail-week-num">TYG ${w.nr}</span>
+          <div>
+            <span style="font-size:12px;font-weight:700;color:${isDeload?'var(--orange)':gc};">${w.label||''}</span>
+            ${w.rpe?`<span class="pill pill-muted" style="font-size:9px;margin-left:6px;">${w.rpe}</span>`:''}
+          </div>
+        </div>
+        ${w.focus?`<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding-left:60px;">${w.focus}</div>`:''}
+        ${(w.days||[]).map(d=>`<div class="prog-detail-day">
+          <span class="prog-detail-day-name">${d.d}</span>
+          <span style="font-size:12px;${d.name==='REST'?'color:var(--muted);font-style:italic;':''}">${d.name}</span>
+        </div>`).join('')}
+      </div>`;
+    }).join('')}`;
+  document.getElementById('prog-detail').style.transform='translateX(0)';
+}
+
+function closeProgDetail(){
+  document.getElementById('prog-detail').style.transform='translateX(100%)';
+  progSelId=null;
+}
+
+function assignProgramToClient(){
+  openAssignProg(progSelId);
+}
+
+function openAssignProg(id){
+  progSelId=id;
+  const p=allPrograms().find(x=>x.id===id);
+  if(!p)return;
+  if(!CL.length){notify('Najpierw dodaj klienta!');return;}
+  document.getElementById('m-assign-prog-title').textContent='PRZYPISZ: '+p.name.toUpperCase();
+  document.getElementById('assign-prog-client').innerHTML=CL.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('');
+  document.getElementById('assign-prog-date').value=new Date().toISOString().split('T')[0];
+  openM('m-assign-prog');
+}
+
+function confirmAssignProgram(){
+  const p=allPrograms().find(x=>x.id===progSelId);
+  if(!p)return;
+  const cid=document.getElementById('assign-prog-client').value;
+  const c=CL.find(x=>x.id===cid);
+  closeM('m-assign-prog');
+  closeProgDetail();
+  notify('✓ Program "'+p.name+'" przypisany do: '+(c?c.name:'klienta'));
+}
+
+async function saveUserProgram(){
+  const name=document.getElementById('pm-name').value.trim();
+  if(!name){notify('Wpisz nazwę programu!');return;}
+  const p={
+    id:'up'+Date.now(),type:'moje',
+    name,goal:document.getElementById('pm-goal').value,
+    level:document.getElementById('pm-level').value,
+    duration:parseInt(document.getElementById('pm-dur').value),
+    daysPerWeek:parseInt(document.getElementById('pm-days').value),
+    equip:document.getElementById('pm-equip').value,
+    method:document.getElementById('pm-method').value,
+    desc:document.getElementById('pm-desc').value,
+    highlights:[],weeks:[],createdAt:new Date().toISOString()
+  };
+  try{if(window._db){const r=await window._add(window._col(window._db,'programs'),p);p.id=r.id;}catch(e){}}catch(e){}
+  window.USER_PROGRAMS.push(p);closeM('m-program');renderPrograms();notify('Program dodany! 📋');
+}
 window.TASKS=[];var taskFilter='all';
 function setTaskFilter(f){taskFilter=f;renderTasks();}
 function renderTasks(){
@@ -1550,6 +1991,10 @@ window.setClientSegment=setClientSegment;window.filterClients=filterClients;
 window.setExView=setExView;window.openExDetail=openExDetail;window.closeExDetail=closeExDetail;
 window.prefillExInBuilder=prefillExInBuilder;window.prefillExInWorkout=prefillExInWorkout;
 window.askExAI=askExAI;
+window.renderPrograms=renderPrograms;window.setProgNav=setProgNav;window.setProgDurFilter=setProgDurFilter;
+window.openProgDetail=openProgDetail;window.closeProgDetail=closeProgDetail;
+window.assignProgramToClient=assignProgramToClient;window.openAssignProg=openAssignProg;
+window.confirmAssignProgram=confirmAssignProgram;window.saveUserProgram=saveUserProgram;
 
 updateExDl();renderWL();
 </script>
