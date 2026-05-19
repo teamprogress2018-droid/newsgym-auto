@@ -2187,7 +2187,7 @@ async function saveUserProgram(){
     desc:document.getElementById('pm-desc').value,
     highlights:[],weeks:[],createdAt:new Date().toISOString()
   };
-  try{if(window._db){const r=await window._add(window._col(window._db,'programs'),p);p.id=r.id;}catch(e){}}catch(e){}
+  try{if(window._db){const r=await window._add(window._col(window._db,'programs'),p);p.id=r.id;}}catch(e){}
   window.USER_PROGRAMS.push(p);closeM('m-program');renderPrograms();notify('Program dodany! 📋');
 }
 window.TASKS=[];var taskFilter='all';
@@ -2636,14 +2636,12 @@ async function saveCustomForm(){
   });
   if(!questions.length){notify('Dodaj przynajmniej jedno pytanie!');return;}
   const form={id:'cf'+Date.now(),type:'moje',status:'active',cat:document.getElementById('nf-cat').value,name:title,desc:document.getElementById('nf-desc').value,questions,createdAt:new Date().toISOString()};
-  try{if(window._db){const r=await window._add(window._col(window._db,'forms'),form);form.id=r.id;}catch(e){}}catch(e){}
+  try{if(window._db){const r=await window._add(window._col(window._db,'forms'),form);form.id=r.id;}}catch(e){}
   window.CUSTOM_FORMS.push(form);
   closeM('m-form');
   document.getElementById('nf-questions').innerHTML='';
   document.getElementById('nf-title').value='';
   renderForms();notify('✓ Formularz "'+title+'" utworzony!');
-}
-  if(n==='forms'){renderForms();}
 }
 
 function notify(msg){
