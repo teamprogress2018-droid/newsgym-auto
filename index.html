@@ -182,6 +182,30 @@ button{cursor:pointer;}
 .wb-inp{background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:12px;width:100%;}
 .wb-inp:focus{border-color:var(--accent);}
 
+/* ── FORMS ENHANCED ── */
+.form-nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s;}
+.form-nav-item:hover{color:var(--text);background:rgba(255,255,255,0.02);}
+.form-nav-item.active{color:var(--accent);background:var(--adim);border-left-color:var(--accent);}
+.form-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;cursor:pointer;transition:border-color 0.12s,transform 0.12s;animation:fadeUp 0.18s ease both;}
+.form-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.form-card-top{height:4px;}
+.form-card-body{padding:16px;}
+.form-card-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.form-card-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;}
+.form-card-stats{display:flex;gap:0;border-top:1px solid var(--border);margin:10px -16px -16px;padding:10px 16px;background:rgba(0,0,0,0.15);justify-content:space-between;align-items:center;}
+.fq-row{background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.fq-type-badge{font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:4px;flex-shrink:0;background:var(--s4);color:var(--muted);}
+.fd-question{padding:12px 0;border-bottom:1px solid var(--border);}
+.fd-question:last-child{border-bottom:none;}
+.fd-q-text{font-size:13px;font-weight:600;margin-bottom:8px;}
+.fd-q-input{width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:8px 11px;color:var(--text);font-size:12px;}
+.fd-scale{display:flex;gap:4px;flex-wrap:wrap;}
+.fd-scale-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--muted);font-size:13px;cursor:pointer;transition:all 0.1s;display:flex;align-items:center;justify-content:center;}
+.fd-scale-btn:hover,.fd-scale-btn.sel{background:var(--accent);color:#000;border-color:var(--accent);}
+.fd-yn{display:flex;gap:8px;}
+.fd-yn-btn{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.1s;}
+.fd-yn-btn:hover,.fd-yn-btn.sel{border-color:var(--accent);color:var(--accent);background:var(--adim);}
+.sent-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:99px;}
 /* ── TASKS ENHANCED ── */
 .task-nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s;}
 .task-nav-item:hover{color:var(--text);background:rgba(255,255,255,0.02);}
@@ -734,14 +758,114 @@ button{cursor:pointer;}
   <div style="flex:1;overflow-y:auto;padding:14px;" id="task-templates-body"></div>
 </div>
 
-<!-- FORMS -->
+<!-- FORMS — ENHANCED -->
 <div class="screen" id="screen-forms">
-  <div class="topbar"><div class="topbar-title">Formularze</div><div class="topbar-actions"><button class="btn btn-primary btn-sm" onclick="openM('m-form')">+ Formularz</button></div></div>
-  <div class="content">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-      <div class="card" style="border-left:3px solid var(--accent);"><div style="font-size:14px;font-weight:700;margin-bottom:8px;">Ankieta wstępna</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Informacje o stanie zdrowia, celach i historii treningowej</div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm">Podgląd</button><button class="btn btn-ghost btn-sm">Wyślij do klienta</button></div></div>
-      <div class="card" style="border-left:3px solid var(--blue);"><div style="font-size:14px;font-weight:700;margin-bottom:8px;">Ocena postawy</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Analiza wad postawy, bóle, ograniczenia ruchowe</div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm">Podgląd</button><button class="btn btn-ghost btn-sm">Wyślij do klienta</button></div></div>
+  <div class="topbar">
+    <div class="topbar-title">Formularze i kwestionariusze</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openM('m-form')">+ Własny formularz</button>
     </div>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden;">
+
+    <!-- lewy panel -->
+    <div style="width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:10px;">
+        <input type="text" id="form-search" placeholder="Szukaj..." oninput="renderForms()" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;">
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:4px 0;">
+        <div style="padding:5px 14px 2px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Widok</div>
+        <div class="form-nav-item active" id="fn-all" onclick="setFormNav('all')"><span>Wszystkie</span><span class="wl-nav-count" id="fnc-all">0</span></div>
+        <div class="form-nav-item" id="fn-active" onclick="setFormNav('active')"><span>Aktywne</span><span class="wl-nav-count" id="fnc-active">0</span></div>
+        <div class="form-nav-item" id="fn-draft" onclick="setFormNav('draft')"><span>Robocze</span><span class="wl-nav-count" id="fnc-draft">0</span></div>
+        <div style="padding:5px 14px 2px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Kategoria</div>
+        <div class="form-nav-item" id="fn-wstepna" onclick="setFormNav('wstepna')"><span>📋 Wstępne</span><span class="wl-nav-count" id="fnc-wstepna">0</span></div>
+        <div class="form-nav-item" id="fn-postepy" onclick="setFormNav('postepy')"><span>📈 Postępy</span><span class="wl-nav-count" id="fnc-postepy">0</span></div>
+        <div class="form-nav-item" id="fn-zdrowie" onclick="setFormNav('zdrowie')"><span>❤️ Zdrowie</span><span class="wl-nav-count" id="fnc-zdrowie">0</span></div>
+        <div class="form-nav-item" id="fn-dieta" onclick="setFormNav('dieta')"><span>🥗 Dieta</span><span class="wl-nav-count" id="fnc-dieta">0</span></div>
+        <div class="form-nav-item" id="fn-satysfakcja" onclick="setFormNav('satysfakcja')"><span>⭐ Satysfakcja</span><span class="wl-nav-count" id="fnc-satysfakcja">0</span></div>
+      </div>
+      <!-- statystyki -->
+      <div style="padding:10px 12px;border-top:1px solid var(--border);">
+        <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Statystyki</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--muted);">Wysłanych</span><span style="font-family:'DM Mono',monospace;color:var(--accent);" id="fs-sent">0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--muted);">Wypełnionych</span><span style="font-family:'DM Mono',monospace;color:var(--teal);" id="fs-filled">0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--muted);">Oczekujących</span><span style="font-family:'DM Mono',monospace;color:var(--orange);" id="fs-pending">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- główna treść -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;" id="form-count-lbl">0 formularzy</span>
+        <div style="margin-left:auto;">
+          <select class="form-select" style="padding:4px 8px;font-size:11px;width:auto;" id="form-client-filter" onchange="renderForms()">
+            <option value="">Wszyscy klienci</option>
+          </select>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;" id="forms-grid-main"></div>
+    </div>
+
+    <!-- prawy panel — podgląd formularza -->
+    <div id="form-detail" style="width:440px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.25s ease;position:absolute;right:0;top:56px;bottom:0;background:var(--s1);z-index:20;">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;" id="fd-title">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="fd-meta">—</div>
+        </div>
+        <button onclick="closeFormDetail()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:18px;" id="fd-body"></div>
+      <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;" id="fd-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM SEND MODAL -->
+<div class="modal-ov" id="m-send-form">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="m-send-form-title">WYŚLIJ FORMULARZ</div><button class="modal-close" onclick="closeM('m-send-form')">×</button></div>
+    <div class="modal-body">
+      <div class="form-field"><label class="form-lbl">Wybierz klienta</label><select class="form-select" id="send-form-client"></select></div>
+      <div class="form-field"><label class="form-lbl">Wiadomość do klienta (opcjonalnie)</label><textarea class="form-textarea" id="send-form-msg" rows="3" placeholder="np. Proszę wypełnić formularz przed następną sesją..."></textarea></div>
+      <div style="background:var(--adim);border:1px solid rgba(200,241,53,0.15);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6;">
+        Klient otrzyma link do formularza i powiadomienie. Odpowiedzi będą widoczne w sekcji Odpowiedzi.
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeM('m-send-form')">Anuluj</button><button class="btn btn-primary" onclick="confirmSendForm()">Wyślij formularz</button></div>
+  </div>
+</div>
+
+<!-- FORM BUILDER MODAL -->
+<div class="modal-ov" id="m-form">
+  <div class="modal modal-wide">
+    <div class="modal-hdr"><div class="modal-title">NOWY FORMULARZ</div><button class="modal-close" onclick="closeM('m-form')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-lbl">Nazwa formularza</label><input type="text" class="form-input" id="nf-title" placeholder="np. Ankieta miesięczna"></div>
+        <div class="form-field"><label class="form-lbl">Kategoria</label>
+          <select class="form-select" id="nf-cat">
+            <option value="wstepna">Wstępna</option><option value="postepy">Postępy</option>
+            <option value="zdrowie">Zdrowie</option><option value="dieta">Dieta</option>
+            <option value="satysfakcja">Satysfakcja</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field"><label class="form-lbl">Opis formularza</label><textarea class="form-textarea" id="nf-desc" rows="2" placeholder="Krótki opis — co ten formularz mierzy i do czego służy..."></textarea></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;color:var(--accent);margin-bottom:10px;margin-top:4px;">PYTANIA</div>
+      <div id="nf-questions"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+        <button onclick="addFormQ('text')" class="btn btn-ghost btn-sm">+ Tekst</button>
+        <button onclick="addFormQ('scale')" class="btn btn-ghost btn-sm">+ Skala 1-10</button>
+        <button onclick="addFormQ('yesno')" class="btn btn-ghost btn-sm">+ Tak/Nie</button>
+        <button onclick="addFormQ('number')" class="btn btn-ghost btn-sm">+ Liczba</button>
+        <button onclick="addFormQ('choice')" class="btn btn-ghost btn-sm">+ Wybór</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeM('m-form')">Anuluj</button><button class="btn btn-primary" onclick="saveCustomForm()">Zapisz formularz</button></div>
   </div>
 </div>
 
@@ -1049,6 +1173,7 @@ function goTo(n){
     document.getElementById('task-due').value=new Date().toISOString().split('T')[0];
     renderTasks();
   }
+  if(n==='forms'){renderForms();}
 }
 
 function openM(id){
@@ -2218,8 +2343,309 @@ async function addAITask(t){
 }
 
 // ════════════════════════════════════════
-// UTILS
+// FORMS — ENHANCED
 // ════════════════════════════════════════
+var formNav='all';var formSelId=null;var sendFormId=null;
+window.CUSTOM_FORMS=[];
+window.FORM_SENDS=[];// {formId, clientId, sentAt, status:'sent'|'filled', answers:[]}
+
+const CAT_COLORS_F={wstepna:'var(--accent)',postepy:'var(--blue)',zdrowie:'var(--red)',dieta:'var(--teal)',satysfakcja:'var(--purple)'};
+const CAT_LABELS_F={wstepna:'Wstępna',postepy:'Postępy',zdrowie:'Zdrowie',dieta:'Dieta',satysfakcja:'Satysfakcja'};
+const Q_TYPE_LABELS={text:'Tekst',scale:'Skala 1-10',yesno:'Tak/Nie',number:'Liczba',choice:'Wybór'};
+
+const DEMO_FORMS=[
+  {
+    id:'df1',type:'demo',status:'active',cat:'wstepna',
+    name:'Ankieta wstępna',
+    desc:'Podstawowe informacje o stanie zdrowia, celach i historii treningowej klienta. Wysyłana automatycznie po dodaniu nowego klienta.',
+    questions:[
+      {id:'q1',type:'text',text:'Jaki jest Twój główny cel treningowy?',required:true},
+      {id:'q2',type:'choice',text:'Jak długo trenujesz?',options:['Jestem początkujący (0-1 rok)','1-3 lata','Ponad 3 lata'],required:true},
+      {id:'q3',type:'yesno',text:'Czy masz jakieś kontuzje lub problemy zdrowotne, o których powinienem wiedzieć?',required:true},
+      {id:'q4',type:'text',text:'Jeśli tak — opisz proszę rodzaj i lokalizację bólu/kontuzji'},
+      {id:'q5',type:'number',text:'Ile dni w tygodniu możesz trenować?',required:true},
+      {id:'q6',type:'choice',text:'O której porze dnia preferujesz trening?',options:['Rano (6-10)','Południe (10-14)','Po południu (14-18)','Wieczór (18-22)'],required:false},
+      {id:'q7',type:'yesno',text:'Czy stosujesz jakąś dietę lub masz ograniczenia żywieniowe?'},
+      {id:'q8',type:'text',text:'Opisz swój typowy dzień żywieniowy (3 główne posiłki)'},
+      {id:'q9',type:'scale',text:'Jak oceniasz swój obecny poziom energii (1=bardzo niski, 10=bardzo wysoki)?',required:true},
+      {id:'q10',type:'text',text:'Czego oczekujesz od współpracy ze mną jako trenerem?',required:true},
+    ]
+  },
+  {
+    id:'df2',type:'demo',status:'active',cat:'zdrowie',
+    name:'Ocena postawy i zdrowia',
+    desc:'Szczegółowa analiza wad postawy, bólu, ograniczeń ruchowych i historii medycznej. Kluczowa przed ułożeniem planu.',
+    questions:[
+      {id:'q1',type:'yesno',text:'Czy odczuwasz bóle kręgosłupa (odcinek lędźwiowy)?',required:true},
+      {id:'q2',type:'yesno',text:'Czy odczuwasz bóle kręgosłupa (odcinek szyjny/piersiowy)?'},
+      {id:'q3',type:'choice',text:'Czy masz zdiagnozowane wady postawy?',options:['Nie','Hiperlordoza','Hiperkifoza','Skolioza','Protrakcja barków','Kilka z powyższych'],required:true},
+      {id:'q4',type:'yesno',text:'Czy miałeś/aś operacje ortopedyczne w ciągu ostatnich 2 lat?'},
+      {id:'q5',type:'text',text:'Opisz operacje lub poważne urazy (jeśli dotyczy)'},
+      {id:'q6',type:'yesno',text:'Czy przyjmujesz leki na stałe?'},
+      {id:'q7',type:'choice',text:'Jak oceniasz swoją mobilność bioder?',options:['Dobra (pełny przysiad bez problemów)','Średnia (pewne ograniczenia)','Słaba (trudności z głębokim przysiadem)'],required:true},
+      {id:'q8',type:'yesno',text:'Czy masz problemy z kolanami (ból, trzaski, niestabilność)?'},
+      {id:'q9',type:'yesno',text:'Czy masz problemy z barkami (ból przy uniesieniu ramion)?'},
+      {id:'q10',type:'scale',text:'Jak oceniasz swój ogólny stan zdrowia (1=bardzo zły, 10=doskonały)?',required:true},
+    ]
+  },
+  {
+    id:'df3',type:'demo',status:'active',cat:'postepy',
+    name:'Miesięczna ocena postępów',
+    desc:'Formularz wysyłany co 30 dni. Mierzy postęp fizyczny, samopoczucie i satysfakcję z planu treningowego.',
+    questions:[
+      {id:'q1',type:'number',text:'Aktualna masa ciała (kg)'},
+      {id:'q2',type:'scale',text:'Jak oceniasz swoje postępy w tym miesiącu? (1=brak postępów, 10=świetne)'},
+      {id:'q3',type:'scale',text:'Jak oceniasz swoje samopoczucie i energię? (1=bardzo złe, 10=doskonałe)'},
+      {id:'q4',type:'number',text:'Ile treningów udało Ci się wykonać w tym miesiącu?'},
+      {id:'q5',type:'scale',text:'Jak oceniasz poziom trudności planu? (1=za łatwy, 10=za trudny)'},
+      {id:'q6',type:'yesno',text:'Czy trzymałeś/aś się planu żywieniowego?'},
+      {id:'q7',type:'yesno',text:'Czy wystąpiły jakieś bóle lub kontuzje w tym miesiącu?'},
+      {id:'q8',type:'text',text:'Opisz bóle lub kontuzje (jeśli dotyczy)'},
+      {id:'q9',type:'scale',text:'Jak bardzo jesteś zadowolony/a ze współpracy z trenerem? (1-10)'},
+      {id:'q10',type:'text',text:'Co chciałbyś/chciałabyś zmienić lub ulepszyć w swoim planie?'},
+    ]
+  },
+  {
+    id:'df4',type:'demo',status:'active',cat:'dieta',
+    name:'Wywiad żywieniowy',
+    desc:'Szczegółowe informacje o nawykach żywieniowych, preferencjach i celach dietetycznych klienta.',
+    questions:[
+      {id:'q1',type:'number',text:'Ile posiłków dziennie spożywasz?'},
+      {id:'q2',type:'yesno',text:'Czy liczysz kalorie lub makroskładniki?'},
+      {id:'q3',type:'choice',text:'Jaki jest Twój główny cel żywieniowy?',options:['Redukcja masy ciała','Budowa masy mięśniowej','Utrzymanie wagi','Poprawa zdrowia','Nie mam konkretnego celu'],required:true},
+      {id:'q4',type:'yesno',text:'Czy jesteś wegetarianinem/weganinem?'},
+      {id:'q5',type:'text',text:'Jakie masz ograniczenia dietetyczne lub alergie pokarmowe?'},
+      {id:'q6',type:'scale',text:'Jak oceniasz jakość swojej diety (1=bardzo zła, 10=doskonała)?'},
+      {id:'q7',type:'number',text:'Ile litrów wody pijesz dziennie?'},
+      {id:'q8',type:'yesno',text:'Czy suplementujesz? (białko, kreatyna, witaminy itp.)'},
+      {id:'q9',type:'text',text:'Jakie suplementy stosujesz?'},
+      {id:'q10',type:'text',text:'O której godzinie zwykle jesz ostatni posiłek?'},
+    ]
+  },
+  {
+    id:'df5',type:'demo',status:'active',cat:'satysfakcja',
+    name:'Ankieta satysfakcji klienta',
+    desc:'Badanie zadowolenia ze współpracy z trenerem. Anonimowe. Pomaga ulepszać usługi.',
+    questions:[
+      {id:'q1',type:'scale',text:'Jak oceniasz ogólną jakość współpracy z trenerem? (1-10)',required:true},
+      {id:'q2',type:'scale',text:'Jak oceniasz jakość ułożonego planu treningowego? (1-10)',required:true},
+      {id:'q3',type:'scale',text:'Jak oceniasz komunikację i dostępność trenera? (1-10)',required:true},
+      {id:'q4',type:'scale',text:'Jak oceniasz postępy, które osiągnąłeś/osiągnęłaś? (1-10)'},
+      {id:'q5',type:'yesno',text:'Czy poleciłbyś/poleciłabyś tego trenera znajomym?',required:true},
+      {id:'q6',type:'text',text:'Co najbardziej cenisz we współpracy z trenerem?'},
+      {id:'q7',type:'text',text:'Co Twoim zdaniem można by poprawić?'},
+    ]
+  },
+];
+
+function allForms(){return[...DEMO_FORMS,...(window.CUSTOM_FORMS||[])];}
+
+function setFormNav(n){
+  formNav=n;
+  document.querySelectorAll('.form-nav-item').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('fn-'+n);if(el)el.classList.add('active');
+  renderForms();
+}
+
+function updateFormCounts(){
+  const all=allForms();
+  const cnt=fn=>all.filter(fn).length;
+  const set=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n;};
+  set('fnc-all',all.length);
+  set('fnc-active',cnt(f=>f.status==='active'));
+  set('fnc-draft',cnt(f=>f.status==='draft'));
+  ['wstepna','postepy','zdrowie','dieta','satysfakcja'].forEach(c=>set('fnc-'+c,cnt(f=>f.cat===c)));
+  // stats
+  const sent=FORM_SENDS.length;
+  const filled=FORM_SENDS.filter(s=>s.status==='filled').length;
+  set('fs-sent',sent);
+  set('fs-filled',filled);
+  set('fs-pending',sent-filled);
+}
+
+function renderForms(){
+  updateFormCounts();
+  const all=allForms();
+  const search=(document.getElementById('form-search')||{}).value||'';
+  const clientFil=(document.getElementById('form-client-filter')||{}).value||'';
+
+  // populate client filter
+  const cf=document.getElementById('form-client-filter');
+  if(cf){const cur=cf.value;cf.innerHTML='<option value="">Wszyscy klienci</option>'+CL.map(c=>'<option value="'+c.id+'"'+(c.id===cur?' selected':'')+'>'+c.name+'</option>').join('');}
+
+  let res=all.filter(f=>{
+    if(search&&!f.name.toLowerCase().includes(search.toLowerCase())&&!(f.desc||'').toLowerCase().includes(search.toLowerCase()))return false;
+    if(formNav==='active')return f.status==='active';
+    if(formNav==='draft')return f.status==='draft';
+    if(['wstepna','postepy','zdrowie','dieta','satysfakcja'].includes(formNav))return f.cat===formNav;
+    return true;
+  });
+
+  const lbl=document.getElementById('form-count-lbl');
+  if(lbl)lbl.textContent=res.length+' '+(res.length===1?'formularz':res.length<5?'formularze':'formularzy');
+
+  const grid=document.getElementById('forms-grid-main');
+  if(!grid)return;
+  if(!res.length){
+    grid.innerHTML='<div style="text-align:center;padding:60px;color:var(--muted);"><div style="font-size:40px;margin-bottom:12px;opacity:0.3;">📋</div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Brak formularzy</div><button class="btn btn-primary" onclick="openM(\'m-form\')">+ Nowy formularz</button></div>';
+    return;
+  }
+
+  grid.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">${res.map((f,i)=>{
+    const col=CAT_COLORS_F[f.cat]||'var(--accent)';
+    const cl=CAT_LABELS_F[f.cat]||f.cat;
+    const sends=FORM_SENDS.filter(s=>s.formId===f.id);
+    const filled=sends.filter(s=>s.status==='filled').length;
+    return `<div class="form-card" style="animation-delay:${i*0.04}s" onclick="openFormDetail('${f.id}')">
+      <div class="form-card-top" style="background:${col};"></div>
+      <div class="form-card-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px;">
+          <div class="form-card-title">${f.name}</div>
+          ${f.type==='demo'?'<span class="pill pill-blue" style="font-size:9px;white-space:nowrap;">DEMO</span>':'<span class="pill pill-green" style="font-size:9px;white-space:nowrap;">MOJE</span>'}
+        </div>
+        <div class="form-card-desc">${f.desc||''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;">
+          <span class="pill" style="background:${col}22;color:${col};font-size:10px;">${cl}</span>
+          <span class="pill pill-muted" style="font-size:10px;">${(f.questions||[]).length} pytań</span>
+          <span class="pill ${f.status==='active'?'pill-green':'pill-muted'}" style="font-size:10px;">${f.status==='active'?'Aktywny':'Roboczy'}</span>
+        </div>
+        <div class="form-card-stats">
+          <div style="font-size:11px;color:var(--muted);">Wysłanych: <span style="color:var(--text);font-weight:600;">${sends.length}</span> · Wypełnionych: <span style="color:var(--teal);font-weight:600;">${filled}</span></div>
+          <div style="display:flex;gap:5px;" onclick="event.stopPropagation()">
+            <button class="btn btn-ghost btn-sm" onclick="openFormDetail('${f.id}')">Podgląd</button>
+            <button class="btn btn-primary btn-sm" onclick="openSendForm('${f.id}')">Wyślij</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function openFormDetail(id){
+  const f=allForms().find(x=>x.id===id);if(!f)return;
+  formSelId=id;
+  const col=CAT_COLORS_F[f.cat]||'var(--accent)';
+  const cl=CAT_LABELS_F[f.cat]||f.cat;
+  document.getElementById('fd-title').textContent=f.name;
+  document.getElementById('fd-meta').textContent=cl+' · '+(f.questions||[]).length+' pytań · '+(f.status==='active'?'Aktywny':'Roboczy');
+
+  const sends=FORM_SENDS.filter(s=>s.formId===id);
+
+  document.getElementById('fd-body').innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+      <span class="pill" style="background:${col}22;color:${col};">${cl}</span>
+      <span class="pill pill-muted">${(f.questions||[]).length} pytań</span>
+      ${f.type==='demo'?'<span class="pill pill-blue">DEMO</span>':''}
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px;">${f.desc||''}</div>
+
+    ${sends.length?`<div style="margin-bottom:16px;">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Historia wysyłek</div>
+      ${sends.map(s=>{const c=CL.find(x=>x.id===s.clientId);return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;">
+        <span>${c?c.name:'Klient'}</span>
+        <span class="sent-badge ${s.status==='filled'?'pill-green':'pill-orange'}">${s.status==='filled'?'✓ Wypełniony':'⏳ Oczekuje'}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">${s.sentAt}</span>
+      </div>`;}).join('')}
+    </div>`:''}
+
+    <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">PODGLĄD PYTAŃ</div>
+    <div id="fd-questions-preview">
+      ${(f.questions||[]).map((q,i)=>`
+        <div class="fd-question">
+          <div class="fd-q-text">${i+1}. ${q.text}${q.required?'<span style="color:var(--red);margin-left:4px;">*</span>':''}</div>
+          ${q.type==='text'?`<input type="text" class="fd-q-input" placeholder="Odpowiedź tekstowa..." disabled>`:''}
+          ${q.type==='number'?`<input type="number" class="fd-q-input" placeholder="Wpisz liczbę..." disabled>`:''}
+          ${q.type==='scale'?`<div class="fd-scale">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="fd-scale-btn" onclick="selectScale(this,'${q.id}')">${n}</button>`).join('')}</div>`:''}
+          ${q.type==='yesno'?`<div class="fd-yn"><button class="fd-yn-btn" onclick="selectYN(this,'${q.id}','tak')">✓ Tak</button><button class="fd-yn-btn" onclick="selectYN(this,'${q.id}','nie')">✗ Nie</button></div>`:''}
+          ${q.type==='choice'&&q.options?`<div style="display:flex;flex-direction:column;gap:5px;">${q.options.map(opt=>`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;"><input type="radio" name="q${q.id}" style="accent-color:var(--accent);"> ${opt}</label>`).join('')}</div>`:''}
+        </div>`).join('')}
+    </div>`;
+
+  document.getElementById('fd-actions').innerHTML=`
+    <button class="btn btn-primary" style="flex:1;" onclick="openSendForm('${id}')">📤 Wyślij do klienta</button>
+    <button class="btn btn-ghost" onclick="closeFormDetail()">Zamknij</button>`;
+
+  document.getElementById('form-detail').style.transform='translateX(0)';
+}
+
+function closeFormDetail(){
+  document.getElementById('form-detail').style.transform='translateX(100%)';
+  formSelId=null;
+}
+
+function selectScale(btn,qid){
+  btn.closest('.fd-scale').querySelectorAll('.fd-scale-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function selectYN(btn,qid,val){
+  btn.closest('.fd-yn').querySelectorAll('.fd-yn-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function openSendForm(id){
+  sendFormId=id;
+  const f=allForms().find(x=>x.id===id);if(!f)return;
+  if(!CL.length){notify('Najpierw dodaj klienta!');return;}
+  document.getElementById('m-send-form-title').textContent='WYŚLIJ: '+f.name.toUpperCase();
+  document.getElementById('send-form-client').innerHTML=CL.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('');
+  document.getElementById('send-form-msg').value='';
+  openM('m-send-form');
+}
+
+function confirmSendForm(){
+  if(!sendFormId)return;
+  const cid=document.getElementById('send-form-client').value;
+  const c=CL.find(x=>x.id===cid);
+  const f=allForms().find(x=>x.id===sendFormId);
+  const send={formId:sendFormId,clientId:cid,sentAt:new Date().toLocaleDateString('pl'),status:'sent',answers:[]};
+  FORM_SENDS.push(send);
+  closeM('m-send-form');
+  renderForms();
+  if(formSelId===sendFormId)openFormDetail(sendFormId);
+  notify('✓ Formularz "'+f.name+'" wysłany do '+(c?c.name:'klienta'));
+}
+
+// Form builder
+function addFormQ(type){
+  const container=document.getElementById('nf-questions');
+  const id='nfq'+Date.now();
+  const div=document.createElement('div');
+  div.className='fq-row';
+  div.id=id;
+  div.innerHTML=`
+    <span class="fq-type-badge">${Q_TYPE_LABELS[type]||type}</span>
+    <input type="text" placeholder="Treść pytania..." style="flex:1;background:var(--s4);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;" data-type="${type}">
+    ${type==='choice'?`<input type="text" placeholder="Opcja 1, Opcja 2, Opcja 3..." style="width:180px;background:var(--s4);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:11px;" data-opts>`:'' }
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;flex-shrink:0;"><input type="checkbox" style="accent-color:var(--accent);" data-req> Wymagane</label>
+    <button onclick="document.getElementById('${id}').remove()" style="background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;flex-shrink:0;">×</button>`;
+  container.appendChild(div);
+}
+
+async function saveCustomForm(){
+  const title=document.getElementById('nf-title').value.trim();
+  if(!title){notify('Wpisz nazwę formularza!');return;}
+  const questions=[];
+  document.querySelectorAll('#nf-questions .fq-row').forEach((row,i)=>{
+    const inp=row.querySelector('input[data-type]');
+    const optsInp=row.querySelector('input[data-opts]');
+    const reqInp=row.querySelector('input[data-req]');
+    if(!inp||!inp.value.trim())return;
+    const q={id:'q'+(i+1),type:inp.dataset.type,text:inp.value.trim(),required:reqInp?reqInp.checked:false};
+    if(optsInp&&optsInp.value)q.options=optsInp.value.split(',').map(s=>s.trim()).filter(Boolean);
+    questions.push(q);
+  });
+  if(!questions.length){notify('Dodaj przynajmniej jedno pytanie!');return;}
+  const form={id:'cf'+Date.now(),type:'moje',status:'active',cat:document.getElementById('nf-cat').value,name:title,desc:document.getElementById('nf-desc').value,questions,createdAt:new Date().toISOString()};
+  try{if(window._db){const r=await window._add(window._col(window._db,'forms'),form);form.id=r.id;}catch(e){}}catch(e){}
+  window.CUSTOM_FORMS.push(form);
+  closeM('m-form');
+  document.getElementById('nf-questions').innerHTML='';
+  document.getElementById('nf-title').value='';
+  renderForms();notify('✓ Formularz "'+title+'" utworzony!');
+}
+  if(n==='forms'){renderForms();}
+}
+
 function notify(msg){
   const old=document.querySelector('.notif');if(old)old.remove();
   const d=document.createElement('div');d.className='notif';d.innerHTML=msg;
@@ -2247,6 +2673,11 @@ window.renderPrograms=renderPrograms;window.setProgNav=setProgNav;window.setProg
 window.openProgDetail=openProgDetail;window.closeProgDetail=closeProgDetail;
 window.assignProgramToClient=assignProgramToClient;window.openAssignProg=openAssignProg;
 window.confirmAssignProgram=confirmAssignProgram;window.saveUserProgram=saveUserProgram;
+window.renderForms=renderForms;window.setFormNav=setFormNav;
+window.openFormDetail=openFormDetail;window.closeFormDetail=closeFormDetail;
+window.openSendForm=openSendForm;window.confirmSendForm=confirmSendForm;
+window.selectScale=selectScale;window.selectYN=selectYN;
+window.addFormQ=addFormQ;window.saveCustomForm=saveCustomForm;
 
 updateExDl();renderWL();
 </script>
