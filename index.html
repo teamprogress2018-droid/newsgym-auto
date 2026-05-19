@@ -182,6 +182,24 @@ button{cursor:pointer;}
 .wb-inp{background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:12px;width:100%;}
 .wb-inp:focus{border-color:var(--accent);}
 
+/* ── EXERCISE LIBRARY ENHANCED ── */
+.ex-cat-nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s;}
+.ex-cat-nav-item:hover{color:var(--text);background:rgba(255,255,255,0.02);}
+.ex-cat-nav-item.active{color:var(--accent);background:var(--adim);border-left-color:var(--accent);}
+.ex-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ex-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;cursor:pointer;transition:border-color 0.12s,transform 0.12s;animation:fadeUp 0.18s ease both;position:relative;overflow:hidden;}
+.ex-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.ex-card.selected{border-color:var(--accent);background:rgba(200,241,53,0.04);}
+.ex-card-accent{position:absolute;top:0;left:0;width:3px;bottom:0;border-radius:2px 0 0 2px;}
+.ex-card-name{font-size:13px;font-weight:700;margin-bottom:6px;line-height:1.3;}
+.ex-card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.ex-card-tip{font-size:11px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}
+.ex-equip-chip{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:11px;color:var(--muted);cursor:pointer;border:1px solid transparent;transition:all 0.1s;}
+.ex-equip-chip:hover{background:rgba(255,255,255,0.03);}
+.ex-equip-chip.active{background:var(--adim);border-color:rgba(200,241,53,0.3);color:var(--accent);}
+.ex-equip-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.ex-list-row{display:grid;grid-template-columns:2fr 120px 140px 1fr 100px;gap:8px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;animation:fadeUp 0.15s ease both;}
+.ex-list-row:hover{background:rgba(255,255,255,0.02);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 @keyframes slideIn{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:translateX(0);}}
@@ -418,10 +436,78 @@ button{cursor:pointer;}
   </div>
 </div>
 
-<!-- EXERCISE LIBRARY -->
+<!-- EXERCISE LIBRARY — ENHANCED -->
 <div class="screen" id="screen-library">
-  <div class="topbar"><div class="topbar-title">Biblioteka ćwiczeń</div><div class="topbar-actions"><button class="btn btn-primary btn-sm" onclick="openM('m-ex')">+ Ćwiczenie</button></div></div>
-  <div class="content"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="lib-filters"></div><div class="lib-grid" id="lib-grid"></div></div>
+  <div class="topbar">
+    <div class="topbar-title">Biblioteka ćwiczeń</div>
+    <div class="topbar-actions">
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" id="ex-view-grid-btn" onclick="setExView('grid')">⊞ Karty</button>
+        <button class="btn btn-primary btn-sm" id="ex-view-list-btn" onclick="setExView('list')">☰ Lista</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openM('m-ex')">+ Ćwiczenie</button>
+    </div>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden;">
+    <!-- lewy panel -->
+    <div style="width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:10px;">
+        <input type="text" id="ex-search" placeholder="Szukaj ćwiczenia..." oninput="renderLib()" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;">
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:4px 0;" id="ex-cat-nav"></div>
+      <div style="padding:10px;border-top:1px solid var(--border);">
+        <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Sprzęt</div>
+        <div id="ex-equip-filters" style="display:flex;flex-direction:column;gap:4px;"></div>
+      </div>
+    </div>
+
+    <!-- główna treść -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <!-- toolbar -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;" id="ex-results-count">0 ćwiczeń</span>
+        <div style="display:flex;gap:6px;" id="ex-muscle-chips"></div>
+        <div style="margin-left:auto;">
+          <select class="form-select" style="padding:4px 8px;font-size:11px;width:auto;" id="ex-sort" onchange="renderLib()">
+            <option value="az">A–Z</option>
+            <option value="cat">Kategoria</option>
+            <option value="eq">Sprzęt</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- widok kart -->
+      <div id="ex-grid-view" style="flex:1;overflow-y:auto;padding:14px 16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;" id="lib-grid"></div>
+      </div>
+
+      <!-- widok listy -->
+      <div id="ex-list-view" style="flex:1;overflow-y:auto;display:none;">
+        <div style="display:grid;grid-template-columns:2fr 120px 140px 1fr 100px;gap:8px;padding:8px 16px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);">
+          <span>Ćwiczenie</span><span>Kategoria</span><span>Sprzęt</span><span>Wskazówka</span><span></span>
+        </div>
+        <div id="ex-list-body"></div>
+      </div>
+    </div>
+
+    <!-- prawy panel: szczegóły ćwiczenia -->
+    <div id="ex-detail" style="width:320px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.25s ease;position:absolute;right:0;top:56px;bottom:0;background:var(--s1);z-index:20;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;" id="exd-title">—</div>
+        <button onclick="closeExDetail()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;" id="exd-body"></div>
+      <!-- mini AI w panelu ćwiczenia -->
+      <div style="border-top:1px solid var(--border);padding:12px;">
+        <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;"></div>ASYSTENT AI — ANALIZA ĆWICZENIA</div>
+        <div id="exd-ai-msgs" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="exd-ai-q" placeholder="Pytaj o technikę, zamienniki..." style="flex:1;background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;color:var(--text);font-size:11px;" onkeydown="if(event.key==='Enter')askExAI()">
+          <button onclick="askExAI()" style="padding:6px 10px;background:var(--accent);color:#000;border:none;border-radius:6px;font-size:12px;font-weight:700;">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- TASKS -->
@@ -1040,8 +1126,7 @@ function addRow(dayId){
 }
 function updateExDl(){
   const dl=document.getElementById('ex-dl');
-  const DEF_EX_NAMES=['Wyciskanie sztangi leżąc','Wyciskanie hantli skos+','Wyciskanie żołnierskie OHP','Wiosłowanie sztangą','Podciąganie na drążku','Przysiad ze sztangą','Martwy ciąg klasyczny','Martwy ciąg RDL','Hip Thrust','Facepull','Wznosy hantli bokiem','Uginanie biceps','Pompki','Plank'];
-  const all=[...DEF_EX_NAMES,...(EX||[]).map(e=>e.name)];
+  const all=allExercises().map(e=>e.name);
   dl.innerHTML=[...new Set(all)].map(n=>'<option value="'+n+'">').join('');
 }
 function updatePeriod(){
@@ -1150,40 +1235,243 @@ function sendMsg(){
 }
 
 // ════════════════════════════════════════
-// EXERCISE LIBRARY
+// EXERCISE LIBRARY — ENHANCED
 // ════════════════════════════════════════
+var exView='grid';var exCatFilter='Wszystkie';var exEquipFilter='';var exSelId=null;
+
+const CAT_COLORS_EX={
+  'Klatka piersiowa':'var(--blue)',
+  'Plecy':'var(--purple)',
+  'Barki':'var(--orange)',
+  'Nogi':'var(--teal)',
+  'Biceps':'#f59e0b',
+  'Triceps':'#ec4899',
+  'Core':'var(--accent)',
+  'Pośladki':'var(--red)',
+  'Cardio':'#14b8a6',
+};
+
 const DEF_EX=[
-  {name:'Wyciskanie sztangi leżąc',cat:'Klatka piersiowa',eq:'Sztanga',desc:'Łopatki ściągnięte, pełny ROM'},
-  {name:'Wyciskanie hantli skos+',cat:'Klatka piersiowa',eq:'Hantle',desc:''},
-  {name:'Wyciskanie żołnierskie OHP',cat:'Barki',eq:'Sztanga',desc:'Core napiętv przez cały ruch'},
-  {name:'Wiosłowanie sztangą',cat:'Plecy',eq:'Sztanga',desc:''},
-  {name:'Podciąganie na drążku',cat:'Plecy',eq:'Własna masa',desc:''},
-  {name:'Ściąganie drążka wyciąg',cat:'Plecy',eq:'Wyciąg',desc:''},
-  {name:'Przysiad ze sztangą',cat:'Nogi',eq:'Sztanga',desc:''},
-  {name:'Martwy ciąg klasyczny',cat:'Plecy',eq:'Sztanga',desc:''},
-  {name:'Martwy ciąg RDL',cat:'Nogi',eq:'Sztanga',desc:'Nauka wzorca zawiasowego'},
-  {name:'Hip Thrust',cat:'Pośladki',eq:'Sztanga',desc:'OBOWIĄZKOWE — zawsze w planie'},
-  {name:'Facepull',cat:'Barki',eq:'Wyciąg',desc:'OBOWIĄZKOWE 3x15 — rotatory'},
-  {name:'Wznosy hantli bokiem',cat:'Barki',eq:'Hantle',desc:''},
-  {name:'Uginanie biceps',cat:'Biceps',eq:'Sztanga',desc:''},
-  {name:'Prostowanie triceps wyciąg',cat:'Triceps',eq:'Wyciąg',desc:''},
-  {name:'Leg Press',cat:'Nogi',eq:'Maszyna',desc:''},
-  {name:'Hip Thrust',cat:'Pośladki',eq:'Sztanga',desc:''},
-  {name:'Plank',cat:'Core',eq:'Własna masa',desc:'45s/serie'},
-  {name:'Pompki',cat:'Klatka piersiowa',eq:'Własna masa',desc:''},
+  // Klatka
+  {name:'Wyciskanie sztangi leżąc',cat:'Klatka piersiowa',eq:'Sztanga',muscle:'Klatka (główna), Triceps, Barki (przednie)',tip:'Łopatki ściągnięte i wciśnięte w ławkę przez cały czas. Pełny ROM — sztanga dotyka klatki.',nsca:'Hipertrofia: 3-4×8-12, RPE 8. Siła: 4-6×3-5, RPE 9.',alt:'Wyciskanie hantli, Pompki, Rozpiętki'},
+  {name:'Wyciskanie hantli skos+',cat:'Klatka piersiowa',eq:'Hantle',muscle:'Klatka górna, Barki (przednie)',tip:'Kąt ławki 30-45°. Hantle zbliżaj w górnej fazie ruchu.',nsca:'3×10-12, RPE 8. Doskonałe jako ćwiczenie uzupełniające po wyciskaniu.',alt:'Wyciskanie sztangi skos, Pompki na rączkach'},
+  {name:'Rozpiętki wyciąg krzyżowy',cat:'Klatka piersiowa',eq:'Wyciąg',muscle:'Klatka (izolacja), łączenie mięśniowe',tip:'Utrzymuj lekkie ugięcie łokci. Skup się na rozciągnięciu klatki.',nsca:'3×12-15, RPE 7-8. Idealny finisher dla klatki.',alt:'Rozpiętki z hantlami, Pec deck'},
+  {name:'Pompki',cat:'Klatka piersiowa',eq:'Własna masa',muscle:'Klatka, Triceps, Barki (przednie), Core',tip:'Ciało w jednej linii. Opanuj 20 pompek przed ciężkim wyciskaniem.',nsca:'2-4×AMRAP. Doskonałe jako rozgrzewka lub finisher.',alt:'Pompki z obciążeniem, Wyciskanie leżąc'},
+  // Plecy
+  {name:'Wiosłowanie sztangą',cat:'Plecy',eq:'Sztanga',muscle:'Plecy środkowe, Biceps, Tylne barki',tip:'Tułów ok. 45°. Prowadź łokcie blisko ciała. Ściągaj łopatki na górze.',nsca:'4×6-10, RPE 8-9. Podstawa budowania grubości pleców.',alt:'Wiosłowanie hantlem, Wiosłowanie na maszynie'},
+  {name:'Podciąganie na drążku',cat:'Plecy',eq:'Własna masa',muscle:'Szerokie plecy (najszerszy), Biceps, Tylne barki',tip:'Pełny ROM — pełny zwis w dole, broda nad drążkiem na górze. Nie bujaj się!',nsca:'4×6-8 (dodaj obciążenie gdy >10 powt). Król ćwiczeń na plecy.',alt:'Ściąganie drążka wyciąg, Pulldown maszyna'},
+  {name:'Ściąganie drążka wyciąg',cat:'Plecy',eq:'Wyciąg',muscle:'Najszerszy, Biceps',tip:'Drążek do górnej klatki, łokcie do dołu i do tyłu. Nie odchylaj się za bardzo.',nsca:'3-4×10-12, RPE 8. Dobra alternatywa/przygotowanie do podciągania.',alt:'Podciąganie, Pullover'},
+  {name:'Wiosłowanie hantlem',cat:'Plecy',eq:'Hantle',muscle:'Plecy środkowe, Biceps (jednostronnie)',tip:'Kolano i ręka na ławce. Prowadź łokieć prosto do góry i do tyłu.',nsca:'3×10-12/stronę, RPE 8. Lepsza izolacja niż wiosłowanie oburęczne.',alt:'Wiosłowanie sztangą, Maszyna wiosłująca'},
+  {name:'Martwy ciąg klasyczny',cat:'Plecy',eq:'Sztanga',muscle:'Dolne plecy (prostowniki), Pośladki, Nogi, Czworoboczny',tip:'Kręgosłup neutralny przez cały czas! Nie zaokrąglaj pleców. Start z bioder.',nsca:'3-5×3-6, RPE 8-9. Ćwiczenie wielostawowe — fundament siły.',alt:'Martwy ciąg RDL, Trap bar deadlift'},
+  {name:'Facepull',cat:'Barki',eq:'Wyciąg',muscle:'Tylne barki, Rotatory mankietu (nadgrzebieniowy, podgrzebieniowy)',tip:'OBOWIĄZKOWE! Linka na wysokości twarzy. Wyciągaj do czoła, łokcie wysoko.',nsca:'3×15-20, RPE 7. Profilaktyka urazów barku — zawsze w planie!',alt:'Y-raise, Odwrotne rozpiętki'},
+  // Barki
+  {name:'Wyciskanie żołnierskie OHP',cat:'Barki',eq:'Sztanga',muscle:'Barki (przednie i środkowe), Triceps',tip:'Core napiętv przez cały ruch. Nie przegięj w odcinku lędźwiowym.',nsca:'3-4×6-10, RPE 8-9. Podstawa siły górnej partii.',alt:'Wyciskanie hantli, Wyciskanie maszyna Arnold press'},
+  {name:'Wznosy hantli bokiem',cat:'Barki',eq:'Hantle',muscle:'Barki środkowe (izolacja)',tip:'Lekki ciężar! Łokieć lekko ugięty. Unos do linii barków.',nsca:'3-4×15-20, RPE 8. Buduje szerokość sylwetki.',alt:'Wznosy na wyciągu, Cable lateral raise'},
+  {name:'Y-raise hantlami',cat:'Barki',eq:'Hantle',muscle:'Trapez dolny, Tylne barki, Rotatory',tip:'Leżąc na ławce skos+. Ręce tworzą kształt Y. Kluczowe dla zdrowia barku.',nsca:'3×12-15, RPE 7. Często zaniedbywane — absolutnie kluczowe!',alt:'Facepull, Odwrotne rozpiętki na ławce'},
+  // Nogi
+  {name:'Przysiad ze sztangą',cat:'Nogi',eq:'Sztanga',muscle:'Czworogłowy, Pośladki, Dwugłowy, Prostowniki grzbietu',tip:'Kolana w kierunku palców. Biodra poniżej kolan (pełny przysiad). Klatka do góry.',nsca:'3-5×5-8, RPE 8-9. Ćwiczenie fundamentalne. Scięgna adaptują się 6-8 tyg wolniej!',alt:'Przysiad ze sztangą na klatce, Goblet squat, Leg press'},
+  {name:'Przysiad Goblet',cat:'Nogi',eq:'Hantle',muscle:'Czworogłowy, Pośladki, Core',tip:'Hantel trzymaj przy klatce. Idealne ćwiczenie na naukę wzorca przysiadu.',nsca:'3×12-15, RPE 7-8. Doskonałe dla początkujących i jako rozgrzewka.',alt:'Przysiad ze sztangą, Box squat'},
+  {name:'Martwy ciąg RDL',cat:'Nogi',eq:'Sztanga',muscle:'Dwugłowy uda, Pośladki, Prostowniki grzbietu',tip:'Biodra do tyłu, kręgosłup neutralny. Czujesz rozciąganie w tylnej części uda.',nsca:'3-4×8-12, RPE 8. Nauka wzorca zawiasowego, klucz do przysiadu.',alt:'Martwy ciąg, Nordic curl, Leg curl'},
+  {name:'Hip Thrust',cat:'Pośladki',eq:'Sztanga',muscle:'Pośladki (maksymalna aktywacja), Dwugłowy uda',tip:'OBOWIĄZKOWE dla każdego klienta! Łopatki na ławce. Wypchnij biodra do góry.',nsca:'3-4×10-15, RPE 8. Najskuteczniejsze ćwiczenie na pośladki wg EMG.',alt:'Glute bridge, Cable kickback, Hip thrust maszyna'},
+  {name:'Wykroki z hantlami',cat:'Nogi',eq:'Hantle',muscle:'Czworogłowy, Pośladki (jednostronnie)',tip:'Krok naprzód — kolano tylne prawie dotyka podłogi. Nie pochylaj się do przodu.',nsca:'3×10-12/stronę, RPE 7-8. Trening unilateralny — wyrównuje asymetrie.',alt:'Bułgarski przysiad, Step-up, Walking lunges'},
+  {name:'Leg Press',cat:'Nogi',eq:'Maszyna',muscle:'Czworogłowy, Pośladki',tip:'Stopy na wysokości barków. Nie blokuj całkowicie kolan na górze.',nsca:'3-4×10-15, RPE 8. Bezpieczna alternatywa przysiadu dla osób z problemami z kręgosłupem.',alt:'Przysiad ze sztangą, Hack squat'},
+  {name:'Uginanie nóg maszyna',cat:'Nogi',eq:'Maszyna',muscle:'Dwugłowy uda (izolacja)',tip:'Nie odrywaj bioder od siedziska. Kontroluj fazę ekscentryczną.',nsca:'3×12-15, RPE 8. Kluczowe dla zdrowia kolan i bilansu sił.',alt:'Nordic curl, Martwy ciąg RDL'},
+  // Biceps
+  {name:'Uginanie biceps sztanga',cat:'Biceps',eq:'Sztanga',muscle:'Biceps (głowa długa i krótka)',tip:'Łokcie przy tułowiu przez cały ruch. Nie bujaj się! Pełny ROM.',nsca:'3×10-12, RPE 8. Klasyczne ćwiczenie na masę bicepsa.',alt:'Uginanie hantli, Uginanie młotkowe, Cable curl'},
+  {name:'Uginanie młotkowe',cat:'Biceps',eq:'Hantle',muscle:'Biceps (głowa długa), Ramiennopromieniowy',tip:'Neutralny chwyt — kciuk do góry. Buduje szerokość ramienia.',nsca:'3×12-15, RPE 7-8. Dobry superset z uginaniem klasycznym.',alt:'Uginanie biceps sztanga, Cable hammer curl'},
+  // Triceps
+  {name:'Prostowanie triceps wyciąg',cat:'Triceps',eq:'Wyciąg',muscle:'Triceps (wszystkie 3 głowy)',tip:'Łokcie przy tułowiu, nie ruszaj nimi. Pełne prostowanie w dole.',nsca:'3×12-15, RPE 8. Podstawowe ćwiczenie izolacyjne na triceps.',alt:'Dipy, French press, Kickback hantlem'},
+  {name:'Dipy na poręczach',cat:'Triceps',eq:'Własna masa',muscle:'Triceps, Klatka (dolna), Barki (przednie)',tip:'Ciało pionowo = więcej triceps. Pochylenie do przodu = więcej klatki.',nsca:'3-4×8-12 (dodaj obciążenie gdy >12). Najlepsze masowe ćwiczenie na triceps.',alt:'Wyciskanie wąskim chwytem, Prostowanie wyciąg'},
+  // Core
+  {name:'Plank',cat:'Core',eq:'Własna masa',muscle:'Core (anteriora), Pośladki, Barki',tip:'45-60s/serie. Biodra nie opadają, nie unoszą się. Napnij pośladki.',nsca:'2-3×45-60s. Fundament stabilizacji kręgosłupa. RPE 7.',alt:'Deska boczna, Ab wheel, Allahy'},
+  {name:'Spacer farmera',cat:'Core',eq:'Hantle',muscle:'Core (boczny), Siła chwytu, Stabilizatory barku',tip:'Hantle na wysokości bioder. Chodź powoli, kontroluj postawę.',nsca:'3×30-40m. Funkcjonalne ćwiczenie siłowe. Niedoceniane!',alt:'Suitcase carry, Yoke walk'},
+  {name:'Ab wheel rollout',cat:'Core',eq:'Własna masa',muscle:'Core (przedni — prosty), Barki',tip:'Zacznij od wersji na kolanach. Biodra nie opadają w najdalszym punkcie.',nsca:'3×8-12 powt. Zaawansowane — wymaga silnego core.',alt:'Plank, Hollow hold'},
+  // Cardio
+  {name:'Burpees',cat:'Cardio',eq:'Własna masa',muscle:'Całe ciało — cardio',tip:'Pełny zakres ruchu. Nie skracaj fazy przysiadu ani wyskoku.',nsca:'W protokole HIIT/Tabata. 20s praca / 10s przerwa × 8 rund.',alt:'Mountain climbers, Jump squats'},
 ];
+
+function allExercises(){
+  const all=[...DEF_EX,...(EX||[])];
+  const seen=new Set();
+  return all.filter(e=>{if(seen.has(e.name))return false;seen.add(e.name);return true;});
+}
+
+function setExView(v){
+  exView=v;
+  document.getElementById('ex-grid-view').style.display=v==='grid'?'block':'none';
+  document.getElementById('ex-list-view').style.display=v==='list'?'flex':'none';
+  document.getElementById('ex-list-view').style.flexDirection='column';
+  document.getElementById('ex-view-grid-btn').className='btn btn-sm '+(v==='grid'?'btn-primary':'btn-ghost');
+  document.getElementById('ex-view-list-btn').className='btn btn-sm '+(v==='list'?'btn-primary':'btn-ghost');
+  renderLib();
+}
+
 function renderLib(){
   updateExDl();
-  const all=[...DEF_EX,...(EX||[])];
-  const cats=['Wszystkie',...new Set(all.map(e=>e.cat))];
-  document.getElementById('lib-filters').innerHTML=cats.map(c=>'<button onclick="libF=\''+c+'\';renderLib()" class="btn btn-sm '+(libF===c?'btn-primary':'btn-ghost')+'">'+c+'</button>').join('');
-  const filtered=libF==='Wszystkie'?all:all.filter(e=>e.cat===libF);
-  const catC={'Klatka piersiowa':'var(--blue)','Plecy':'var(--purple)','Barki':'var(--orange)','Nogi':'var(--teal)','Biceps':'#f59e0b','Triceps':'#f59e0b','Core':'var(--accent)','Pośladki':'var(--red)'};
-  document.getElementById('lib-grid').innerHTML=filtered.map(e=>`<div class="card-sm" style="border-left:3px solid ${catC[e.cat]||'var(--muted2)'};cursor:pointer;"><div style="font-size:12px;font-weight:600;margin-bottom:5px;">${e.name}</div><div style="display:flex;gap:4px;flex-wrap:wrap;"><span class="pill pill-muted" style="font-size:9px;">${e.cat}</span><span class="pill pill-muted" style="font-size:9px;">${e.eq}</span></div>${e.desc?'<div style="font-size:10px;color:var(--muted);margin-top:5px;">'+e.desc+'</div>':''}</div>`).join('');
+  const all=allExercises();
+  const search=(document.getElementById('ex-search')||{}).value||'';
+  const sort=(document.getElementById('ex-sort')||{}).value||'az';
+
+  // build category nav
+  const cats=['Wszystkie',...Object.keys(CAT_COLORS_EX)];
+  const catNav=document.getElementById('ex-cat-nav');
+  if(catNav){
+    catNav.innerHTML=cats.map(c=>{
+      const count=c==='Wszystkie'?all.length:all.filter(e=>e.cat===c).length;
+      const col=CAT_COLORS_EX[c]||'var(--muted)';
+      return `<div class="ex-cat-nav-item${exCatFilter===c?' active':''}" onclick="exCatFilter='${c}';renderLib()">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="ex-cat-dot" style="background:${col};"></div>
+          <span>${c}</span>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;">${count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // equip filters
+  const equips=['Sztanga','Hantle','Maszyna','Wyciąg','Własna masa','Kettlebell'];
+  const equipEl=document.getElementById('ex-equip-filters');
+  if(equipEl){
+    equipEl.innerHTML=equips.map(eq=>`<div class="ex-equip-chip${exEquipFilter===eq?' active':''}" onclick="exEquipFilter=exEquipFilter==='${eq}'?'':'${eq}';renderLib()">
+      <div class="ex-equip-dot"></div><span>${eq}</span>
+    </div>`).join('');
+  }
+
+  // filter
+  let filtered=all.filter(e=>{
+    if(exCatFilter!=='Wszystkie'&&e.cat!==exCatFilter)return false;
+    if(exEquipFilter&&e.eq!==exEquipFilter)return false;
+    if(search){const s=search.toLowerCase();if(!e.name.toLowerCase().includes(s)&&!(e.cat||'').toLowerCase().includes(s)&&!(e.muscle||'').toLowerCase().includes(s))return false;}
+    return true;
+  });
+
+  // sort
+  if(sort==='az')filtered.sort((a,b)=>a.name.localeCompare(b.name,'pl'));
+  else if(sort==='cat')filtered.sort((a,b)=>a.cat.localeCompare(b.cat,'pl'));
+  else if(sort==='eq')filtered.sort((a,b)=>(a.eq||'').localeCompare(b.eq||'','pl'));
+
+  const countEl=document.getElementById('ex-results-count');
+  if(countEl)countEl.textContent=filtered.length+' '+(filtered.length===1?'ćwiczenie':filtered.length<5?'ćwiczenia':'ćwiczeń');
+
+  if(exView==='grid'){
+    const grid=document.getElementById('lib-grid');
+    if(!filtered.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">Brak ćwiczeń pasujących do filtrów</div>';return;}
+    grid.innerHTML=filtered.map((e,i)=>{
+      const col=CAT_COLORS_EX[e.cat]||'var(--muted2)';
+      return `<div class="ex-card${exSelId===e.name?' selected':''}" style="animation-delay:${i*0.025}s" onclick="openExDetail('${e.name.replace(/'/g,"\\'")}')">
+        <div class="ex-card-accent" style="background:${col};"></div>
+        <div style="padding-left:8px;">
+          <div class="ex-card-name">${e.name}</div>
+          <div class="ex-card-tags">
+            <span class="pill pill-muted" style="font-size:9px;">${e.cat}</span>
+            <span class="pill pill-muted" style="font-size:9px;">${e.eq}</span>
+          </div>
+          ${e.muscle?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">${e.muscle}</div>`:''}
+          ${e.tip?`<div class="ex-card-tip">${e.tip.substring(0,80)}${e.tip.length>80?'…':''}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    const body=document.getElementById('ex-list-body');
+    if(!filtered.length){body.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);">Brak ćwiczeń</div>';return;}
+    body.innerHTML=filtered.map((e,i)=>{
+      const col=CAT_COLORS_EX[e.cat]||'var(--muted2)';
+      return `<div class="ex-list-row" style="animation-delay:${i*0.02}s" onclick="openExDetail('${e.name.replace(/'/g,"\\'")}')">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:4px;height:32px;border-radius:2px;background:${col};flex-shrink:0;"></div>
+          <div><div style="font-size:13px;font-weight:600;">${e.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px;">${e.muscle||''}</div></div>
+        </div>
+        <span class="pill pill-muted" style="font-size:10px;align-self:center;">${e.cat}</span>
+        <span class="pill pill-muted" style="font-size:10px;align-self:center;">${e.eq}</span>
+        <div style="font-size:11px;color:var(--muted);align-self:center;">${(e.tip||'').substring(0,60)}${(e.tip||'').length>60?'…':''}</div>
+        <div style="align-self:center;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openExDetail('${e.name.replace(/'/g,"\\'")}')">Szczegóły</button></div>
+      </div>`;
+    }).join('');
+  }
 }
+
+function openExDetail(name){
+  const all=allExercises();
+  const e=all.find(x=>x.name===name);
+  if(!e)return;
+  exSelId=name;
+  const col=CAT_COLORS_EX[e.cat]||'var(--muted2)';
+  document.getElementById('exd-title').textContent=e.name;
+  document.getElementById('exd-body').innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+      <span class="pill" style="background:${col}22;color:${col};">${e.cat}</span>
+      <span class="pill pill-muted">${e.eq}</span>
+    </div>
+    ${e.muscle?`<div style="margin-bottom:12px;">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Mięśnie</div>
+      <div style="font-size:12px;line-height:1.6;">${e.muscle}</div>
+    </div>`:''}
+    ${e.tip?`<div style="margin-bottom:12px;">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Wskazówka techniczna</div>
+      <div style="background:var(--s3);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;border-left:3px solid ${col};">${e.tip}</div>
+    </div>`:''}
+    ${e.nsca?`<div style="margin-bottom:12px;">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Parametry NSCA/ACSM</div>
+      <div style="background:var(--adim);border:1px solid rgba(200,241,53,0.15);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">${e.nsca}</div>
+    </div>`:''}
+    ${e.alt?`<div style="margin-bottom:12px;">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Zamienniki</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">${e.alt.split(',').map(a=>`<span class="pill pill-muted" style="font-size:10px;cursor:pointer;" onclick="openExDetail('${a.trim().replace(/'/g,"\\'")}')">→ ${a.trim()}</span>`).join('')}</div>
+    </div>`:''}
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="prefillExInBuilder('${e.name.replace(/'/g,"\\'")}')">Użyj w builderze</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="prefillExInWorkout('${e.name.replace(/'/g,"\\'")}')">Dodaj do treningu</button>
+    </div>`;
+  // clear AI msgs
+  document.getElementById('exd-ai-msgs').innerHTML='';
+  const detail=document.getElementById('ex-detail');
+  detail.style.transform='translateX(0)';
+  renderLib();
+}
+
+function closeExDetail(){
+  document.getElementById('ex-detail').style.transform='translateX(100%)';
+  exSelId=null;renderLib();
+}
+
+function prefillExInBuilder(name){
+  closeExDetail();goTo('builder');
+  setTimeout(()=>{
+    const rows=document.querySelectorAll('.ex-inp-name');
+    for(const r of rows){if(!r.value){r.value=name;r.focus();return;}}
+    notify(name+' — dodaj ćwiczenie w builderze');
+  },300);
+}
+
+function prefillExInWorkout(name){
+  openM('m-workout');
+  setTimeout(()=>{
+    const rows=document.querySelectorAll('#w-ex-rows .wb-inp');
+    for(const r of rows){if(!r.value&&r.placeholder==='Nazwa ćwiczenia...'){r.value=name;r.focus();return;}}
+  },200);
+}
+
+async function askExAI(){
+  const q=document.getElementById('exd-ai-q').value.trim();if(!q)return;
+  document.getElementById('exd-ai-q').value='';
+  const msgs=document.getElementById('exd-ai-msgs');
+  msgs.innerHTML+='<div style="text-align:right;margin-bottom:5px;"><div style="display:inline-block;background:var(--accent);color:#000;padding:5px 9px;border-radius:8px;font-size:11px;">'+q+'</div></div>';
+  msgs.innerHTML+='<div id="exd-ai-t" style="margin-bottom:5px;"><div style="display:inline-block;background:var(--s3);border:1px solid var(--border2);padding:5px 9px;border-radius:8px;font-size:11px;opacity:0.5;">Analizuję...</div></div>';
+  msgs.scrollTop=msgs.scrollHeight;
+  const ctx=exSelId?'Ćwiczenie: '+exSelId+'. ':'';
+  const sys='Asystent trenera personalnego. Odpowiadaj BARDZO KRÓTKO po polsku, max 60 słów. Ekspert techniki ćwiczeń, biomechaniki, NSCA. Dawaj konkretne wskazówki.';
+  try{
+    const r=await fetch(W,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:150,system:sys,messages:[{role:'user',content:ctx+q}]})});
+    const d=await r.json();const ans=d.content.map(i=>i.text||'').join('');
+    document.getElementById('exd-ai-t').outerHTML='<div style="margin-bottom:5px;"><div style="display:inline-block;background:var(--s3);border:1px solid var(--border2);padding:5px 9px;border-radius:8px;font-size:11px;line-height:1.5;">'+ans.replace(/\n/g,'<br>')+'</div></div>';
+  }catch(e){document.getElementById('exd-ai-t').outerHTML='<div style="margin-bottom:5px;"><div style="display:inline-block;background:var(--s3);padding:5px 9px;border-radius:8px;font-size:11px;color:var(--red);">Błąd</div></div>';}
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
 async function saveEx(){
   const name=document.getElementById('ex-name').value.trim();if(!name){notify('Wpisz nazwę!');return;}
-  const ex={name,cat:document.getElementById('ex-cat').value,eq:document.getElementById('ex-eq').value,desc:document.getElementById('ex-desc').value};
+  const ex={name,cat:document.getElementById('ex-cat').value,eq:document.getElementById('ex-eq').value,desc:document.getElementById('ex-desc').value,tip:document.getElementById('ex-desc').value,muscle:'',nsca:'',alt:''};
   try{if(window._db){const r=await window._add(window._col(window._db,'exercises'),ex);ex.id=r.id;}else ex.id='l'+Date.now();}catch(e){ex.id='l'+Date.now();}
   EX.push(ex);closeM('m-ex');renderLib();notify('Ćwiczenie dodane!');
 }
@@ -1259,6 +1547,9 @@ window.assignWorkout=assignWorkout;window.assignWorkoutDirect=assignWorkoutDirec
 window.addWExRow=addWExRow;window.saveWorkout=saveWorkout;
 window.setTaskFilter=setTaskFilter;window.saveTask=saveTask;window.toggleTask=toggleTask;window.delTask=delTask;
 window.setClientSegment=setClientSegment;window.filterClients=filterClients;
+window.setExView=setExView;window.openExDetail=openExDetail;window.closeExDetail=closeExDetail;
+window.prefillExInBuilder=prefillExInBuilder;window.prefillExInWorkout=prefillExInWorkout;
+window.askExAI=askExAI;
 
 updateExDl();renderWL();
 </script>
