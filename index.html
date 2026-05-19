@@ -586,17 +586,18 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 
     <!-- AI ASYSTENT -->
     <div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:8px;">🤖 ASYSTENT AI</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Zapytaj o wskazówki dla tego klienta — dobór ćwiczeń, RPE, serie, korekty postawy</div>
-      <textarea class="form-textarea" id="ai-question" rows="2" placeholder="np. Jakie ćwiczenia na klatkę dla osoby z protrakcją barków? Ile serii na hipertrofię?"></textarea>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:6px;">🤖 ASYSTENT AI</div>
+      <textarea class="form-textarea" id="ai-question" rows="2" placeholder="np. Ile serii na klatkę dla hipertrofii? Jakie RPE dla nowicjusza?"></textarea>
       <button onclick="askAiAssistant()" style="width:100%;margin-top:8px;padding:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💡 Zapytaj asystenta</button>
       <div id="ai-answer" style="margin-top:10px;"></div>
     </div>
 
     <!-- DNI TRENINGOWE -->
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text);margin-bottom:12px;">📋 WPROWADŹ PLAN</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text);">📋 DNI TRENINGOWE</div>
+      <button onclick="addPlanDay()" style="background:var(--accent);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">+ Dzień</button>
+    </div>
     <div id="plan-days-builder"></div>
-    <button onclick="addPlanDay()" class="btn-secondary" style="margin-bottom:16px;">+ Dodaj dzień</button>
 
     <button class="btn-primary" onclick="savePlanManual()">✅ Zapisz plan</button>
     <div style="height:20px;"></div>
@@ -1125,8 +1126,7 @@ function openGeneratePlan(clientId){
   document.getElementById('ai-question').value = '';
   document.getElementById('ai-answer').innerHTML = '';
   document.getElementById('plan-days-builder').innerHTML = '';
-  // Dodaj 3 dni startowe
-  addPlanDay(); addPlanDay(); addPlanDay();
+  planDayCount = 0;
   openFullview('gen-plan-view');
 }
 
@@ -1134,39 +1134,207 @@ var planDayCount = 0;
 
 function addPlanDay(){
   planDayCount++;
-  var id = 'day-'+planDayCount;
-  var dayNames = ['PON','WT','SR','CZ','PT','SO','ND'];
+  var id = 'planday-'+planDayCount;
+  var dayOpts = ['PON','WT','SR','CZ','PT','SO','ND'].map(function(d,i){
+    return '<option value="'+d+'"'+(i===planDayCount-1?' selected':'')+'>'+d+'</option>';
+  }).join('');
+
   var el = document.createElement('div');
   el.id = id;
-  el.style.cssText = 'background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:10px;';
-  el.innerHTML = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">'
-    +'<select style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:DM Mono,monospace;">'
-    +dayNames.map(function(d){return '<option value="'+d+'">'+d+'</option>';}).join('')
-    +'</select>'
-    +'<input type="text" placeholder="np. Klatka + Triceps" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">'
-    +'<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">'
-    +'<input type="checkbox" style="accent-color:var(--accent);"> Odpoczynek</label>'
-    +'<button onclick="document.getElementById(\''+id+'\').remove()" style="background:rgba(255,68,68,0.15);border:none;color:var(--red);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;">✕</button>'
+  el.className = 'plan-day-block';
+  el.style.cssText = 'background:var(--surface);border:1px solid var(--border2);border-radius:12px;margin-bottom:12px;overflow:hidden;';
+  el.innerHTML =
+    // Nagłówek dnia
+    '<div style="display:flex;gap:8px;align-items:center;padding:12px 14px;background:var(--surface2);border-bottom:1px solid var(--border);">'
+    +'<select class="day-name-sel" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--accent);font-family:DM Mono,monospace;font-size:12px;font-weight:700;">'+dayOpts+'</select>'
+    +'<input type="text" class="day-muscles-inp" placeholder="np. Klatka + Triceps + Barki" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">'
+    +'<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;">'
+    +'<input type="checkbox" class="rest-check" style="accent-color:var(--accent);" onchange="toggleRestDay(\''+id+'\')"> REST</label>'
+    +'<button onclick="document.getElementById(\''+id+'\').remove()" style="background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.2);color:var(--red);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px;">✕</button>'
     +'</div>'
-    +'<div class="exercises-list" style="margin-bottom:8px;"></div>'
-    +'<button onclick="addExercise(\''+id+'\')" style="width:100%;padding:7px;background:rgba(200,241,53,0.06);border:1px dashed rgba(200,241,53,0.3);border-radius:8px;color:var(--accent);font-size:11px;cursor:pointer;font-family:DM Mono,monospace;">+ Dodaj ćwiczenie</button>';
+
+    // Nagłówki kolumn ćwiczeń
+    +'<div class="ex-header" style="display:grid;grid-template-columns:1fr 35px 55px 50px 45px 50px 50px 55px 28px;gap:4px;padding:6px 14px;background:rgba(0,0,0,0.2);">'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;">ĆWICZENIE</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">SER</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">POWT</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">KG</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">RPE</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">RIR</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">PRZERWA</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:DM Mono,monospace;text-align:center;">TEMPO</div>'
+    +'<div></div>'
+    +'</div>'
+
+    // Lista ćwiczeń
+    +'<div class="exercises-list" style="padding:8px 14px;"></div>'
+
+    // Przycisk dodaj ćwiczenie
+    +'<div style="padding:8px 14px 12px;">'
+    +'<button onclick="addExercise(\''+id+'\')" style="width:100%;padding:8px;background:rgba(200,241,53,0.05);border:1px dashed rgba(200,241,53,0.25);border-radius:8px;color:var(--accent);font-size:11px;font-family:DM Mono,monospace;cursor:pointer;letter-spacing:0.5px;">+ DODAJ ĆWICZENIE</button>'
+    +'</div>';
+
   document.getElementById('plan-days-builder').appendChild(el);
+}
+
+function toggleRestDay(dayId){
+  var el = document.getElementById(dayId);
+  var isRest = el.querySelector('.rest-check').checked;
+  var header = el.querySelector('.ex-header');
+  var list = el.querySelector('.exercises-list');
+  var addBtn = el.querySelector('.exercises-list + div');
+  var musclesInp = el.querySelector('.day-muscles-inp');
+  if(isRest){
+    header.style.display='none';
+    list.style.display='none';
+    if(addBtn) addBtn.style.display='none';
+    musclesInp.value='Odpoczynek';
+    musclesInp.disabled=true;
+    musclesInp.style.color='var(--muted)';
+  } else {
+    header.style.display='';
+    list.style.display='';
+    if(addBtn) addBtn.style.display='';
+    musclesInp.value='';
+    musclesInp.disabled=false;
+    musclesInp.style.color='var(--text)';
+  }
 }
 
 function addExercise(dayId){
   var dayEl = document.getElementById(dayId);
   var list = dayEl.querySelector('.exercises-list');
   var exEl = document.createElement('div');
-  exEl.style.cssText = 'display:grid;grid-template-columns:2fr 40px 50px 50px 50px 30px;gap:4px;margin-bottom:6px;align-items:center;';
-  exEl.innerHTML = '<input type="text" placeholder="Nazwa ćwiczenia" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;">'
-    +'<input type="number" placeholder="S" title="Serie" min="1" max="10" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;text-align:center;">'
-    +'<input type="text" placeholder="Powt" title="Powtórzenia np. 8-10" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;text-align:center;">'
-    +'<input type="number" placeholder="RPE" title="RPE 1-10" min="1" max="10" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;text-align:center;">'
-    +'<input type="text" placeholder="Przerwa" title="np. 2min" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;text-align:center;">'
-    +'<button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;">✕</button>';
+  exEl.className = 'ex-row';
+  exEl.style.cssText = 'display:grid;grid-template-columns:1fr 35px 55px 50px 45px 50px 50px 55px 28px;gap:4px;margin-bottom:5px;align-items:center;';
+
+  function inp(ph, type, title){
+    type = type||'text';
+    return '<input type="'+type+'" placeholder="'+ph+'" title="'+(title||ph)+'" '
+      +'style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;'
+      +'padding:5px 4px;color:var(--text);font-size:11px;text-align:center;width:100%;min-width:0;">';
+  }
+
+  exEl.innerHTML =
+    '<input type="text" placeholder="Nazwa ćwiczenia..." title="Nazwa ćwiczenia" '
+    +'style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;'
+    +'padding:5px 8px;color:var(--text);font-size:11px;width:100%;min-width:0;">'
+    +inp('3','number','Serie (np. 4)')
+    +inp('8-12','text','Powtórzenia (np. 8-12)')
+    +inp('kg','number','Obciążenie w kg')
+    +inp('8','number','RPE 1-10')
+    +inp('2','number','RIR (powt w rezerwie)')
+    +inp('2min','text','Przerwa (np. 2min)')
+    +inp('2-0-2','text','Tempo (np. 2-0-2-0)')
+    +'<button onclick="this.parentElement.remove()" '
+    +'style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:16px;line-height:1;">×</button>';
+
   list.appendChild(exEl);
 }
 
+async function askAiAssistant(){
+  var question = document.getElementById('ai-question').value.trim();
+  if(!question){ flash('Wpisz pytanie!'); return; }
+  var clientId = document.getElementById('gp-client').value;
+  var client = window.CLIENTS.find(function(c){return c.id===clientId;});
+  var ansEl = document.getElementById('ai-answer');
+  ansEl.innerHTML = '<div style="color:var(--accent);font-size:12px;font-family:DM Mono,monospace;">🤖 Analizuję...</div>';
+
+  var clientCtx = client
+    ? 'Klient: '+client.name+', '+client.age+' lat, '+client.weight+'kg'
+      +', cel: '+client.goal+', poziom: '+client.level
+      +', postawa: '+(client.posture||'prawidłowa')
+      +', barki: '+(client.shoulders||'prawidłowe')
+      +', kolana: '+(client.knees||'prawidłowe')
+      +', słabe partie: '+((client.weakMuscles||[]).join(', ')||'brak')
+      +(client.notes?', uwagi: '+client.notes:'')
+    : '';
+
+  var system = 'Jesteś asystentem trenera personalnego. Odpowiadaj KRÓTKO po polsku, max 120 słów. '
+    +'Baza wiedzy: NSCA (hipertrofia 3-6 serii/8-10 powt/67-85% 1RM; siła 2-6 serii/1-6 powt/>85% 1RM; moc 3-5 serii), '
+    +'ACSM, Barbell Medicine. Cykl SRA. TUT 35-45s. Przerwy siła 3-5min, hipertrofia 60-90s. '
+    +'RPE 8 = 2 powt w rezerwie (RIR 2). Ścięgna adaptują się 6-8 tygodni wolniej od mięśni! '
+    +'Facepull i Hip Thrust zawsze. Push:Pull min 1:1. '
+    +'Tempo 2-0-2-0 = 2s dół, 0 pauza, 2s góra, 0 pauza. '
+    +'Dawaj konkretne liczby. Bądź zwięzły jak trener na sali.';
+
+  try {
+    var resp = await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,system:system,
+        messages:[{role:'user',content:(clientCtx?clientCtx+'\n\n':'')+question}]})});
+    var data = await resp.json();
+    var answer = data.content.map(function(i){return i.text||'';}).join('');
+    ansEl.innerHTML = '<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:12px;">'
+      +'<div style="font-size:9px;font-family:DM Mono,monospace;color:var(--accent);margin-bottom:6px;">🤖 ASYSTENT · NSCA/NASM/ACSM</div>'
+      +'<div style="font-size:12px;color:var(--text);line-height:1.6;">'+answer.replace(/\n/g,'<br>')+'</div>'
+      +'</div>';
+  } catch(err){
+    ansEl.innerHTML='<div style="color:var(--red);font-size:12px;">Błąd: '+err.message+'</div>';
+  }
+}
+
+async function savePlanManual(){
+  var clientId = document.getElementById('gp-client').value;
+  var name = document.getElementById('gp-name').value.trim();
+  var method = document.getElementById('gp-method').value;
+  var duration = document.getElementById('gp-duration').value;
+  var client = window.CLIENTS.find(function(c){return c.id===clientId;});
+  if(!clientId||!name){ flash('Wybierz klienta i wpisz nazwę planu!'); return; }
+
+  var days = [];
+  document.querySelectorAll('.plan-day-block').forEach(function(dayEl){
+    var dayName = dayEl.querySelector('.day-name-sel').value;
+    var muscles = dayEl.querySelector('.day-muscles-inp').value;
+    var isRest = dayEl.querySelector('.rest-check').checked;
+    if(isRest){
+      days.push({day:dayName,rest:true,muscles:'',exercises:[],sets:0});
+    } else {
+      var exercises = [];
+      var totalSets = 0;
+      dayEl.querySelectorAll('.ex-row').forEach(function(exEl){
+        var inps = exEl.querySelectorAll('input');
+        var n=inps[0].value.trim(), s=inps[1].value, p=inps[2].value,
+            kg=inps[3].value, rpe=inps[4].value, rir=inps[5].value,
+            prz=inps[6].value, tempo=inps[7].value;
+        if(n){
+          var str = n;
+          if(s) str += ' '+s+'x'+(p||'?');
+          if(kg) str += ' @'+kg+'kg';
+          if(rpe) str += ' RPE'+rpe;
+          if(rir) str += ' RIR'+rir;
+          if(prz) str += ' ('+prz+')';
+          if(tempo) str += ' ['+tempo+']';
+          exercises.push(str);
+          totalSets += parseInt(s)||3;
+        }
+      });
+      days.push({day:dayName,muscles:muscles,exercises:exercises,sets:totalSets,rest:false});
+    }
+  });
+
+  if(!days.length){ flash('Dodaj przynajmniej jeden dzień!'); return; }
+
+  var plan = {
+    name:name, method:method, duration:duration,
+    clientId:clientId, clientName:client?client.name:'',
+    level:client?client.level:'sredni', goal:client?client.goal:'masa',
+    days:days, createdAt:new Date().toISOString()
+  };
+
+  try {
+    if(window._addDoc&&window._db){
+      var ref=await window._addDoc(window._collection(window._db,'plans'),plan);
+      plan.id=ref.id;
+    } else { plan.id='local-'+Date.now(); }
+  } catch(e){ plan.id='local-'+Date.now(); }
+
+  window.PLANS.push(plan);
+  closeFullview('gen-plan-view');
+  goScreen('plans');
+  flash('Plan zapisany! 📋');
+}
+
+async function generatePlan(){ savePlanManual(); }
 async function askAiAssistant(){
   var question = document.getElementById('ai-question').value.trim();
   if(!question){ flash('Wpisz pytanie!'); return; }
