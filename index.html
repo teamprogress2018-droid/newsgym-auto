@@ -929,10 +929,26 @@ function buildFbText(a){
 }
 function buildIgText(a){
   var mm=m(a.cat);
+  var parts=[];
+  if(a.excerpt) parts.push(a.excerpt);
+  if(a.content){
+    var tmp=document.createElement('div');
+    tmp.innerHTML=a.content;
+    tmp.querySelectorAll('h3,p,.highlight,.tip-box').forEach(function(el){
+      var t=el.textContent.trim();
+      if(t&&t.length>10&&parts.indexOf(t)===-1){
+        parts.push(el.tagName==='H3'?'\n📌 '+t:t);
+      }
+    });
+  }
+  if(a.points&&a.points.length) a.points.forEach(function(p){parts.push('✅ '+p);});
+  if(a.practicalTip) parts.push('\n💡 '+a.practicalTip);
+  var body=parts.join('\n\n');
+  if(!body) body=a.excerpt||'';
   var tags=['#fitness','#trening','#silownia','#sport','#polska','#gymlife','#workout','#health','#motywacja','#nauka'];
   if(a.tags) a.tags.forEach(function(t){tags.push('#'+t.replace(/\s+/g,''));});
   tags.push('#'+a.cat,'#newsgym');
-  return mm.icon+' '+a.title.toUpperCase()+'\n\n'+(a.excerpt||'')+'\n\n👇 Pełny artykuł w bio\n\n.\n.\n.\n\n'+tags.slice(0,15).join(' ');
+  return mm.icon+' '+a.title.toUpperCase()+'\n\n'+body+'\n\n.\n.\n.\n\n'+tags.slice(0,15).join(' ');
 }
 function buildWaText(a){
   var mm=m(a.cat);
