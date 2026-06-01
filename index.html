@@ -803,6 +803,9 @@ function showPublishModal(article) {
     +'</div>'
     +'<div style="background:rgba(24,119,242,0.06);border:1px solid rgba(24,119,242,0.15);border-radius:12px;padding:14px;margin-bottom:14px;">'
     +'<div style="font-size:10px;font-family:DM Mono,monospace;color:#60a5fa;margin-bottom:10px;">🖼️ GRAFIKA 1200×630</div>'
+    +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-bottom:6px;">WYBIERZ TŁO:</div>'
+    +'<div id="photo-gallery-fb" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;"></div>'
+    +'<label style="display:flex;align-items:center;gap:8px;background:rgba(200,241,53,0.06);border:1px dashed rgba(200,241,53,0.3);border-radius:8px;padding:8px 12px;cursor:pointer;margin-bottom:10px;font-size:11px;color:#c8f135;font-family:DM Mono,monospace;">📸 Własne zdjęcie<input type="file" accept="image/*" id="custom-photo-fb" style="display:none;" onchange="loadCustomPhoto(this,\'fb\')"></label>'
     +'<canvas id="pub-fb-canvas" width="1200" height="630" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.07);display:block;"></canvas>'
     +'<button onclick="dlCanvas(\'pub-fb-canvas\',\'newsgym_fb\')" style="width:100%;margin-top:10px;padding:10px;background:rgba(24,119,242,0.12);border:1px solid rgba(24,119,242,0.25);color:#60a5fa;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">⬇️ POBIERZ GRAFIKĘ FB</button>'
     +'</div>'
@@ -823,6 +826,9 @@ function showPublishModal(article) {
     +'</div></div>'
     +'<div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.12);border-radius:12px;padding:14px;margin-bottom:14px;">'
     +'<div style="font-size:10px;font-family:DM Mono,monospace;color:#f97316;margin-bottom:10px;">🖼️ GRAFIKA 1080×1080</div>'
+    +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-bottom:6px;">WYBIERZ TŁO:</div>'
+    +'<div id="photo-gallery-ig" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;"></div>'
+    +'<label style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,0.06);border:1px dashed rgba(249,115,22,0.3);border-radius:8px;padding:8px 12px;cursor:pointer;margin-bottom:10px;font-size:11px;color:#f97316;font-family:DM Mono,monospace;">📸 Własne zdjęcie<input type="file" accept="image/*" id="custom-photo-ig" style="display:none;" onchange="loadCustomPhoto(this,\'ig\')"></label>'
     +'<canvas id="pub-ig-canvas" width="1080" height="1080" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.07);display:block;"></canvas>'
     +'<button onclick="dlCanvas(\'pub-ig-canvas\',\'newsgym_ig\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(236,72,153,0.1));border:1px solid rgba(249,115,22,0.25);color:#f97316;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">⬇️ POBIERZ GRAFIKĘ IG</button>'
     +'</div>'
@@ -845,9 +851,18 @@ function showPublishModal(article) {
     +'</div></div>';
 
   document.body.appendChild(modal);
+  // Zapisz artykuł do zmiennej globalnej dla galerii
+  currentArticleForModal = article;
+  selectedPhoto['fb'] = article.imageUrl || getImg(article.cat);
+  selectedPhoto['ig'] = article.imageUrl || getImg(article.cat);
+
   setTimeout(function(){
-    drawFbGfx(document.getElementById('pub-fb-canvas'), article);
-    drawIgGfx(document.getElementById('pub-ig-canvas'), article);
+    // Inicjalizuj galerie zdjęć
+    initPhotoGallery(article, 'fb');
+    initPhotoGallery(article, 'ig');
+    // Rysuj grafiki ze zdjęciem
+    drawGfxWithPhoto(document.getElementById('pub-fb-canvas'), article, selectedPhoto['fb'], 'fb');
+    drawGfxWithPhoto(document.getElementById('pub-ig-canvas'), article, selectedPhoto['ig'], 'ig');
     var ta=document.getElementById('pub-fb-text');
     if(ta) ta.addEventListener('input',function(){var c=document.getElementById('pub-fb-counter');if(c)c.textContent=ta.value.length+' znaków';});
     // Auto-generuj długi post FB od razu po otwarciu modalu
@@ -986,6 +1001,226 @@ async function pubToFb(){
 // ============================================================
 // GRAFIKI CANVAS (FB 1200×630 i IG 1080×1080)
 // ============================================================
+
+
+// ============================================================
+// GALERIA ZDJĘĆ I UPLOAD WŁASNEGO ZDJĘCIA
+// ============================================================
+
+var UNSPLASH_PHOTOS = {
+  trening: [
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80&fit=crop',
+  ],
+  sila: [
+    'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1567013127542-490d757e51fc?w=600&q=80&fit=crop',
+  ],
+  cardio: [
+    'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=600&q=80&fit=crop',
+  ],
+  dieta: [
+    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80&fit=crop',
+  ],
+  supl: [
+    'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1544991875-5dc1b05f1571?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=600&q=80&fit=crop',
+  ],
+  badania: [
+    'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=600&q=80&fit=crop',
+  ],
+  lifestyle: [
+    'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1545389336-cf090694435e?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1499728603263-13726abce5fd?w=600&q=80&fit=crop',
+  ],
+  motyw: [
+    'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=600&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1483721310020-03333e577078?w=600&q=80&fit=crop',
+  ],
+};
+
+// Przechowuje aktualnie wybrany URL zdjęcia dla FB i IG
+var selectedPhoto = {fb: null, ig: null};
+var currentArticleForModal = null;
+
+function initPhotoGallery(article, platform) {
+  var cat = article.cat || 'trening';
+  var photos = UNSPLASH_PHOTOS[cat] || UNSPLASH_PHOTOS.trening;
+  var galleryId = 'photo-gallery-' + platform;
+  var gallery = document.getElementById(galleryId);
+  if(!gallery) return;
+
+  // Pierwsze zdjęcie = aktualne z artykułu
+  var allPhotos = [article.imageUrl || getImg(cat)].concat(photos).filter(function(p,i,arr){return arr.indexOf(p)===i;}).slice(0,5);
+
+  // Domyślnie wybierz pierwsze
+  if(!selectedPhoto[platform]) selectedPhoto[platform] = allPhotos[0];
+
+  gallery.innerHTML = allPhotos.map(function(url, i) {
+    var isSelected = (url === selectedPhoto[platform]);
+    return '<div onclick="selectPhoto(this,'' + url.replace(/'/g,"\'") + '','' + platform + '')" style="flex-shrink:0;width:70px;height:50px;border-radius:6px;overflow:hidden;cursor:pointer;border:' + (isSelected?'2px solid #c8f135':'1px solid rgba(255,255,255,0.15)') + ';position:relative;">'
+      + '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy">'
+      + (isSelected ? '<div style="position:absolute;inset:0;background:rgba(200,241,53,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;">✓</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function selectPhoto(el, url, platform) {
+  selectedPhoto[platform] = url;
+  // Odśwież galerię
+  if(currentArticleForModal) initPhotoGallery(currentArticleForModal, platform);
+  // Przerysuj canvas
+  var canvas = document.getElementById('pub-' + platform + '-canvas');
+  if(!canvas || !currentArticleForModal) return;
+  drawGfxWithPhoto(canvas, currentArticleForModal, url, platform);
+}
+
+function loadCustomPhoto(input, platform) {
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    selectedPhoto[platform] = e.target.result;
+    // Dodaj do galerii jako pierwszą opcję
+    var gallery = document.getElementById('photo-gallery-' + platform);
+    if(gallery) {
+      var div = document.createElement('div');
+      div.style.cssText = 'flex-shrink:0;width:70px;height:50px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid #c8f135;';
+      div.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+      div.onclick = function(){ selectPhoto(div, e.target.result, platform); };
+      gallery.insertBefore(div, gallery.firstChild);
+    }
+    // Przerysuj canvas
+    var canvas = document.getElementById('pub-' + platform + '-canvas');
+    if(canvas && currentArticleForModal) drawGfxWithPhoto(canvas, currentArticleForModal, e.target.result, platform);
+    flash('Zdjęcie wgrane! ✅');
+  };
+  reader.readAsDataURL(file);
+}
+
+function drawGfxWithPhoto(canvas, article, photoUrl, platform) {
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    if(platform === 'fb') drawFbGfxWithImg(canvas, article, img);
+    else drawIgGfxWithImg(canvas, article, img);
+  };
+  img.onerror = function() {
+    // Fallback bez zdjęcia
+    if(platform === 'fb') drawFbGfx(canvas, article);
+    else drawIgGfx(canvas, article);
+  };
+  img.src = photoUrl;
+}
+
+function drawFbGfxWithImg(canvas, article, bgImg) {
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d'), W = 1200, H = 630;
+  var mm = m(article.cat), A = mm.color || '#c8f135';
+  // Tło - zdjęcie
+  ctx.drawImage(bgImg, 0, 0, W, H);
+  // Ciemna nakładka
+  var grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,0,0,0.3)');
+  grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  // Lewa belka kolorowa
+  ctx.fillStyle = A; ctx.fillRect(0, 0, 8, H);
+  // Logo
+  ctx.font = 'bold 52px Arial'; ctx.fillStyle = A; ctx.textAlign = 'left';
+  ctx.fillText('NEWS', 50, 76);
+  var nw = ctx.measureText('NEWS').width;
+  ctx.fillStyle = '#fff'; ctx.fillText('GYM', 50 + nw + 8, 76);
+  // Kategoria pill
+  ctx.fillStyle = 'rgba(' + hexToRgbStr(A) + ',0.25)';
+  roundCv(ctx, 50, 96, 240, 44, 22);
+  ctx.fillStyle = A; ctx.font = 'bold 22px Arial';
+  ctx.fillText(mm.icon + ' ' + (article.cat || 'trening').toUpperCase(), 70, 124);
+  // Linia
+  ctx.fillStyle = 'rgba(' + hexToRgbStr(A) + ',0.6)'; ctx.fillRect(50, 154, W - 100, 2);
+  // Tytuł
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 66px Arial';
+  var th = wrapCv(ctx, article.title, 50, 234, W - 120, 78);
+  // Excerpt
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '32px Arial';
+  wrapCv(ctx, article.excerpt || '', 50, 240 + th + 8, W - 120, 44);
+  // Dolny pasek
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, H - 80, W, 80);
+  ctx.font = 'bold 26px Arial'; ctx.fillStyle = A; ctx.textAlign = 'left';
+  ctx.fillText('@newsgym_pl', 50, H - 44);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '22px Arial';
+  ctx.fillText('#fitness #trening #newsgym', 50, H - 12);
+  ctx.textAlign = 'right'; ctx.fillStyle = A; ctx.font = 'bold 28px Arial';
+  ctx.fillText('⏱ ' + (article.readTime || '5 min'), W - 50, H - 28);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = A; ctx.fillRect(0, H - 4, W, 4);
+}
+
+function drawIgGfxWithImg(canvas, article, bgImg) {
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d'), W = 1080, H = 1080;
+  var mm = m(article.cat), A = mm.color || '#c8f135';
+  // Tło - zdjęcie
+  ctx.drawImage(bgImg, 0, 0, W, H);
+  // Ciemna nakładka
+  var grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,0,0,0.35)');
+  grad.addColorStop(0.4, 'rgba(0,0,0,0.5)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.88)');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+  // Górna linia
+  ctx.fillStyle = A; ctx.fillRect(0, 0, W, 6);
+  // Logo
+  ctx.font = 'bold 48px Arial'; ctx.fillStyle = A; ctx.textAlign = 'left';
+  ctx.fillText('NEWS', 60, 82);
+  var nw = ctx.measureText('NEWS').width;
+  ctx.fillStyle = '#fff'; ctx.fillText('GYM', 60 + nw + 8, 82);
+  // Kategoria
+  ctx.fillStyle = 'rgba(' + hexToRgbStr(A) + ',0.25)';
+  roundCv(ctx, 60, 108, 270, 50, 25);
+  ctx.fillStyle = A; ctx.font = 'bold 26px Arial';
+  ctx.fillText(mm.icon + ' ' + (article.cat || 'trening').toUpperCase(), 82, 141);
+  // Linia
+  ctx.fillStyle = 'rgba(' + hexToRgbStr(A) + ',0.6)'; ctx.fillRect(60, 176, W - 120, 2);
+  // Tytuł
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 80px Arial';
+  var th = wrapCv(ctx, article.title, 60, 278, W - 120, 94);
+  // Excerpt
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '36px Arial';
+  wrapCv(ctx, article.excerpt || '', 60, 296 + th, W - 120, 50);
+  // Tagi
+  var tags = (article.tags || [article.cat, 'fitness']).slice(0, 4);
+  ctx.font = '28px Arial'; ctx.fillStyle = 'rgba(' + hexToRgbStr(A) + ',0.8)';
+  ctx.fillText(tags.map(function(t){return '#'+t;}).join('  '), 60, H - 120);
+  // Dolny pasek
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, H - 90, W, 90);
+  ctx.font = 'bold 30px Arial'; ctx.fillStyle = A; ctx.textAlign = 'left';
+  ctx.fillText('@newsgym_pl', 60, H - 46);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '24px Arial';
+  ctx.fillText('👆 Link w bio – pełny artykuł', 60, H - 12);
+  ctx.fillStyle = A; ctx.fillRect(0, H - 4, W, 4);
+}
 
 function drawFbGfx(canvas,article){
   if(!canvas) return;
