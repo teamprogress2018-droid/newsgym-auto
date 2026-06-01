@@ -861,7 +861,22 @@ function hexToRgbStr(hex){
 
 function buildFbText(a){
   var mm=m(a.cat);
-  return mm.icon+' '+a.title+'\n\n'+(a.excerpt||'')+'\n\n'+(a.tags||[a.cat,'fitness']).map(function(t){return '#'+t.replace(/\s+/g,'');}).join(' ')+' #fitness #trening #newsgym\n\n🔗 https://teamprogress2018-droid.github.io/newsgym-auto/';
+  // Pobierz czystą treść artykułu (bez tagów HTML)
+  var bodyClean='';
+  if(a.content){
+    var tmp=document.createElement('div');
+    tmp.innerHTML=a.content;
+    // Pobierz tekst z h3 i p, dodaj separatory
+    var parts=[];
+    tmp.querySelectorAll('h3,p').forEach(function(el){
+      var t=el.textContent.trim();
+      if(t) parts.push(el.tagName==='H3'?'📌 '+t:t);
+    });
+    bodyClean=parts.join('\n\n');
+  }
+  if(!bodyClean) bodyClean=a.excerpt||'';
+  var tags=(a.tags||[a.cat,'fitness']).map(function(t){return '#'+t.replace(/\s+/g,'');}).join(' ')+' #fitness #trening #newsgym #silownia';
+  return mm.icon+' '+a.title.toUpperCase()+'\n\n'+bodyClean+'\n\n'+tags;
 }
 function buildIgText(a){
   var mm=m(a.cat);
@@ -900,11 +915,13 @@ async function regenText(fieldId,platform,artId){
   var old=ta.value;
   ta.value='⏳ Generuję...';
   try{
-    var prompt='Napisz post na '+(platform==='fb'?'Facebook':'Instagram')+' po polsku na temat artykułu fitness. '+(platform==='fb'?'Max 3 zdania + hashtagi. Naturalny angażujący ton.':'Max 3 zdania + 10 hashtagów. Krótki chwytliwy styl.')+' Bez cudzysłowów.\n\nTytuł: '+a.title+'\nOpis: '+a.excerpt;
+    var prompt=platform==='fb'
+      ? 'Napisz PEŁNY post na Facebooka po polsku. BEZ linków. Styl: angażujący, wartościowy, edukacyjny. Struktura: 1) Mocny tytuł z emoji, 2) 3-4 akapity z pełną treścią merytoryczną (praktyczne wskazówki, dane z badań, protokoły), 3) Podsumowanie, 4) 5-8 hashtagów. Bez cudzysłowów.\n\nTytuł: '+a.title+'\nTreść: '+(a.excerpt||'')+'\n'+(a.content?a.content.replace(/<[^>]*>/g,' ').substring(0,400):'')
+      : 'Napisz post na Instagram po polsku na temat artykułu fitness. Max 3 zdania + 10 hashtagów. Krótki chwytliwy styl. Bez cudzysłowów.\n\nTytuł: '+a.title+'\nOpis: '+a.excerpt;
     var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
     var d=await resp.json();
     var text=d.content.map(function(i){return i.text||'';}).join('').trim();
-    if(platform==='fb') text+='\n\n🔗 https://teamprogress2018-droid.github.io/newsgym-auto/';
+    // FB: bez linku - pełny artykuł w poście
     ta.value=text;
     flash('Przepisano AI ✅');
   }catch(e){ta.value=old;}
