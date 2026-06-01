@@ -861,21 +861,28 @@ function hexToRgbStr(hex){
 
 function buildFbText(a){
   var mm=m(a.cat);
-  // Pobierz czystą treść artykułu (bez tagów HTML)
-  var bodyClean='';
+  var parts=[];
+  // Dodaj excerpt jako pierwsze zdanie
+  if(a.excerpt) parts.push(a.excerpt);
+  // Pobierz treść artykułu bez HTML
   if(a.content){
     var tmp=document.createElement('div');
     tmp.innerHTML=a.content;
-    // Pobierz tekst z h3 i p, dodaj separatory
-    var parts=[];
-    tmp.querySelectorAll('h3,p').forEach(function(el){
+    tmp.querySelectorAll('h3,p,.highlight,.tip-box').forEach(function(el){
       var t=el.textContent.trim();
-      if(t) parts.push(el.tagName==='H3'?'📌 '+t:t);
+      if(t&&t.length>10&&parts.indexOf(t)===-1){
+        parts.push(el.tagName==='H3'?'📌 '+t:t);
+      }
     });
-    bodyClean=parts.join('\n\n');
   }
+  // Jeśli artykuł z Firebase ma points
+  if(a.points&&a.points.length){
+    a.points.forEach(function(p,i){parts.push('✅ '+p);});
+  }
+  if(a.practicalTip) parts.push('💡 '+a.practicalTip);
+  var bodyClean=parts.join('\n\n');
   if(!bodyClean) bodyClean=a.excerpt||'';
-  var tags=(a.tags||[a.cat,'fitness']).map(function(t){return '#'+t.replace(/\s+/g,'');}).join(' ')+' #fitness #trening #newsgym #silownia';
+  var tags=(a.tags||[a.cat,'fitness']).map(function(t){return '#'+t.replace(/\s+/g,'');}).join(' ')+' #fitness #trening #newsgym #silownia #nauka';
   return mm.icon+' '+a.title.toUpperCase()+'\n\n'+bodyClean+'\n\n'+tags;
 }
 function buildIgText(a){
@@ -915,10 +922,11 @@ async function regenText(fieldId,platform,artId){
   var old=ta.value;
   ta.value='⏳ Generuję...';
   try{
+    var artBody=a.content?a.content.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').substring(0,600):'';
     var prompt=platform==='fb'
-      ? 'Napisz PEŁNY post na Facebooka po polsku. BEZ linków. Styl: angażujący, wartościowy, edukacyjny. Struktura: 1) Mocny tytuł z emoji, 2) 3-4 akapity z pełną treścią merytoryczną (praktyczne wskazówki, dane z badań, protokoły), 3) Podsumowanie, 4) 5-8 hashtagów. Bez cudzysłowów.\n\nTytuł: '+a.title+'\nTreść: '+(a.excerpt||'')+'\n'+(a.content?a.content.replace(/<[^>]*>/g,' ').substring(0,400):'')
+      ? 'Napisz PEŁNY wartościowy post na Facebooka po polsku. BEZ linków. BEZ cudzysłowów. Minimum 300 słów.\nStruktura:\n1) Tytuł z emoji CAPS\n2) Wstęp (co czytelnik zyska)\n3) Główne fakty i dane naukowe (z konkretnymi liczbami)\n4) Praktyczny protokół zastosowania (konkretne wskazówki)\n5) Podsumowanie\n6) 6-8 hashtagów\n\nArtykuł:\nTytuł: '+a.title+'\nTreść: '+artBody
       : 'Napisz post na Instagram po polsku na temat artykułu fitness. Max 3 zdania + 10 hashtagów. Krótki chwytliwy styl. Bez cudzysłowów.\n\nTytuł: '+a.title+'\nOpis: '+a.excerpt;
-    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:platform==='fb'?800:300,messages:[{role:'user',content:prompt}]})});
     var d=await resp.json();
     var text=d.content.map(function(i){return i.text||'';}).join('').trim();
     // FB: bez linku - pełny artykuł w poście
