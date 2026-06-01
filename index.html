@@ -911,25 +911,25 @@ async function regenText(fieldId,platform,artId){
 }
 
 async function pubToFb(){
-  var text=document.getElementById('pub-fb-text');
+  var textEl=document.getElementById('pub-fb-text');
   var status=document.getElementById('pub-fb-status');
-  if(!text||!status) return;
-  status.style.color='#f97316';
-  status.textContent='⏳ Publikuję na Facebook...';
-  try{
-    var resp=await fetch('https://graph.facebook.com/v25.0/'+FB_PAGE_ID+'/feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text.value,access_token:FB_TOKEN})});
-    var d=await resp.json();
-    if(d.id){
-      status.style.color='#c8f135';
-      status.innerHTML='✅ Opublikowano! ID: <span style="color:#555;">'+d.id+'</span>';
-      setTimeout(function(){document.getElementById('pub-modal').remove();flash('Post opublikowany na Facebook! 🎉');},2000);
-    }else{
-      status.style.color='#ff4444';
-      status.textContent='❌ '+(d.error&&d.error.message||'Błąd publikacji');
-    }
-  }catch(e){
-    status.style.color='#ff4444';
-    status.textContent='❌ Błąd połączenia z Facebook API';
+  if(!textEl||!status) return;
+  dlCanvas('pub-fb-canvas','newsgym_post_fb');
+  var postText=textEl.value;
+  function doOpen(){
+    status.style.color='#c8f135';
+    status.innerHTML='✅ Grafika pobrana + tekst skopiowany!<br><span style="font-size:11px;color:#777;">Za 2s otworzy się Facebook — wklej tekst (Ctrl+V) i dodaj grafikę</span>';
+    setTimeout(function(){
+      window.open('https://www.facebook.com/teamprogress2018','_blank');
+      status.innerHTML='✅ Gotowe! Wklej tekst (Ctrl+V) i dodaj pobraną grafikę 📸';
+    }, 2000);
+  }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(postText).then(doOpen).catch(function(){
+      var ta=document.createElement('textarea');ta.value=postText;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);doOpen();
+    });
+  } else {
+    var ta=document.createElement('textarea');ta.value=postText;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);doOpen();
   }
 }
 
