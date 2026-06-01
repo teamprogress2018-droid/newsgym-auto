@@ -44,7 +44,6 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 .section-more{font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;cursor:pointer;background:none;border:none;letter-spacing:0.5px;}
 .banner-wrap{padding:0 18px 16px;}
 .banner{border-radius:16px;overflow:hidden;position:relative;height:200px;cursor:pointer;}
-.banner-pattern{position:absolute;inset:0;opacity:0.15;background-image:radial-gradient(circle at 20% 50%,var(--accent) 0%,transparent 50%),radial-gradient(circle at 80% 20%,var(--teal) 0%,transparent 40%);}
 .banner-content{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 60%);}
 .banner-cat{display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;font-family:'DM Mono',monospace;letter-spacing:0.5px;margin-bottom:8px;width:fit-content;}
 .banner-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.5px;line-height:1.1;color:#fff;margin-bottom:6px;}
@@ -89,7 +88,8 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 .research-title{font-size:14px;font-weight:600;line-height:1.35;margin-bottom:8px;color:var(--text);}
 .research-points{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
 .research-points li{display:flex;gap:8px;font-size:12px;color:var(--muted);line-height:1.4;}
-.research-points li::before{content:'→';color:var(--blue);flex-shrink:0;font-size:11px;margin-top:1px;}
+/* FIX #1: poprawna encja Unicode dla strzałki w CSS (było: content:'rarr' lub content:'→') */
+.research-points li::before{content:'\2192';color:var(--blue);flex-shrink:0;font-size:11px;margin-top:1px;}
 .research-tip{background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--accent);line-height:1.4;}
 .research-tip strong{font-weight:700;display:block;margin-bottom:3px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
@@ -171,8 +171,6 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 .g5{background:linear-gradient(135deg,#0a2a2a,#1a4040);}
 .g6{background:linear-gradient(135deg,#2a0a1a,#401a2a);}
 .g7{background:linear-gradient(135deg,#1a1a0a,#3a3a1a);}
-.img-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:0.6;}
-.img-icon-sm{font-size:24px;}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);}
 .empty-icon{font-size:36px;margin-bottom:10px;opacity:0.4;}
 .dot-loader{display:flex;gap:4px;align-items:center;justify-content:center;margin-top:14px;}
@@ -489,7 +487,8 @@ function resCard(a){
 function buildSources(cat,extra){
   var src=getSrc(cat,extra);
   if(!src.length) return '';
-  return '<div class="sources-section"><div class="sources-hdr">ZRODLA NAUKOWE</div><div class="sources-sub">Potwierdzone badania naukowe powiazane z tym artykulem</div>'+src.map(function(s){return '<div class="source-item"><div class="source-top"><div class="source-journal">'+s.journal+'</div><div class="source-year">'+s.year+'</div></div><div class="source-title-txt">'+s.title+'</div><div class="source-authors">'+s.authors+'</div><div class="source-finding"><div class="source-arrow">→</div><div class="source-finding-text">'+s.finding+'</div></div>'+(s.pmid?'<div class="source-pmid">'+s.pmid+' PubMed</div>':'')+'</div>';}).join('')+'</div>';
+  /* FIX: używamy &rarr; jako HTML entity (renderowane przez innerHTML) */
+  return '<div class="sources-section"><div class="sources-hdr">ZRODLA NAUKOWE</div><div class="sources-sub">Potwierdzone badania naukowe powiazane z tym artykulem</div>'+src.map(function(s){return '<div class="source-item"><div class="source-top"><div class="source-journal">'+s.journal+'</div><div class="source-year">'+s.year+'</div></div><div class="source-title-txt">'+s.title+'</div><div class="source-authors">'+s.authors+'</div><div class="source-finding"><div class="source-arrow">&rarr;</div><div class="source-finding-text">'+s.finding+'</div></div>'+(s.pmid?'<div class="source-pmid">'+s.pmid+' PubMed</div>':'')+'</div>';}).join('')+'</div>';
 }
 
 function openArticle(id){
@@ -541,7 +540,7 @@ async function generateProtocol(id){
   var content=document.getElementById('protocol-content');
   if(btn){btn.textContent='⏳ Generuję...';btn.disabled=true;}
   if(content) content.innerHTML='<div style="text-align:center;padding:20px;color:#60a5fa;font-size:12px;font-family:DM Mono,monospace;"><div style="animation:spin 1s linear infinite;display:inline-block;font-size:24px;">⚡</div><div style="margin-top:8px;">AI tworzy protokół...</div></div>';
-  var prompt='Stwórz protokół zastosowania dla artykułu fitness. Odpowiedz TYLKO JSON:\n{"dawka":"...","kiedy":"...","czestotliwosc":"...","efekty":"...","uwaga":"...","wskazowki":["...","...","..."]}\n\nArtykul: '+a.title+'\n'+a.excerpt;
+  var prompt='Stwórz protokół zastosowania dla artykułu fitness. Odpowiedz TYLKO czystym JSON bez markdown:\n{"dawka":"...","kiedy":"...","czestotliwosc":"...","efekty":"...","uwaga":"...","wskazowki":["...","...","..."]}\n\nArtykul: '+a.title+'\n'+a.excerpt;
   try{
     var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
     var data=await resp.json();
@@ -647,6 +646,7 @@ async function buildSourcesTab(el) {
   el.innerHTML = '<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">📡 ŹRÓDŁA ZEWNĘTRZNE</div></div><div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"><button onclick="loadPubMed()" style="background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.4);color:#60a5fa;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">🔬 PubMed</button><button onclick="loadRSS()" style="background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:#c8f135;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">📰 Blogi Fitness</button><button onclick="loadAll()" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">⚡ WSZYSTKO</button></div><div id="sources-feed"></div></div><div style="height:20px;"></div>';
 }
 async function loadAll(){ await loadPubMed(); await loadRSS(); }
+
 async function loadPubMed(){
   var box=document.getElementById('sources-feed');
   if(!box) return;
@@ -667,7 +667,10 @@ async function loadPubMed(){
       var journal=a.fulljournalname||a.source||'';
       var year=a.pubdate?a.pubdate.substring(0,4):'';
       var authors=a.authors&&a.authors.length?a.authors.slice(0,2).map(function(x){return x.name;}).join(', '):'';
-      html+='<div style="background:linear-gradient(135deg,rgba(96,165,250,0.06),rgba(167,139,250,0.04));border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#60a5fa;font-weight:700;">🔬 PUBMED · '+year+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+journal.substring(0,25)+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+title.substring(0,120)+(title.length>120?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;font-style:italic;">'+authors+'</div><button onclick="generateFromSource(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+journal+'\',\''+year+'\',\'badania\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
+      /* FIX #4: sanitacja apostrofów i cudzysłowów w tytułach z PubMed */
+      var safeTitle=title.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+      var safeJournal=journal.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+      html+='<div style="background:linear-gradient(135deg,rgba(96,165,250,0.06),rgba(167,139,250,0.04));border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#60a5fa;font-weight:700;">🔬 PUBMED · '+year+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+safeJournal.substring(0,25)+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+safeTitle.substring(0,120)+(title.length>120?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;font-style:italic;">'+authors+'</div><button onclick="generateFromSource(\''+safeTitle.substring(0,80).replace(/'/g,'&#39;')+'\',\''+safeJournal.substring(0,30).replace(/'/g,'&#39;')+'\',\''+year+'\',\'badania\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
     });
     var loading=document.getElementById('pubmed-loading');
     if(loading) loading.remove();
@@ -677,6 +680,7 @@ async function loadPubMed(){
     if(loading) loading.textContent='❌ Błąd PubMed: '+e.message;
   }
 }
+
 async function loadRSS(){
   var box=document.getElementById('sources-feed');
   if(!box) return;
@@ -694,7 +698,10 @@ async function loadRSS(){
         var desc=item.description?item.description.replace(/<[^>]*>/g,'').substring(0,150):'';
         var date=item.pubDate?item.pubDate.substring(0,10):'';
         var cat=guessCat(title+' '+desc);
-        html+='<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;font-weight:700;">📰 '+feed.name+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+date+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+title.substring(0,100)+(title.length>100?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;">'+desc+(desc.length>=150?'...':'')+'</div><button onclick="generateFromSource(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+feed.name+'\',\'\',\''+cat+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
+        /* FIX #4: sanitacja apostrofów i cudzysłowów w tytułach RSS */
+        var safeTitle=title.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+        var safeFeedName=feed.name.replace(/'/g,'&#39;');
+        html+='<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;font-weight:700;">📰 '+safeFeedName+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+date+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+safeTitle.substring(0,100)+(title.length>100?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;">'+desc+(desc.length>=150?'...':'')+'</div><button onclick="generateFromSource(\''+safeTitle.substring(0,80).replace(/'/g,'&#39;')+'\',\''+safeFeedName+'\',\'\',\''+cat+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
         loaded++;
       });
     }catch(e){}
@@ -704,6 +711,7 @@ async function loadRSS(){
   if(loaded===0) html+='<div style="color:#ff4444;font-size:12px;">Nie udało się pobrać blogów (CORS). Użyj PubMed.</div>';
   box.innerHTML+=html;
 }
+
 function guessCat(text){
   var t=text.toLowerCase();
   if(t.includes('strength')||t.includes('powerlifting')||t.includes('squat')) return 'sila';
@@ -716,6 +724,7 @@ function guessCat(text){
   if(t.includes('research')||t.includes('study')||t.includes('meta')) return 'badania';
   return 'trening';
 }
+
 async function generateFromSource(title,source,year,cat){
   var text=title+'\n\nŹródło: '+source+(year?' ('+year+')':'')+'\n\nStwórz szczegółowy artykuł fitness po polsku na podstawie tego tematu/badania. Dodaj praktyczne wskazówki i naukowe podstawy.';
   document.getElementById('add-panel').classList.add('show');
@@ -727,7 +736,8 @@ async function generateFromSource(title,source,year,cat){
 }
 
 // ============================================================
-// ULEPSZONY SYSTEM PUBLIKOWANIA
+// SYSTEM PUBLIKOWANIA — FB / IG / WA
+// FIX #2: switchPubTab zdefiniowana (zastępuje brakującą switchSocialTab)
 // ============================================================
 
 function showPublishModal(article) {
@@ -742,34 +752,25 @@ function showPublishModal(article) {
 
   modal.innerHTML=
     '<div style="background:#111;border:1px solid rgba(200,241,53,0.2);border-radius:20px;width:100%;max-width:500px;overflow:hidden;margin:auto;">'
-
-    // NAGŁÓWEK
     +'<div style="background:linear-gradient(135deg,rgba(200,241,53,0.1),rgba(200,241,53,0.03));padding:18px 18px 14px;border-bottom:1px solid rgba(200,241,53,0.12);">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
-    +'<div>'
-    +'<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#c8f135;letter-spacing:2px;line-height:1;">📤 PUBLIKUJ POST</div>'
-    +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-top:3px;">Wybierz platformę → pobierz grafikę → wklej</div>'
-    +'</div>'
+    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#c8f135;letter-spacing:2px;line-height:1;">📤 PUBLIKUJ POST</div>'
+    +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-top:3px;">Wybierz platformę → pobierz grafikę → wklej</div></div>'
     +'<button onclick="document.getElementById(\'pub-modal\').remove()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#777;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;">✕</button>'
     +'</div>'
-    // mini podgląd
     +'<div style="display:flex;gap:10px;align-items:center;margin-top:12px;background:rgba(0,0,0,0.3);border-radius:10px;padding:10px;">'
     +'<div style="font-size:22px;">'+mm.icon+'</div>'
     +'<div><div style="font-size:12px;font-weight:600;color:#f0ece8;line-height:1.3;">'+article.title.substring(0,55)+(article.title.length>55?'...':'')+'</div>'
     +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-top:2px;">'+mm.label+' · '+(article.readTime||'5 min')+'</div></div>'
     +'</div>'
     +'</div>'
-
-    // TABS
     +'<div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);">'
     +'<button id="ptab-fb" onclick="switchPubTab(\'fb\')" style="flex:1;padding:12px 6px;background:rgba(24,119,242,0.12);border:none;border-bottom:2px solid #1877f2;color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.5px;">📘 FACEBOOK</button>'
     +'<button id="ptab-ig" onclick="switchPubTab(\'ig\')" style="flex:1;padding:12px 6px;background:transparent;border:none;border-bottom:2px solid transparent;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.5px;">📸 INSTAGRAM</button>'
     +'<button id="ptab-wa" onclick="switchPubTab(\'wa\')" style="flex:1;padding:12px 6px;background:transparent;border:none;border-bottom:2px solid transparent;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.5px;">💬 WHATSAPP</button>'
     +'</div>'
-
     +'<div style="padding:18px;">'
-
-    // === FACEBOOK PANEL ===
+    // FACEBOOK
     +'<div id="ppanel-fb">'
     +'<div style="font-size:10px;color:#60a5fa;font-family:DM Mono,monospace;margin-bottom:8px;">STRONA: P&amp;P PROGRESS</div>'
     +'<textarea id="pub-fb-text" rows="5" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;" onfocus="this.style.borderColor=\'#1877f2\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'">'+buildFbText(article)+'</textarea>'
@@ -777,7 +778,6 @@ function showPublishModal(article) {
     +'<div id="pub-fb-counter" style="font-size:10px;color:#555;font-family:DM Mono,monospace;">'+buildFbText(article).length+' znaków</div>'
     +'<button onclick="regenText(\'pub-fb-text\',\'fb\',\''+article.id+'\')" style="background:none;border:none;color:#60a5fa;font-size:10px;font-family:DM Mono,monospace;cursor:pointer;">↺ Przepisz AI</button>'
     +'</div>'
-    // grafika FB
     +'<div style="background:rgba(24,119,242,0.06);border:1px solid rgba(24,119,242,0.15);border-radius:12px;padding:14px;margin-bottom:14px;">'
     +'<div style="font-size:10px;font-family:DM Mono,monospace;color:#60a5fa;margin-bottom:10px;">🖼️ GRAFIKA 1200×630</div>'
     +'<canvas id="pub-fb-canvas" width="1200" height="630" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.07);display:block;"></canvas>'
@@ -789,21 +789,20 @@ function showPublishModal(article) {
     +'<button onclick="pubToFb()" style="padding:13px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📘 Publikuj na FB</button>'
     +'</div>'
     +'</div>'
-
-    // === INSTAGRAM PANEL ===
+    // INSTAGRAM
     +'<div id="ppanel-ig" style="display:none;">'
     +'<div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:12px;padding:12px;margin-bottom:14px;">'
     +'<div style="font-size:10px;font-weight:700;color:#f97316;font-family:DM Mono,monospace;margin-bottom:10px;">📋 INSTRUKCJA — 3 KROKI:</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;">'
-    +['Pobierz grafikę (kwadrat 1080×1080)','Skopiuj podpis przyciskiem poniżej','Otwórz Instagram → Nowy post → wklej'].map(function(s,i){return '<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:rgba(240,236,232,0.8);"><span style="background:#f97316;color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;margin-top:1px;">'+(i+1)+'</span>'+s+'</div>';}).join('')
+    +'<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:rgba(240,236,232,0.8);"><span style="background:#f97316;color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;margin-top:1px;">1</span>Pobierz grafikę (kwadrat 1080×1080)</div>'
+    +'<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:rgba(240,236,232,0.8);"><span style="background:#f97316;color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;margin-top:1px;">2</span>Skopiuj podpis przyciskiem poniżej</div>'
+    +'<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:rgba(240,236,232,0.8);"><span style="background:#f97316;color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;margin-top:1px;">3</span>Otwórz Instagram → Nowy post → wklej</div>'
     +'</div></div>'
-    // grafika IG
     +'<div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.12);border-radius:12px;padding:14px;margin-bottom:14px;">'
     +'<div style="font-size:10px;font-family:DM Mono,monospace;color:#f97316;margin-bottom:10px;">🖼️ GRAFIKA 1080×1080</div>'
     +'<canvas id="pub-ig-canvas" width="1080" height="1080" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.07);display:block;"></canvas>'
     +'<button onclick="dlCanvas(\'pub-ig-canvas\',\'newsgym_ig\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(236,72,153,0.1));border:1px solid rgba(249,115,22,0.25);color:#f97316;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">⬇️ POBIERZ GRAFIKĘ IG</button>'
     +'</div>'
-    // podpis
     +'<div style="font-size:10px;color:#777;font-family:DM Mono,monospace;margin-bottom:6px;">PODPIS:</div>'
     +'<textarea id="pub-ig-text" rows="6" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;" onfocus="this.style.borderColor=\'#f97316\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'">'+buildIgText(article)+'</textarea>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">'
@@ -811,8 +810,7 @@ function showPublishModal(article) {
     +'<button onclick="copyTxt(\'pub-ig-text\');window.open(\'https://www.instagram.com/\',\'_blank\');" style="padding:13px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">📸 Otwórz IG</button>'
     +'</div>'
     +'</div>'
-
-    // === WHATSAPP PANEL ===
+    // WHATSAPP
     +'<div id="ppanel-wa" style="display:none;">'
     +'<div style="font-size:10px;color:#25d366;font-family:DM Mono,monospace;margin-bottom:8px;">WIADOMOŚĆ WHATSAPP:</div>'
     +'<textarea id="pub-wa-text" rows="6" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;" onfocus="this.style.borderColor=\'#25d366\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'">'+buildWaText(article)+'</textarea>'
@@ -821,11 +819,9 @@ function showPublishModal(article) {
     +'<button onclick="var t=document.getElementById(\'pub-wa-text\');window.open(\'https://wa.me/?text=\'+encodeURIComponent(t?t.value:\'\'),\'_blank\');" style="padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">💬 Otwórz WhatsApp</button>'
     +'</div>'
     +'</div>'
-
     +'</div></div>';
 
   document.body.appendChild(modal);
-
   setTimeout(function(){
     drawFbGfx(document.getElementById('pub-fb-canvas'), article);
     drawIgGfx(document.getElementById('pub-ig-canvas'), article);
@@ -834,6 +830,7 @@ function showPublishModal(article) {
   }, 150);
 }
 
+/* FIX #2: switchPubTab — obsługa zakładek FB/IG/WA (wcześniej brakująca funkcja) */
 function switchPubTab(tab){
   ['fb','ig','wa'].forEach(function(t){
     var p=document.getElementById('ppanel-'+t);
@@ -851,15 +848,6 @@ function switchPubTab(tab){
       b.style.background='transparent';
       b.style.borderBottom='2px solid transparent';
       b.style.color='#555';
-    }
-    // Rysuj grafikę IG gdy tab otwarty
-    if(on && t==='ig') {
-      setTimeout(function(){
-        var c=document.getElementById('pub-ig-canvas');
-        if(c && c.getContext('2d').getImageData(0,0,1,1).data[3]===0) {
-          // canvas pusty - pobierz artykuł z aktywnego modal
-        }
-      },100);
     }
   });
 }
@@ -904,7 +892,7 @@ function dlCanvas(id,name){
   flash('Pobrano grafikę! 📥');
 }
 
-async function regenText(fieldId, platform, artId){
+async function regenText(fieldId,platform,artId){
   var a=window.ARTICLES.find(function(x){return x.id===artId||x.id==artId;});
   if(!a) return;
   var ta=document.getElementById(fieldId);
@@ -946,25 +934,24 @@ async function pubToFb(){
 }
 
 // ============================================================
-// GRAFIKI CANVAS
+// GRAFIKI CANVAS (FB 1200×630 i IG 1080×1080)
 // ============================================================
 
-function drawFbGfx(canvas, article){
+function drawFbGfx(canvas,article){
   if(!canvas) return;
   var ctx=canvas.getContext('2d'),W=1200,H=630;
   var mm=m(article.cat),A=mm.color||'#c8f135';
   ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
   var g=ctx.createLinearGradient(W*0.4,0,W,H);
-  g.addColorStop(0,'transparent');g.addColorStop(1,A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.1)':'rgba(200,241,53,0.1)');
+  g.addColorStop(0,'transparent');g.addColorStop(1,'rgba('+hexToRgbStr(A)+',0.1)');
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
   ctx.fillStyle=A;ctx.fillRect(0,0,6,H);
   ctx.font='bold 52px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('NEWS',50,76);
   var nw=ctx.measureText('NEWS').width;ctx.fillStyle='#f0ece8';ctx.fillText('GYM',50+nw+8,76);
-  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.15)':'rgba(200,241,53,0.15)';
+  ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.15)';
   roundCv(ctx,50,96,240,44,22);
   ctx.fillStyle=A;ctx.font='bold 22px Arial';ctx.fillText(mm.icon+' '+(article.cat||'trening').toUpperCase(),70,124);
-  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.25)':'rgba(200,241,53,0.25)';
-  ctx.fillRect(50,154,W-100,2);
+  ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.25)';ctx.fillRect(50,154,W-100,2);
   ctx.fillStyle='#f0ece8';ctx.font='bold 66px Arial';
   var th=wrapCv(ctx,article.title,50,234,W-120,78);
   ctx.fillStyle='rgba(240,236,232,0.55)';ctx.font='32px Arial';
@@ -976,27 +963,27 @@ function drawFbGfx(canvas, article){
   ctx.fillStyle=A;ctx.fillRect(0,H-4,W,4);
 }
 
-function drawIgGfx(canvas, article){
+function drawIgGfx(canvas,article){
   if(!canvas) return;
   var ctx=canvas.getContext('2d'),W=1080,H=1080;
   var mm=m(article.cat),A=mm.color||'#c8f135';
   ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
   var g=ctx.createRadialGradient(W,0,0,W,0,W);
-  g.addColorStop(0,A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.09)':'rgba(200,241,53,0.09)');g.addColorStop(1,'transparent');
+  g.addColorStop(0,'rgba('+hexToRgbStr(A)+',0.09)');g.addColorStop(1,'transparent');
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
   ctx.fillStyle=A;ctx.fillRect(0,0,W,6);
   ctx.font='bold 48px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('NEWS',60,82);
   var nw=ctx.measureText('NEWS').width;ctx.fillStyle='#f0ece8';ctx.fillText('GYM',60+nw+8,82);
   ctx.globalAlpha=0.04;ctx.font='460px Arial';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(mm.icon,W/2,H/2+150);ctx.globalAlpha=1;ctx.textAlign='left';
-  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.14)':'rgba(200,241,53,0.14)';
+  ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.14)';
   roundCv(ctx,60,108,270,50,25);ctx.fillStyle=A;ctx.font='bold 26px Arial';ctx.fillText(mm.icon+' '+(article.cat||'trening').toUpperCase(),82,141);
-  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.28)':'rgba(200,241,53,0.28)';ctx.fillRect(60,176,W-120,2);
+  ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.28)';ctx.fillRect(60,176,W-120,2);
   ctx.fillStyle='#f0ece8';ctx.font='bold 80px Arial';
   var th=wrapCv(ctx,article.title,60,278,W-120,94);
   ctx.fillStyle='rgba(240,236,232,0.6)';ctx.font='36px Arial';wrapCv(ctx,article.excerpt||'',60,296+th,W-120,50);
-  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.18)':'rgba(200,241,53,0.18)';ctx.fillRect(60,H-170,W-120,1);
+  ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.18)';ctx.fillRect(60,H-170,W-120,1);
   var tags=(article.tags||[article.cat,'fitness']).slice(0,4);
-  ctx.font='28px Arial';ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.65)':'rgba(200,241,53,0.65)';
+  ctx.font='28px Arial';ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.65)';
   ctx.fillText(tags.map(function(t){return '#'+t;}).join('  '),60,H-120);
   ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(0,H-90,W,90);
   ctx.font='bold 30px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@newsgym_pl',60,H-46);
