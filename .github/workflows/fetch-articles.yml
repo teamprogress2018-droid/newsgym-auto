@@ -1,28 +1,33 @@
-name: Pobierz artykuły fitness co 2 dni
+name: Pobierz artykuly fitness codziennie
 
 on:
   schedule:
-    - cron: '0 */2 * * *' # Co 2 godziny o 8:00 rano
-  workflow_dispatch:         # Możliwość ręcznego uruchomienia
+    - cron: '0 7 * * *'  # Codziennie o 7:00 rano
+  workflow_dispatch:      # Możliwość ręcznego uruchomienia
 
 jobs:
-  fetch-articles:
+  fetch:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Pobierz kod
-        uses: actions/checkout@v4
-      
-      - name: Zainstaluj Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
-      
-      - name: Zainstaluj zależności
+          node-version: '18'
+
+      - name: Install dependencies
         run: npm install
-      
-      - name: Pobierz i zapisz artykuły
+
+      - name: Pobierz i wygeneruj 4 artykuly
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
         run: node fetch-articles.js
+
+      - name: Commit nowe artykuly
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "Dodaj artykuly fitness $(date +'%Y-%m-%d')"
+          git push
