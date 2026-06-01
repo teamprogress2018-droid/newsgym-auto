@@ -701,7 +701,9 @@ async function loadRSS(){
         /* FIX #4: sanitacja apostrofów i cudzysłowów w tytułach RSS */
         var safeTitle=title.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
         var safeFeedName=feed.name.replace(/'/g,'&#39;');
-        html+='<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;font-weight:700;">📰 '+safeFeedName+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+date+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+safeTitle.substring(0,100)+(title.length>100?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;">'+desc+(desc.length>=150?'...':'')+'</div><button onclick="generateFromSource(\''+safeTitle.substring(0,80).replace(/'/g,'&#39;')+'\',\''+safeFeedName+'\',\'\',\''+cat+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
+        var btnId='rss-'+loaded;
+        html+='<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;font-weight:700;">📰 '+safeFeedName+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+date+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+safeTitle.substring(0,100)+(title.length>100?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;">'+desc+(desc.length>=150?'...':'')+'</div><button id="'+btnId+'" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
+        (function(t,s,c){setTimeout(function(){var btn=document.getElementById(btnId);if(btn)btn.onclick=function(){generateFromSource(t,s,'',c);};},100);})(safeTitle.substring(0,80),safeFeedName,cat);
         loaded++;
       });
     }catch(e){}
@@ -1077,11 +1079,21 @@ function initPhotoGallery(article, platform) {
 
   gallery.innerHTML = allPhotos.map(function(url, i) {
     var isSelected = (url === selectedPhoto[platform]);
-    return '<div onclick="selectPhoto(this,'' + url.replace(/'/g,"\'") + '','' + platform + '')" style="flex-shrink:0;width:70px;height:50px;border-radius:6px;overflow:hidden;cursor:pointer;border:' + (isSelected?'2px solid #c8f135':'1px solid rgba(255,255,255,0.15)') + ';position:relative;">'
+    var encodedUrl = encodeURIComponent(url);
+    return '<div data-url="' + encodedUrl + '" data-plat="' + platform + '" class="photo-thumb" style="flex-shrink:0;width:70px;height:50px;border-radius:6px;overflow:hidden;cursor:pointer;border:' + (isSelected?'2px solid #c8f135':'1px solid rgba(255,255,255,0.15)') + ';position:relative;">'
       + '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy">'
-      + (isSelected ? '<div style="position:absolute;inset:0;background:rgba(200,241,53,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;">✓</div>' : '')
+      + (isSelected ? '<div style="position:absolute;inset:0;background:rgba(200,241,53,0.25);display:flex;align-items:center;justify-content:center;">✓</div>' : '')
       + '</div>';
   }).join('');
+
+  // Dodaj click handler przez delegację (bez onclick w HTML)
+  gallery.onclick = function(e) {
+    var thumb = e.target.closest('.photo-thumb');
+    if(!thumb) return;
+    var url = decodeURIComponent(thumb.getAttribute('data-url'));
+    var plat = thumb.getAttribute('data-platform');
+    selectPhoto(thumb, url, plat);
+  };
 }
 
 function selectPhoto(el, url, platform) {
