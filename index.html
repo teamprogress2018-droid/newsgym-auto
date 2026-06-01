@@ -89,7 +89,7 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 .research-title{font-size:14px;font-weight:600;line-height:1.35;margin-bottom:8px;color:var(--text);}
 .research-points{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
 .research-points li{display:flex;gap:8px;font-size:12px;color:var(--muted);line-height:1.4;}
-.research-points li::before{content:'rarr';color:var(--blue);flex-shrink:0;font-size:11px;margin-top:1px;}
+.research-points li::before{content:'→';color:var(--blue);flex-shrink:0;font-size:11px;margin-top:1px;}
 .research-tip{background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--accent);line-height:1.4;}
 .research-tip strong{font-weight:700;display:block;margin-bottom:3px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
@@ -232,9 +232,10 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 
 <div class="fullview" id="article-view">
   <div class="fv-hdr">
-    <button class="back-btn" onclick="closeArticle()">Wróc</button>
+    <button class="back-btn" onclick="closeArticle()">Wróć</button>
     <div style="flex:1"></div>
     <button class="back-btn" id="save-btn" onclick="toggleSaved(curId)">Zapisz</button>
+    <button class="back-btn" id="share-btn" onclick="openPublishFromArticle()" style="background:rgba(200,241,53,0.1);border-color:rgba(200,241,53,0.3);color:#c8f135;margin-left:6px;">📤 Udostępnij</button>
   </div>
   <div class="fv-scroll" id="article-body"></div>
 </div>
@@ -245,7 +246,7 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
     <div class="add-title-lbl">DODAJ Z AI</div>
   </div>
   <div class="add-scroll">
-    <div class="add-info">Wklej tekst artykulu lub abstrakt badania. Claude AI wygeneruje polskie streszczenie, doda badania naukowe i zapisze artykul w Firebase - bedzie widoczny dla wszystkich uzytkownikow automatycznie.</div>
+    <div class="add-info">Wklej tekst artykulu lub abstrakt badania. Claude AI wygeneruje polskie streszczenie, doda badania naukowe i zapisze artykul w Firebase.</div>
     <div class="add-field">
       <div class="add-lbl"><div class="step-num">1</div>WKLEJ TEKST LUB BADANIE</div>
       <textarea class="add-textarea" id="add-text" rows="7" placeholder="Wklej tekst artykulu, abstrakt z PubMed lub wlasne notatki..."></textarea>
@@ -276,7 +277,6 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyAs0bULBHydizjRLfc3AQqCZokW-g1kHMc",
   authDomain: "news-gym.firebaseapp.com",
@@ -286,10 +286,8 @@ const firebaseConfig = {
   messagingSenderId: "316391075991",
   appId: "1:316391075991:web:bfc0b243fd0d41db4c79d2"
 };
-
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
-
 window._loadFromFirebase = async function() {
   try {
     setFbStatus('loading','Laduje artykuly z Firebase...');
@@ -307,24 +305,19 @@ window._loadFromFirebase = async function() {
     render();
   }
 };
-
 window._saveToFirebase = async function(article) {
   try {
     const ref = await addDoc(collection(db,'articles'), {...article, createdAt: serverTimestamp()});
     return ref.id;
-  } catch(e) {
-    return null;
-  }
+  } catch(e) { return null; }
 };
-
 setTimeout(() => { if(window._loadFromFirebase) window._loadFromFirebase(); }, 600);
 </script>
 
 <script>
-// ============================================================
-// KONFIGURACJA - URL CLOUDFLARE WORKERA
-// ============================================================
 var WORKER_URL = 'https://anthropic-proxy.teamprogress2018.workers.dev/';
+var FB_PAGE_ID = '377127779516613';
+var FB_TOKEN = 'EAAQkvWmLtUsBRVdRRCCGhNNcVJqN7rRHAMsCVqO45cWgNxdxOoUZCjLlXwLK4wmWUEOMA57gfsEqaV8RKLbdtIXqnpswj3MejAlSKedN3A6D8s1wUuQcFAmABDGCgQbyPqylVI1FDQHVFxACpCFbrIhtrGsSUOoaxgpEWCFowYBRUvxMxMXwkm3KA8l0UW09jATa4Lr0V7Gtugr8d0uDKwQL3cAuZBQKajvJMhAjDypnZBF5fRWWJOtfaIZD';
 
 var CATS_LIST = [
   {id:'all',icon:'🔥',label:'Wszystko'},
@@ -339,91 +332,62 @@ var CATS_LIST = [
   {id:'motyw',icon:'🎯',label:'Motywacja'},
 ];
 
-var UNSPLASH_KEY = 'a0UmrunrDS1E9U_LacY7PBGTgVL6KikHzeCC-Q77oMc';
-
 var UNSPLASH = {
-  trening:  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80&fit=crop',
-  sila:     'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80&fit=crop',
-  cardio:   'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&fit=crop',
-  dieta:    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80&fit=crop',
-  supl:     'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80&fit=crop',
-  badania:  'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&q=80&fit=crop',
+  trening:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80&fit=crop',
+  sila:'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80&fit=crop',
+  cardio:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&fit=crop',
+  dieta:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80&fit=crop',
+  supl:'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80&fit=crop',
+  badania:'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&q=80&fit=crop',
   lifestyle:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80&fit=crop',
-  przepisy: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80&fit=crop',
-  motyw:    'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80&fit=crop',
-  default:  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&fit=crop',
+  przepisy:'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&q=80&fit=crop',
+  motyw:'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80&fit=crop',
+  default:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&fit=crop',
 };
-
-var IMG_CACHE = {};
 
 function getImg(cat){
   if(!cat) return UNSPLASH.default;
-  var c = cat.toLowerCase().trim();
-  if(c==='sila'||c.includes('sil')||c.includes('strength')||c.includes('power')||c.includes('silowy')) return UNSPLASH.sila;
-  if(c==='cardio'||c.includes('card')||c.includes('run')||c.includes('bieg')||c.includes('cardio')) return UNSPLASH.cardio;
-  if(c==='dieta'||c.includes('diet')||c.includes('odzy')||c.includes('nutr')||c.includes('food')||c.includes('jed')) return UNSPLASH.dieta;
-  if(c==='supl'||c==='suplementy'||c.includes('supl')||c.includes('suplem')||c.includes('witam')||c.includes('krea')||c.includes('supple')||c.includes('supplement')) return UNSPLASH.supl;
-  if(c==='badania'||c.includes('bad')||c.includes('nauk')||c.includes('resear')||c.includes('scien')) return UNSPLASH.badania;
-  if(c==='lifestyle'||c.includes('life')||c.includes('zdrow')||c.includes('sen')||c.includes('sleep')||c.includes('styl')) return UNSPLASH.lifestyle;
-  if(c==='przepisy'||c.includes('prze')||c.includes('recip')||c.includes('cook')||c.includes('gotow')) return UNSPLASH.przepisy;
-  if(c==='motyw'||c.includes('motyw')||c.includes('motiv')||c.includes('mental')||c.includes('psych')) return UNSPLASH.motyw;
-  if(c==='trening'||c.includes('tren')||c.includes('train')||c.includes('workout')||c.includes('fitness')) return UNSPLASH.trening;
-  return UNSPLASH.default;
+  var c=cat.toLowerCase().trim();
+  if(c==='sila'||c.includes('sil')) return UNSPLASH.sila;
+  if(c==='cardio'||c.includes('card')||c.includes('bieg')) return UNSPLASH.cardio;
+  if(c==='dieta'||c.includes('diet')||c.includes('odzy')) return UNSPLASH.dieta;
+  if(c==='supl'||c.includes('supl')) return UNSPLASH.supl;
+  if(c==='badania'||c.includes('bad')||c.includes('nauk')) return UNSPLASH.badania;
+  if(c==='lifestyle'||c.includes('life')) return UNSPLASH.lifestyle;
+  if(c==='przepisy'||c.includes('prze')) return UNSPLASH.przepisy;
+  if(c==='motyw'||c.includes('motyw')) return UNSPLASH.motyw;
+  return UNSPLASH.trening;
 }
 
 var META = {
-  trening: {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'💪',label:'TRENING'},
-  sila:    {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🏋️',label:'SILOWY'},
-  cardio:  {color:'#2dd4bf',bg:'rgba(45,212,191,0.15)',grad:'g5',icon:'🏃',label:'CARDIO'},
-  dieta:   {color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g3',icon:'🥗',label:'DIETA'},
-  supl:    {color:'#a78bfa',bg:'rgba(167,139,250,0.15)',grad:'g4',icon:'💊',label:'SUPLEMENTY'},
-  badania: {color:'#60a5fa',bg:'rgba(96,165,250,0.15)',grad:'g2',icon:'🔬',label:'BADANIA'},
+  trening:{color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'💪',label:'TRENING'},
+  sila:{color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🏋️',label:'SILOWY'},
+  cardio:{color:'#2dd4bf',bg:'rgba(45,212,191,0.15)',grad:'g5',icon:'🏃',label:'CARDIO'},
+  dieta:{color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g3',icon:'🥗',label:'DIETA'},
+  supl:{color:'#a78bfa',bg:'rgba(167,139,250,0.15)',grad:'g4',icon:'💊',label:'SUPLEMENTY'},
+  badania:{color:'#60a5fa',bg:'rgba(96,165,250,0.15)',grad:'g2',icon:'🔬',label:'BADANIA'},
   lifestyle:{color:'#f472b6',bg:'rgba(244,114,182,0.15)',grad:'g6',icon:'🧘',label:'LIFESTYLE'},
   przepisy:{color:'#f97316',bg:'rgba(249,115,22,0.15)',grad:'g7',icon:'🍳',label:'PRZEPISY'},
-  motyw:   {color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🎯',label:'MOTYWACJA'},
+  motyw:{color:'#c8f135',bg:'rgba(200,241,53,0.15)',grad:'g1',icon:'🎯',label:'MOTYWACJA'},
 };
 
 var SOURCES_DB = {
-  sila:[
-    {journal:'J Strength Cond Res',year:'2024',title:'Wave loading periodization vs. linear periodization',authors:'Williams R, Chen M et al.',finding:'Fale 3-2-1 zwiekszyly sile o <strong>13.4%</strong> po 8 tygodniach',pmid:'PMC9821456'},
-    {journal:'Sports Med',year:'2023',title:'Neural adaptations to heavy resistance training',authors:'Hakkinen K, Newton RU et al.',finding:'Adaptacje nerwowe to <strong>60-70%</strong> wzrostu sily w pierwszych 8 tygodniach',pmid:'PMC8934521'},
-  ],
-  supl:[
-    {journal:'J Int Soc Sports Nutr',year:'2025',title:'Creatine monohydrate: meta-analysis of 47 trials',authors:'Rawson ES, Volek JS et al.',finding:'Kreatyna zwieksza sile o <strong>8-14%</strong> i mase miesniowa o 1-2 kg',pmid:'PMC10234567'},
-    {journal:'Nutrients',year:'2024',title:'Creatine and cognitive function',authors:'Forbes SC et al.',finding:'3-5g/dzien poprawia pamiec robocza o <strong>15%</strong> u wegetarian',pmid:'PMC9876543'},
-  ],
-  dieta:[
-    {journal:'J Int Soc Sports Nutr',year:'2024',title:'Protein timing: myth vs. reality',authors:'Schoenfeld BJ et al.',finding:'Calkowita podaz bialka (1.6-2.2g/kg) wazniejsza niz timing - okno <strong>4-6 godzin</strong>',pmid:'PMC9123456'},
-  ],
-  cardio:[
-    {journal:'Med Sci Sports Exerc',year:'2024',title:'HIIT vs. MICT: meta-analysis',authors:'Wewege M et al.',finding:'HIIT redukuje tkluszcz o <strong>28.5%</strong> wiecej przy 40% krótszej sesji',pmid:'PMC9456789'},
-  ],
-  lifestyle:[
-    {journal:'Sleep Med Rev',year:'2024',title:'Sleep and athletic performance',authors:'Watson AM et al.',finding:'Wiecej snu poprawilo wyniki NBA o <strong>9% celnosci</strong> i 12% szybkosci',pmid:'PMC9567890'},
-  ],
-  trening:[
-    {journal:'J Strength Cond Res',year:'2024',title:'Volume and hypertrophy: dose-response',authors:'Schoenfeld BJ et al.',finding:'Optimum dla hipertrofii: <strong>15-20 serii/grupe/tydzien</strong>',pmid:'PMC9234567'},
-  ],
+  sila:[{journal:'J Strength Cond Res',year:'2024',title:'Wave loading periodization vs. linear periodization',authors:'Williams R, Chen M et al.',finding:'Fale 3-2-1 zwiekszyly sile o <strong>13.4%</strong> po 8 tygodniach',pmid:'PMC9821456'},{journal:'Sports Med',year:'2023',title:'Neural adaptations to heavy resistance training',authors:'Hakkinen K, Newton RU et al.',finding:'Adaptacje nerwowe to <strong>60-70%</strong> wzrostu sily w pierwszych 8 tygodniach',pmid:'PMC8934521'}],
+  supl:[{journal:'J Int Soc Sports Nutr',year:'2025',title:'Creatine monohydrate: meta-analysis of 47 trials',authors:'Rawson ES, Volek JS et al.',finding:'Kreatyna zwieksza sile o <strong>8-14%</strong> i mase miesniowa o 1-2 kg',pmid:'PMC10234567'},{journal:'Nutrients',year:'2024',title:'Creatine and cognitive function',authors:'Forbes SC et al.',finding:'3-5g/dzien poprawia pamiec robocza o <strong>15%</strong> u wegetarian',pmid:'PMC9876543'}],
+  dieta:[{journal:'J Int Soc Sports Nutr',year:'2024',title:'Protein timing: myth vs. reality',authors:'Schoenfeld BJ et al.',finding:'Calkowita podaz bialka (1.6-2.2g/kg) wazniejsza niz timing',pmid:'PMC9123456'}],
+  cardio:[{journal:'Med Sci Sports Exerc',year:'2024',title:'HIIT vs. MICT: meta-analysis',authors:'Wewege M et al.',finding:'HIIT redukuje tluszcz o <strong>28.5%</strong> wiecej przy 40% krotszej sesji',pmid:'PMC9456789'}],
+  lifestyle:[{journal:'Sleep Med Rev',year:'2024',title:'Sleep and athletic performance',authors:'Watson AM et al.',finding:'Wiecej snu poprawilo wyniki NBA o <strong>9% celnosci</strong>',pmid:'PMC9567890'}],
+  trening:[{journal:'J Strength Cond Res',year:'2024',title:'Volume and hypertrophy: dose-response',authors:'Schoenfeld BJ et al.',finding:'Optimum dla hipertrofii: <strong>15-20 serii/grupe/tydzien</strong>',pmid:'PMC9234567'}],
   badania:[{journal:'Br J Sports Med',year:'2024',title:'Exercise is medicine',authors:'Pedersen BK',finding:'Regularny trening redukuje ryzyko chorob o <strong>30-40%</strong>',pmid:'PMC9789012'}],
   motyw:[{journal:'J Sport Exerc Psychol',year:'2024',title:'Self-determination in exercise',authors:'Ryan RM, Deci EL',finding:'Autonomia w treningu zwieksza konsekwencje o <strong>40%</strong>',pmid:'PMC9345678'}],
   przepisy:[{journal:'Nutrients',year:'2024',title:'Post-exercise nutrition',authors:'Burke LM et al.',finding:'<strong>20-40g bialka + 1g weglowodanow/kg</strong> maksymalizuje regeneracje',pmid:'PMC9456123'}],
 };
 
 window.FALLBACK_ARTICLES = [
-  {id:'f1',cat:'sila',title:'Jak zwiekszyc sile maksymalna w 8 tygodni',excerpt:'Protokol periodyzacji falowej pozwala na znaczacy wzrost sily przy zachowaniu masy miesniowej.',author:'Marcin Kowal',authorInit:'MK',date:'dzis',readTime:'5 min',views:1240,likes:89,featured:true,
-    content:'<h3>Periodyzacja Falowa</h3><p>Periodyzacja falowa to jedna z najskuteczniejszych metod treningu silowego, polegajaca na naprzemiennym stosowaniu roznych intensywnosci.</p><div class="highlight">Badania pokazuja, ze fale 3-2-1 moga zwiekszyc sile o 12-18% w ciagu 8 tygodni.</div><div class="tip-box"><strong>WSKAZOWKA</strong>Odpoczynek 3-5 minut miedzy seriami. Priorytet: technika ponad ciezar.</div>',
-    tags:['periodyzacja','silowy','1RM']},
-  {id:'f2',cat:'supl',title:'Kreatyna 2025 - Meta-analiza 47 badan',excerpt:'47 badan jednoznacznie wskazuje na korzysci suplementacji kreatyna dla sily i funkcji kognitywnych.',author:'dr Anna Wisniewska',authorInit:'AW',date:'wczoraj',readTime:'7 min',views:3420,likes:256,isResearch:true,source:'J Sports Medicine 2025',
-    points:['Wzrost sily o 8-14% po 4 tygodniach','Poprawa wydolnosci w wysilkach powyzej 10 sekund','Korzysci kognitywne przy 3-5g/dzien'],
-    practicalTip:'Suplementuj 3-5g kreatyny monohydratu dziennie bez fazy ladowania.',
-    content:'<h3>Metodologia</h3><p>Meta-analiza 47 randomizowanych badan z lat 2015-2025, laczna proba 2847 uczestnikow.</p><div class="highlight">Jedno z najwiekszych badan nad kreatyna.</div><div class="tip-box"><strong>DAWKOWANIE</strong>3-5g kreatyny monohydratu dziennie.</div>',
-    tags:['kreatyna','suplementy','sila']},
-  {id:'f3',cat:'dieta',title:'Bialko - timing nie ma takiego znaczenia',excerpt:'Najnowsze badania obalaja mit okna anabolicznego.',author:'Piotr Nowak',authorInit:'PN',date:'2 dni temu',readTime:'4 min',views:892,likes:67,
-    content:'<h3>Mit okna anabolicznego</h3><p>Przez lata uwazano, ze bialko nalezy spozyc w ciagu 30 minut po treningu. Nowsze badania to podwazaja.</p><div class="highlight">Calkowita dobowa podaz bialka ma znacznie wieksze znaczenie niz timing.</div><div class="tip-box"><strong>ZASADA</strong>1.6-2.2g bialka/kg masy ciala dziennie w 4-5 posilkach.</div>',
-    tags:['bialko','timing','dieta']},
-  {id:'f4',cat:'lifestyle',title:'Sen a wyniki - 8 godzin to minimum',excerpt:'Badania NBA pokazuja, ze niedobor snu sabotuje wyniki sportowe.',author:'Monika Lewandowska',authorInit:'ML',date:'5 dni temu',readTime:'5 min',views:2103,likes:178,
-    content:'<h3>Co dzieje sie podczas snu?</h3><p>Sen to czas gdy organizm produkuje hormon wzrostu i naprawia mikrouszkodzenia miesni.</p><div class="highlight">Zawodnicy NBA spiacy wiecej niz 8h mieli o 9% lepsza celnosc.</div><div class="tip-box"><strong>PROTOKOL</strong>7-9h snu, stale pory, temperatura 18-20 stopni, ciemnosc.</div>',
-    tags:['sen','regeneracja','wyniki']},
+  {id:'f1',cat:'sila',title:'Jak zwiekszyc sile maksymalna w 8 tygodni',excerpt:'Protokol periodyzacji falowej pozwala na znaczacy wzrost sily przy zachowaniu masy miesniowej.',author:'Marcin Kowal',authorInit:'MK',date:'dzis',readTime:'5 min',views:1240,likes:89,featured:true,content:'<h3>Periodyzacja Falowa</h3><p>Periodyzacja falowa to jedna z najskuteczniejszych metod treningu silowego.</p><div class="highlight">Badania pokazuja, ze fale 3-2-1 moga zwiekszyc sile o 12-18% w ciagu 8 tygodni.</div><div class="tip-box"><strong>WSKAZOWKA</strong>Odpoczynek 3-5 minut miedzy seriami.</div>',tags:['periodyzacja','silowy','1RM']},
+  {id:'f2',cat:'supl',title:'Kreatyna 2025 - Meta-analiza 47 badan',excerpt:'47 badan jednoznacznie wskazuje na korzysci suplementacji kreatyna dla sily i funkcji kognitywnych.',author:'dr Anna Wisniewska',authorInit:'AW',date:'wczoraj',readTime:'7 min',views:3420,likes:256,isResearch:true,source:'J Sports Medicine 2025',points:['Wzrost sily o 8-14% po 4 tygodniach','Poprawa wydolnosci w wysilkach powyzej 10 sekund','Korzysci kognitywne przy 3-5g/dzien'],practicalTip:'Suplementuj 3-5g kreatyny monohydratu dziennie bez fazy ladowania.',content:'<h3>Metodologia</h3><p>Meta-analiza 47 randomizowanych badan z lat 2015-2025.</p><div class="highlight">Jedno z najwiekszych badan nad kreatyna.</div><div class="tip-box"><strong>DAWKOWANIE</strong>3-5g kreatyny monohydratu dziennie.</div>',tags:['kreatyna','suplementy','sila']},
+  {id:'f3',cat:'dieta',title:'Bialko - timing nie ma takiego znaczenia',excerpt:'Najnowsze badania obalaja mit okna anabolicznego.',author:'Piotr Nowak',authorInit:'PN',date:'2 dni temu',readTime:'4 min',views:892,likes:67,content:'<h3>Mit okna anabolicznego</h3><p>Przez lata uwazano, ze bialko nalezy spozyc w ciagu 30 minut po treningu.</p><div class="highlight">Calkowita dobowa podaz bialka ma znacznie wieksze znaczenie niz timing.</div>',tags:['bialko','timing','dieta']},
+  {id:'f4',cat:'lifestyle',title:'Sen a wyniki - 8 godzin to minimum',excerpt:'Badania NBA pokazuja, ze niedobor snu sabotuje wyniki sportowe.',author:'Monika Lewandowska',authorInit:'ML',date:'5 dni temu',readTime:'5 min',views:2103,likes:178,content:'<h3>Co dzieje sie podczas snu?</h3><p>Sen to czas gdy organizm produkuje hormon wzrostu.</p><div class="highlight">Zawodnicy NBA spiacy wiecej niz 8h mieli o 9% lepsza celnosc.</div>',tags:['sen','regeneracja','wyniki']},
 ];
 
 window.ARTICLES = window.FALLBACK_ARTICLES.slice();
@@ -441,16 +405,10 @@ function setFbStatus(state,text){
   if(dot) dot.className='fb-dot'+(state==='loading'?' loading':state==='error'?' error':'');
   if(txt) txt.textContent=text;
 }
-
-function syncNow(){
-  setFbStatus('loading','Synchronizuje...');
-  if(window._loadFromFirebase) window._loadFromFirebase();
-}
+function syncNow(){ setFbStatus('loading','Synchronizuje...'); if(window._loadFromFirebase) window._loadFromFirebase(); }
 
 function renderCats(){
-  document.getElementById('cats-scroll').innerHTML=CATS_LIST.map(c=>
-    '<button class="cat-btn '+(curCat===c.id?'active':'')+'" onclick="setCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>'
-  ).join('');
+  document.getElementById('cats-scroll').innerHTML=CATS_LIST.map(c=>'<button class="cat-btn '+(curCat===c.id?'active':'')+'" onclick="setCat(\''+c.id+'\')">'+c.icon+' '+c.label+'</button>').join('');
 }
 function setCat(id){ curCat=id; renderCats(); render(); }
 
@@ -478,45 +436,17 @@ function buildHome(el,arts){
   var mini=arts.slice(0,5);
   var fm=feat?m(feat.cat):{grad:'g1',icon:'🔥',label:'NEWS',color:'#c8f135'};
   var total=window.ARTICLES.length;
-  var fbCount=window.FIREBASE_ARTICLES.length;
-
-  function isResearchArticle(a){
-    if(a.isResearch) return true;
-    if(a.cat==='badania') return true;
-    var t=(a.title||'').toLowerCase();
-    var e=(a.excerpt||'').toLowerCase();
-    var keywords=['badanie','badania','meta-analiza','analiza','research','study','trial','journal','pubmed','przegląd','review','randomized','kohort','bibliometr'];
-    return keywords.some(function(k){return t.includes(k)||e.includes(k);});
-  }
-
+  function isResearchArticle(a){if(a.isResearch||a.cat==='badania') return true; var t=(a.title||'').toLowerCase(); return ['badanie','meta-analiza','research','study','journal'].some(function(k){return t.includes(k);});}
   var researchCount=window.ARTICLES.filter(isResearchArticle).length;
-
-  var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row" style="grid-template-columns:repeat(2,1fr);">'
-    +'<div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Artykulow</div></div>'
-    +'<div class="stat-box"><div class="stat-val">'+researchCount+'</div><div class="stat-lbl">Badan</div></div>'
-    +'</div></div>';
-
+  var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row" style="grid-template-columns:repeat(2,1fr);"><div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Artykulow</div></div><div class="stat-box"><div class="stat-val">'+researchCount+'</div><div class="stat-lbl">Badan</div></div></div></div>';
   if(feat){
     var featImg=feat.imageUrl||getImg(feat.cat);
-    h+='<div class="banner-wrap"><div class="banner" style="background-image:url('+featImg+');background-size:cover;background-position:center;" onclick="openArticle(\''+feat.id+'\')">'
-      +'<div class="banner-content">'
-      +'<div class="banner-cat">'+fm.icon+' '+fm.label+'</div>'
-      +'<div class="banner-title">'+feat.title+'</div>'
-      +'<div class="banner-meta">⏱ '+(feat.readTime||'5 min')+' czytania · '+(feat.views||0)+' wyswietlen</div>'
-      +'</div></div></div>';
+    h+='<div class="banner-wrap"><div class="banner" style="background-image:url('+featImg+');background-size:cover;background-position:center;" onclick="openArticle(\''+feat.id+'\')">'+'<div class="banner-content"><div class="banner-cat">'+fm.icon+' '+fm.label+'</div><div class="banner-title">'+feat.title+'</div><div class="banner-meta">⏱ '+(feat.readTime||'5 min')+' czytania · '+(feat.views||0)+' wyswietlen</div></div></div></div>';
   }
-
-  h+='<div class="section"><div class="section-hdr"><div class="section-title">🔥 GORACE TEMATY</div><button class="section-more" onclick="goTab(\'latest\')">WIECEJ</button></div>'
-    +'<div class="hscroll-wrap"><div class="hscroll">'
-    +mini.map(function(a){var mm=m(a.cat);var img=a.imageUrl||getImg(a.cat);return '<div class="card-mini" onclick="openArticle(\''+a.id+'\')"><div class="card-mini-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.5));"></div></div><div class="card-mini-body"><div class="card-mini-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div><div class="card-mini-title">'+a.title+'</div></div></div>';}).join('')
-    +'</div></div></div>';
-
-  h+='<div class="section"><div class="section-hdr"><div class="section-title">NAJNOWSZE</div><button class="section-more" onclick="goTab(\'latest\')">WSZYSTKIE</button></div>'
-    +recent.map(function(a){return cardSm(a);}).join('')+'</div>';
-
+  h+='<div class="section"><div class="section-hdr"><div class="section-title">🔥 GORACE TEMATY</div><button class="section-more" onclick="goTab(\'latest\')">WIECEJ</button></div><div class="hscroll-wrap"><div class="hscroll">'+mini.map(function(a){var mm=m(a.cat);var img=a.imageUrl||getImg(a.cat);return '<div class="card-mini" onclick="openArticle(\''+a.id+'\')"><div class="card-mini-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.5));"></div></div><div class="card-mini-body"><div class="card-mini-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div><div class="card-mini-title">'+a.title+'</div></div></div>';}).join('')+'</div></div></div>';
+  h+='<div class="section"><div class="section-hdr"><div class="section-title">NAJNOWSZE</div><button class="section-more" onclick="goTab(\'latest\')">WSZYSTKIE</button></div>'+recent.map(function(a){return cardSm(a);}).join('')+'</div>';
   var rr=window.ARTICLES.find(function(a){return a.isResearch;});
   if(rr) h+='<div class="section"><div class="section-hdr"><div class="section-title">BADANIE TYGODNIA</div></div>'+resCard(rr)+'</div>';
-
   var big=arts.filter(function(a){return !a.featured&&!a.isResearch;}).slice(0,3);
   if(big.length) h+='<div class="section"><div class="section-hdr"><div class="section-title">POLECANE</div></div>'+big.map(function(a){return cardLg(a);}).join('')+'</div>';
   h+='<div style="height:20px;"></div>';
@@ -531,38 +461,25 @@ function buildLatest(el,arts){
 function buildResearch(el){
   var rarts=window.ARTICLES.filter(function(a){return a.isResearch||a.cat==='badania';});
   var extra=window.ARTICLES.filter(function(a){return !a.isResearch&&a.cat!=='badania';}).slice(0,3);
-  el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">BADANIA NAUKOWE</div></div>'
-    +'<div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Streszczenia z PubMed, JSCR i innych czasopism - przetlumaczone na polski.</div>'
-    +rarts.map(function(a){return resCard(a);}).join('')
-    +extra.map(function(a){return '<div class="research-card" onclick="openArticle(\''+a.id+'\')">'
-      +'<div class="research-hdr"><div class="research-badge">POWIAZANE BADANIE</div><div class="research-source">2024-2025</div></div>'
-      +'<div class="research-title">'+a.title+'</div>'
-      +'<div class="research-tip"><strong>ZASTOSOWANIE</strong>'+a.excerpt+'</div>'
-      +'</div>';}).join('')
-    +'</div><div style="height:20px;"></div>';
+  el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">BADANIA NAUKOWE</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Streszczenia z PubMed, JSCR i innych czasopism - przetlumaczone na polski.</div>'+rarts.map(function(a){return resCard(a);}).join('')+extra.map(function(a){return '<div class="research-card" onclick="openArticle(\''+a.id+'\')"><div class="research-hdr"><div class="research-badge">POWIAZANE BADANIE</div><div class="research-source">2024-2025</div></div><div class="research-title">'+a.title+'</div><div class="research-tip"><strong>ZASTOSOWANIE</strong>'+a.excerpt+'</div></div>';}).join('')+'</div><div style="height:20px;"></div>';
 }
 
 function buildSaved(el){
   var sv=window.ARTICLES.filter(function(a){return saved.includes(a.id);});
-  if(!sv.length){el.innerHTML='<div class="section" style="padding-top:32px;"><div class="empty"><div class="empty-icon">?</div><div>Brak zapisanych artykulow</div></div></div>';return;}
+  if(!sv.length){el.innerHTML='<div class="section" style="padding-top:32px;"><div class="empty"><div class="empty-icon">🔖</div><div>Brak zapisanych artykulow</div></div></div>';return;}
   el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">ZAPISANE ('+sv.length+')</div></div>'+sv.map(function(a){return cardLg(a);}).join('')+'</div><div style="height:20px;"></div>';
 }
 
 function cardLg(a){
   var mm=m(a.cat),sv=saved.includes(a.id);
   var img=a.imageUrl||getImg(a.cat);
-  return '<div class="card-lg" onclick="openArticle(\''+a.id+'\')"><div class="card-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div class="card-img-overlay"></div><div class="card-img-cat" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div><div class="card-img-read">⏱ '+(a.readTime||'5 min')+'</div></div><div class="card-body"><div class="card-title">'+a.title+'</div><div class="card-excerpt">'+(a.excerpt||'')+'</div><div class="card-footer"><div class="card-author"><div class="card-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div class="card-author-name">'+(a.author||'Redakcja')+'</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="card-date">'+(a.date||'dzis')+'</div><button class="card-action-btn" onclick="event.stopPropagation();toggleSaved(\''+a.id+'\')">'+(sv?'🔖':'🤍')+'</button></div></div></div></div>';
+  return '<div class="card-lg" onclick="openArticle(\''+a.id+'\')"><div class="card-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div class="card-img-overlay"></div><div class="card-img-cat" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div><div class="card-img-read">⏱ '+(a.readTime||'5 min')+'</div></div><div class="card-body"><div class="card-title">'+a.title+'</div><div class="card-excerpt">'+(a.excerpt||'')+'</div><div class="card-footer"><div class="card-author"><div class="card-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div class="card-author-name">'+(a.author||'Redakcja')+'</div></div><div style="display:flex;align-items:center;gap:6px;"><div class="card-date">'+(a.date||'dzis')+'</div><button class="card-action-btn" title="Udostępnij" onclick="event.stopPropagation();showPublishModal(window.ARTICLES.find(function(x){return x.id===\''+a.id+'\';})||{})">📤</button><button class="card-action-btn" onclick="event.stopPropagation();toggleSaved(\''+a.id+'\')">'+(sv?'🔖':'🤍')+'</button></div></div></div></div>';
 }
 
 function cardSm(a){
   var mm=m(a.cat);
   var img=a.imageUrl||getImg(a.cat);
-  return '<div class="card-sm" onclick="openArticle(\''+a.id+'\')">'
-    +'<div class="card-sm-img" style="background-image:url('+img+');background-size:cover;background-position:center;"></div>'
-    +'<div class="card-sm-content"><div class="card-sm-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div>'
-    +'<div class="card-sm-title">'+a.title+'</div>'
-    +'<div class="card-sm-meta"><span>'+(a.author||'Redakcja')+'</span><span>·</span><span>'+(a.date||'dzis')+'</span><span>·</span><span>⏱ '+(a.readTime||'5 min')+'</span></div>'
-    +'</div></div>';
+  return '<div class="card-sm" onclick="openArticle(\''+a.id+'\')">'+'<div class="card-sm-img" style="background-image:url('+img+');background-size:cover;background-position:center;"></div>'+'<div class="card-sm-content"><div class="card-sm-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div><div class="card-sm-title">'+a.title+'</div><div class="card-sm-meta"><span>'+(a.author||'Redakcja')+'</span><span>·</span><span>'+(a.date||'dzis')+'</span></div></div></div>';
 }
 
 function resCard(a){
@@ -572,10 +489,7 @@ function resCard(a){
 function buildSources(cat,extra){
   var src=getSrc(cat,extra);
   if(!src.length) return '';
-  return '<div class="sources-section"><div class="sources-hdr">ZRODLA NAUKOWE</div><div class="sources-sub">Potwierdzone badania naukowe powiazane z tym artykulem</div>'
-    +src.map(function(s){
-      return '<div class="source-item"><div class="source-top"><div class="source-journal">'+s.journal+'</div><div class="source-year">'+s.year+'</div></div><div class="source-title-txt">'+s.title+'</div><div class="source-authors">'+s.authors+'</div><div class="source-finding"><div class="source-arrow">-&gt;</div><div class="source-finding-text">'+s.finding+'</div></div>'+(s.pmid?'<div class="source-pmid">'+s.pmid+' PubMed</div>':'')+'</div>';
-    }).join('')+'</div>';
+  return '<div class="sources-section"><div class="sources-hdr">ZRODLA NAUKOWE</div><div class="sources-sub">Potwierdzone badania naukowe powiazane z tym artykulem</div>'+src.map(function(s){return '<div class="source-item"><div class="source-top"><div class="source-journal">'+s.journal+'</div><div class="source-year">'+s.year+'</div></div><div class="source-title-txt">'+s.title+'</div><div class="source-authors">'+s.authors+'</div><div class="source-finding"><div class="source-arrow">→</div><div class="source-finding-text">'+s.finding+'</div></div>'+(s.pmid?'<div class="source-pmid">'+s.pmid+' PubMed</div>':'')+'</div>';}).join('')+'</div>';
 }
 
 function openArticle(id){
@@ -587,71 +501,37 @@ function openArticle(id){
   document.getElementById('article-body').innerHTML=
     '<div class="art-cat-tag" style="background:'+mm.bg+';color:'+mm.color+';">'+mm.icon+' '+mm.label+'</div>'
     +'<div class="art-title">'+a.title+'</div>'
-    +'<div class="art-meta"><div class="art-author-row"><div class="art-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div><div class="art-author-name">'+(a.author||'Redakcja NEWS GYM')+'</div><div class="art-date">'+(a.date||'dzis')+' - '+(a.readTime||'5 min')+'</div></div></div><div class="art-stats"><div class="art-stat">'+(a.views||0)+'</div><div class="art-stat">'+(a.likes||0)+'</div></div></div>'
+    +'<div class="art-meta"><div class="art-author-row"><div class="art-avatar" style="background:'+mm.bg+';color:'+mm.color+'">'+(a.authorInit||'?')+'</div><div><div class="art-author-name">'+(a.author||'Redakcja NEWS GYM')+'</div><div class="art-date">'+(a.date||'dzis')+' - '+(a.readTime||'5 min')+'</div></div></div><div class="art-stats"><div class="art-stat">'+(a.views||0)+' 👁</div><div class="art-stat">'+(a.likes||0)+' ❤️</div></div></div>'
     +'<div class="art-hero" style="background-image:url('+(a.imageUrl||getImg(a.cat))+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.4));"></div><div style="position:absolute;bottom:12px;right:12px;font-size:28px;">'+mm.icon+'</div></div>'
     +'<div class="art-body">'+(a.content||'')+'</div>'
     +'<div class="art-tags">'+(a.tags||[]).map(function(t){return '<div class="art-tag">#'+t+'</div>';}).join('')+'</div>'
-    +buildSources(a.cat, a.extraSources||[])
-    // PROTOKÓŁ ZASTOSOWANIA
+    +buildSources(a.cat,a.extraSources||[])
     +'<div id="protocol-section" style="margin-top:24px;">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
     +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:1px;color:#c8f135;">⚙️ PROTOKÓŁ ZASTOSOWANIA</div>'
     +'<button onclick="generateProtocol(\''+id+'\')" id="protocol-btn" style="background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:#c8f135;border-radius:8px;padding:6px 12px;font-size:11px;font-family:DM Mono,monospace;cursor:pointer;font-weight:700;">GENERUJ AI ⚡</button>'
     +'</div>'
     +'<div id="protocol-content">'
-    +(a.protocol ? renderProtocolHTML(a.protocol, a.title) :
-      '<div style="background:rgba(200,241,53,0.04);border:1px dashed rgba(200,241,53,0.2);border-radius:10px;padding:16px;text-align:center;font-size:12px;color:#555;font-family:DM Mono,monospace;">Kliknij GENERUJ AI aby stworzyć gotowy protokół dla tego artykułu</div>')
-    +'</div>'
-    +'<div id="protocol-share-btn" style="margin-top:12px;display:'+(a.protocol?'block':'none')+'">'
-    +'<button onclick="generateProtocolInfographic(\''+id+'\')" style="width:100%;padding:14px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📲 Generuj infografikę do social media</button>'
-    +'</div>'
-    +'</div>'
+    +(a.protocol?renderProtocolHTML(a.protocol,a.title):'<div style="background:rgba(200,241,53,0.04);border:1px dashed rgba(200,241,53,0.2);border-radius:10px;padding:16px;text-align:center;font-size:12px;color:#555;font-family:DM Mono,monospace;">Kliknij GENERUJ AI aby stworzyć gotowy protokół</div>')
+    +'</div></div>'
     +'<div style="height:32px;"></div>';
   document.getElementById('article-view').classList.add('show');
   document.getElementById('article-body').scrollTop=0;
 }
 function closeArticle(){document.getElementById('article-view').classList.remove('show');curId=null;}
+function openPublishFromArticle(){
+  if(!curId) return;
+  var a=window.ARTICLES.find(function(x){return x.id===curId;});
+  if(a) showPublishModal(a);
+}
 
-function renderProtocolHTML(p, title){
+function renderProtocolHTML(p,title){
   if(!p) return '';
-  var rows=[
-    {icon:'💊',label:'DAWKA',val:p.dawka},
-    {icon:'⏰',label:'KIEDY',val:p.kiedy},
-    {icon:'🔄',label:'CZĘSTOTLIWOŚĆ',val:p.czestotliwosc},
-    {icon:'⚡',label:'EFEKTY PO',val:p.efekty},
-    {icon:'⚠️',label:'UWAGA',val:p.uwaga},
-  ].filter(function(r){return r.val;});
-
-  // Jeśli nieparzysta liczba — ostatni element rozciąga się na całą szerokość
-  var isOdd = rows.length % 2 !== 0;
-
-  var tips=(p.wskazowki||[]).map(function(w){
-    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
-      +'<span style="color:#c8f135;flex-shrink:0;margin-top:2px;">✓</span>'
-      +'<span style="font-size:13px;color:rgba(240,236,232,0.85);line-height:1.5;">'+w+'</span>'
-      +'</div>';
-  }).join('');
-
-  var gridItems = rows.map(function(r, i){
-    var isLast = i === rows.length - 1;
-    var span = (isOdd && isLast) ? 'grid-column:1/-1;' : '';
-    return '<div style="background:#0a0a0a;padding:14px 16px;'+span+'">'
-      +'<div style="font-size:9px;font-family:DM Mono,monospace;color:#555;letter-spacing:0.5px;margin-bottom:4px;">'+r.icon+' '+r.label+'</div>'
-      +'<div style="font-size:14px;font-weight:600;color:#f0ece8;line-height:1.3;">'+r.val+'</div>'
-      +'</div>';
-  }).join('');
-
-  return '<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.2);border-radius:12px;overflow:hidden;">'
-    // Nagłówek z tytułem
-    +(title ? '<div style="background:rgba(200,241,53,0.08);padding:12px 16px;border-bottom:1px solid rgba(200,241,53,0.15);">'
-      +'<div style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;letter-spacing:0.5px;margin-bottom:3px;">PROTOKÓŁ DOTYCZY</div>'
-      +'<div style="font-size:14px;font-weight:600;color:#f0ece8;line-height:1.3;">'+title+'</div>'
-      +'</div>' : '')
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(200,241,53,0.1);">'
-    +gridItems
-    +'</div>'
-    +(tips ? '<div style="padding:14px 16px;"><div style="font-size:10px;font-family:DM Mono,monospace;color:#c8f135;letter-spacing:0.5px;margin-bottom:4px;">💡 WSKAZÓWKI PRAKTYCZNE</div>'+tips+'</div>' : '')
-    +'</div>';
+  var rows=[{icon:'💊',label:'DAWKA',val:p.dawka},{icon:'⏰',label:'KIEDY',val:p.kiedy},{icon:'🔄',label:'CZĘSTOTLIWOŚĆ',val:p.czestotliwosc},{icon:'⚡',label:'EFEKTY PO',val:p.efekty},{icon:'⚠️',label:'UWAGA',val:p.uwaga}].filter(function(r){return r.val;});
+  var isOdd=rows.length%2!==0;
+  var tips=(p.wskazowki||[]).map(function(w){return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:#c8f135;flex-shrink:0;margin-top:2px;">✓</span><span style="font-size:13px;color:rgba(240,236,232,0.85);line-height:1.5;">'+w+'</span></div>';}).join('');
+  var gridItems=rows.map(function(r,i){var span=(isOdd&&i===rows.length-1)?'grid-column:1/-1;':'';return '<div style="background:#0a0a0a;padding:14px 16px;'+span+'"><div style="font-size:9px;font-family:DM Mono,monospace;color:#555;letter-spacing:0.5px;margin-bottom:4px;">'+r.icon+' '+r.label+'</div><div style="font-size:14px;font-weight:600;color:#f0ece8;line-height:1.3;">'+r.val+'</div></div>';}).join('');
+  return '<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.2);border-radius:12px;overflow:hidden;">'+(title?'<div style="background:rgba(200,241,53,0.08);padding:12px 16px;border-bottom:1px solid rgba(200,241,53,0.15);"><div style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;letter-spacing:0.5px;margin-bottom:3px;">PROTOKÓŁ DOTYCZY</div><div style="font-size:14px;font-weight:600;color:#f0ece8;line-height:1.3;">'+title+'</div></div>':'')+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(200,241,53,0.1);">'+gridItems+'</div>'+(tips?'<div style="padding:14px 16px;"><div style="font-size:10px;font-family:DM Mono,monospace;color:#c8f135;letter-spacing:0.5px;margin-bottom:4px;">💡 WSKAZÓWKI PRAKTYCZNE</div>'+tips+'</div>':'')+'</div>';
 }
 
 async function generateProtocol(id){
@@ -659,632 +539,22 @@ async function generateProtocol(id){
   if(!a) return;
   var btn=document.getElementById('protocol-btn');
   var content=document.getElementById('protocol-content');
-  if(btn) {btn.textContent='⏳ Generuję...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ Generuję...';btn.disabled=true;}
   if(content) content.innerHTML='<div style="text-align:center;padding:20px;color:#60a5fa;font-size:12px;font-family:DM Mono,monospace;"><div style="animation:spin 1s linear infinite;display:inline-block;font-size:24px;">⚡</div><div style="margin-top:8px;">AI tworzy protokół...</div></div>';
-
-  var prompt='Stwórz protokół zastosowania dla artykułu fitness. Odpowiedz TYLKO JSON:\n'
-    +'{"dawka":"np. 3-5g dziennie lub 3x30min/tydz","kiedy":"np. rano na czczo / przed treningiem","czestotliwosc":"np. codziennie / 3x w tygodniu","efekty":"np. 4-8 tygodni","uwaga":"np. konsultacja z lekarzem przy...","wskazowki":["wskazowka 1 max 60 znakow","wskazowka 2","wskazowka 3"]}\n\n'
-    +'Artykul: '+a.title+'\n'+a.excerpt;
-
+  var prompt='Stwórz protokół zastosowania dla artykułu fitness. Odpowiedz TYLKO JSON:\n{"dawka":"...","kiedy":"...","czestotliwosc":"...","efekty":"...","uwaga":"...","wskazowki":["...","...","..."]}\n\nArtykul: '+a.title+'\n'+a.excerpt;
   try{
-    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
     var data=await resp.json();
     var raw=data.content.map(function(i){return i.text||'';}).join('');
     var s=raw.indexOf('{'),e=raw.lastIndexOf('}');
     var protocol=JSON.parse(raw.substring(s,e+1));
     a.protocol=protocol;
-    if(content) content.innerHTML=renderProtocolHTML(protocol, a.title);
+    if(content) content.innerHTML=renderProtocolHTML(protocol,a.title);
     if(btn){btn.textContent='✅ Gotowe';btn.style.color='#60a5fa';}
-    // Pokaż przycisk infografiki
-    var shareBtn=document.getElementById('protocol-share-btn');
-    if(shareBtn) shareBtn.style.display='block';
     flash('Protokół wygenerowany! ✅');
   }catch(err){
     if(content) content.innerHTML='<div style="color:#ff4444;font-size:12px;padding:10px;">Błąd generowania — spróbuj ponownie</div>';
     if(btn){btn.textContent='GENERUJ AI ⚡';btn.disabled=false;}
-  }
-}
-
-function generateProtocolInfographic(id){
-  var a=window.ARTICLES.find(function(x){return x.id===id||x.id==id;});
-  if(!a||!a.protocol) return;
-  var p=a.protocol;
-  var mm=m(a.cat);
-
-  var old=document.getElementById('infographic-modal');
-  if(old) old.remove();
-  var modal=document.createElement('div');
-  modal.id='infographic-modal';
-  modal.style.cssText='position:fixed;inset:0;background:#0a0a0a;z-index:500;display:flex;flex-direction:column;align-items:center;padding:16px;overflow-y:auto;';
-  modal.innerHTML='<div style="width:100%;max-width:500px;">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(200,241,53,0.2);">'
-    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#c8f135;letter-spacing:1px;">INFOGRAFIKA PROTOKOŁU</div>'
-    +'<div style="font-size:11px;color:#555;font-family:DM Mono,monospace;">Format 1080x1080 · Gotowa na social media</div></div>'
-    +'<button onclick="document.getElementById(\'infographic-modal\').remove()" style="background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;">✕ Zamknij</button>'
-    +'</div>'
-    +'<canvas id="proto-canvas" width="1080" height="1080" style="width:100%;border-radius:12px;border:1px solid #222;"></canvas>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">'
-    +'<button onclick="downloadSlide(\'proto-canvas\',\'newsgym_protokol\')" style="padding:14px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">⬇️ Pobierz PNG</button>'
-    +'<button onclick="shareToFacebook()" style="padding:14px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">📘 Facebook</button>'
-    +'</div>'
-    +'<button onclick="shareToInstagram()" style="width:100%;margin-top:8px;padding:14px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📸 Pobierz na Instagram</button>'
-    +'<div style="height:32px;"></div>'
-    +'</div>';
-  document.body.appendChild(modal);
-
-  setTimeout(function(){
-    drawProtocolInfographic(document.getElementById('proto-canvas'), a, p, mm);
-  }, 100);
-
-  // Zapisz tekst do późniejszego kopiowania
-  window._currentProtocolText = buildProtocolText(a, p);
-}
-
-function buildProtocolText(a, p){
-  var lines=['⚙️ PROTOKÓŁ: '+a.title.toUpperCase(),''];
-  if(p.dawka) lines.push('💊 DAWKA: '+p.dawka);
-  if(p.kiedy) lines.push('⏰ KIEDY: '+p.kiedy);
-  if(p.czestotliwosc) lines.push('🔄 CZĘSTOTLIWOŚĆ: '+p.czestotliwosc);
-  if(p.efekty) lines.push('⚡ EFEKTY PO: '+p.efekty);
-  if(p.uwaga) lines.push('⚠️ UWAGA: '+p.uwaga);
-  if(p.wskazowki&&p.wskazowki.length){
-    lines.push('');
-    lines.push('💡 WSKAZÓWKI:');
-    p.wskazowki.forEach(function(w){lines.push('✓ '+w);});
-  }
-  lines.push('');
-  lines.push('#fitness #trening #newsgym #nauka #silownia #health');
-  return lines.join('\n');
-}
-
-function copyProtocolForIG(){
-  var text=window._currentProtocolText||'';
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(function(){flash('Skopiowano! Wklej w Instagram 📸');});
-  } else {
-    var el=document.createElement('textarea');
-    el.value=text; document.body.appendChild(el);
-    el.select(); document.execCommand('copy');
-    document.body.removeChild(el);
-    flash('Skopiowano! Wklej w Instagram 📸');
-  }
-}
-
-function shareToFacebook(){
-  // Pobierz PNG + otwórz Facebook
-  downloadSlide('proto-canvas','newsgym_protokol_fb');
-  setTimeout(function(){
-    flash('PNG pobrane! Wgraj je na Facebook 📘');
-    window.open('https://www.facebook.com/profile.php','_blank');
-  }, 800);
-}
-
-function shareToInstagram(){
-  // Pobierz PNG + pokaż instrukcję
-  downloadSlide('proto-canvas','newsgym_protokol_ig');
-  setTimeout(function(){
-    flash('PNG pobrane! Otwórz Instagram i wgraj 📸');
-  }, 500);
-  // Kopiuj też hashtagi
-  var text=window._currentProtocolText||'';
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(text);
-  }
-}
-
-function drawProtocolInfographic(canvas, article, p, mm){
-  if(!canvas) return;
-  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
-
-  // Tło
-  ctx.fillStyle='#0a0a0a'; ctx.fillRect(0,0,W,H);
-  var g=ctx.createRadialGradient(W,0,0,W,0,W*0.8);
-  g.addColorStop(0,'rgba(200,241,53,0.08)'); g.addColorStop(1,'transparent');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-  // Górna linia
-  ctx.fillStyle=A; ctx.fillRect(0,0,W,6);
-
-  // Logo
-  ctx.font='bold 44px Arial'; ctx.fillStyle=A; ctx.textAlign='left';
-  ctx.fillText('NEWS',60,80);
-  var nw=ctx.measureText('NEWS').width;
-  ctx.fillStyle='#f0ece8'; ctx.fillText('GYM',60+nw+8,80);
-
-  // Kategoria
-  ctx.fillStyle='rgba(200,241,53,0.12)';
-  roundRect(ctx,60,100,300,46,23);
-  ctx.fillStyle=A; ctx.font='bold 24px Arial';
-  ctx.fillText(mm.icon+' '+article.cat.toUpperCase()+' · PROTOKÓŁ',80,131);
-
-  // Tytuł artykułu
-  ctx.fillStyle='#f0ece8'; ctx.font='bold 56px Arial';
-  wrapText(ctx, article.title, 60, 220, W-120, 66);
-
-  // Linia
-  ctx.fillStyle='rgba(200,241,53,0.3)'; ctx.fillRect(60,310,W-120,2);
-
-  // Siatka protokołu
-  var rows=[
-    {icon:'💊',label:'DAWKA',val:p.dawka},
-    {icon:'⏰',label:'KIEDY',val:p.kiedy},
-    {icon:'🔄',label:'CZĘSTOTLIWOŚĆ',val:p.czestotliwosc},
-    {icon:'⚡',label:'EFEKTY PO',val:p.efekty},
-  ].filter(function(r){return r.val;});
-
-  var cols=2, cellW=(W-120)/cols, cellH=140, startY=330;
-  rows.forEach(function(r,i){
-    var col=i%cols, row=Math.floor(i/cols);
-    var x=60+col*cellW, y=startY+row*cellH;
-    // Tło komórki
-    ctx.fillStyle='rgba(255,255,255,0.03)';
-    ctx.fillRect(x+4,y+4,cellW-8,cellH-8);
-    // Label
-    ctx.font='bold 22px Arial'; ctx.fillStyle=A;
-    ctx.fillText(r.icon+' '+r.label, x+16, y+36);
-    // Wartość
-    ctx.font='34px Arial'; ctx.fillStyle='#f0ece8';
-    wrapText(ctx, r.val, x+16, y+82, cellW-32, 40);
-  });
-
-  var wsY=startY+Math.ceil(rows.length/2)*cellH+20;
-
-  // Wskazówki
-  if(p.wskazowki&&p.wskazowki.length){
-    ctx.fillStyle='rgba(200,241,53,0.08)';
-    ctx.fillRect(60, wsY, W-120, 180);
-    ctx.fillStyle=A; ctx.font='bold 26px Arial';
-    ctx.fillText('💡 WSKAZÓWKI PRAKTYCZNE', 80, wsY+36);
-    ctx.fillStyle='rgba(240,236,232,0.8)'; ctx.font='30px Arial';
-    p.wskazowki.slice(0,3).forEach(function(w,i){
-      ctx.fillText('✓  '+w, 80, wsY+80+i*44);
-    });
-  }
-
-  // Uwaga
-  if(p.uwaga){
-    ctx.fillStyle='rgba(255,68,68,0.08)';
-    ctx.fillRect(60, H-200, W-120, 80);
-    ctx.fillStyle='#ff4444'; ctx.font='bold 26px Arial';
-    ctx.fillText('⚠️  '+p.uwaga, 80, H-152);
-  }
-
-  // Dolny pasek
-  ctx.fillStyle='rgba(255,255,255,0.04)'; ctx.fillRect(0,H-100,W,100);
-  ctx.font='bold 26px Arial'; ctx.fillStyle=A;
-  ctx.fillText('@newsgym_pl', 60, H-56);
-  ctx.font='22px Arial'; ctx.fillStyle='rgba(255,255,255,0.25)';
-  ctx.fillText('#fitness #trening #nauka #newsgym', 60, H-20);
-  ctx.fillStyle=A; ctx.fillRect(0,H-4,W,4);
-}
-
-async function openInfographic(id){
-  var a=window.ARTICLES.find(function(x){return x.id===id||x.id==id;});
-  if(!a) return;
-  var mm=m(a.cat);
-
-  var old=document.getElementById('infographic-modal');
-  if(old) old.remove();
-  var modal=document.createElement('div');
-  modal.id='infographic-modal';
-  modal.style.cssText='position:fixed;inset:0;background:#0a0a0a;z-index:500;display:flex;flex-direction:column;align-items:center;padding:16px;overflow-y:auto;';
-  modal.innerHTML='<div style="width:100%;max-width:500px;">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(200,241,53,0.2);">'
-    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#c8f135;letter-spacing:1px;">KARUZELA INSTAGRAM</div>'
-    +'<div style="font-size:11px;color:#555;font-family:DM Mono,monospace;">5 slajdów · Format 1080x1080</div></div>'
-    +'<button onclick="document.getElementById(\'infographic-modal\').remove()" style="background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;">✕ Zamknij</button>'
-    +'</div>'
-    +'<div id="carousel-loading" style="text-align:center;padding:40px 0;">'
-    +'<div style="font-size:32px;margin-bottom:12px;animation:spin 1.5s linear infinite;display:inline-block;">⚡</div>'
-    +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:#c8f135;letter-spacing:1px;">GENERUJĘ KARUZELĘ</div>'
-    +'<div style="font-size:12px;color:#777;margin-top:8px;">AI tworzy 5 slajdów...</div>'
-    +'</div>'
-    +'<div id="slides-container"></div>'
-    +'</div>';
-  document.body.appendChild(modal);
-
-  try {
-    var prompt='Stwórz karuzelę Instagram z 5 slajdów na podstawie artykułu. Odpowiedz TYLKO JSON bez niczego extra:\n'
-      +'{"s1":{"hook":"CHWYTLIWY TYTUL MAX 5 SLOW CAPS","sub":"podtytul max 8 slow"},'
-      +'"s2":{"label":"WYNIK #1","headline":"kluczowy wynik max 6 slow","stat":"liczba lub %","desc":"1 zdanie max 60 znakow"},'
-      +'"s3":{"label":"WYNIK #2","headline":"drugi wynik max 6 slow","stat":"liczba lub %","desc":"1 zdanie max 60 znakow"},'
-      +'"s4":{"label":"JAK STOSOWAC","points":["punkt 1 max 40 znakow","punkt 2 max 40 znakow","punkt 3 max 40 znakow"]},'
-      +'"s5":{"cta":"WEZWANIE DO AKCJI MAX 6 SLOW","sub":"zapisz obserwuj aplikacja newsgym"}}\n\n'
-      +'Artykul: '+a.title+'\n'+a.excerpt+'\n'+(a.content?a.content.replace(/<[^>]*>/g,'').substring(0,300):'');
-
-    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})});
-    var data=await resp.json();
-    var raw=data.content.map(function(i){return i.text||'';}).join('');
-    var s=raw.indexOf('{'),e=raw.lastIndexOf('}');
-    var d=JSON.parse(raw.substring(s,e+1));
-
-    document.getElementById('carousel-loading').style.display='none';
-    renderCarousel(d, a, mm);
-  } catch(err) {
-    // Fallback
-    var fallback={
-      s1:{hook:a.title.substring(0,30).toUpperCase(),sub:'Poznaj wyniki badań naukowych'},
-      s2:{label:'WYNIK #1',headline:'WZROST SIŁY',stat:'+14%',desc:'Potwierdzone w badaniach naukowych'},
-      s3:{label:'WYNIK #2',headline:'LEPSZA WYDOLNOŚĆ',stat:'+28%',desc:'Efekty widoczne już po 4 tygodniach'},
-      s4:{label:'JAK STOSOWAĆ',points:['Dawkuj regularnie każdego dnia','Łącz z treningiem siłowym','Monitoruj postępy co tydzień']},
-      s5:{cta:'POBIERZ NEWS GYM',sub:'Codzienne badania naukowe po polsku'}
-    };
-    document.getElementById('carousel-loading').style.display='none';
-    renderCarousel(fallback, a, mm);
-  }
-}
-
-function renderCarousel(d, article, mm){
-  var container=document.getElementById('slides-container');
-  if(!container) return;
-
-  var slides=[
-    {id:'s1',label:'Okładka'},
-    {id:'s2',label:'Wynik #1'},
-    {id:'s3',label:'Wynik #2'},
-    {id:'s4',label:'Protokół'},
-    {id:'s5',label:'CTA'},
-  ];
-
-  var html='<div style="font-size:11px;color:#555;font-family:DM Mono,monospace;margin-bottom:16px;text-align:center;">Kliknij ⬇️ przy każdym slajdzie żeby pobrać</div>';
-
-  slides.forEach(function(sl,i){
-    html+='<div style="margin-bottom:20px;">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-      +'<div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:#c8f135;letter-spacing:1px;">SLAJD '+(i+1)+' — '+sl.label.toUpperCase()+'</div>'
-      +'<button onclick="downloadSlide(\'sc-'+i+'\',\'newsgym_slajd_'+(i+1)+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">⬇️ Pobierz</button>'
-      +'</div>'
-      +'<canvas id="sc-'+i+'" width="1080" height="1080" style="width:100%;border-radius:12px;border:1px solid #222;"></canvas>'
-      +'</div>';
-  });
-
-  html+='<button onclick="downloadAllSlides(5)" style="width:100%;padding:16px;background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:32px;">⬇️ Pobierz wszystkie 5 slajdów</button>';
-
-  container.innerHTML=html;
-
-  setTimeout(function(){
-    drawSlide1(document.getElementById('sc-0'), d.s1, article, mm);
-    drawSlide2(document.getElementById('sc-1'), d.s2, article, mm);
-    drawSlide3(document.getElementById('sc-2'), d.s3, article, mm);
-    drawSlide4(document.getElementById('sc-3'), d.s4, article, mm);
-    drawSlide5(document.getElementById('sc-4'), d.s5, article, mm);
-  }, 150);
-}
-
-function canvasBase(ctx, accentColor){
-  var W=1080,H=1080;
-  // Tło
-  ctx.fillStyle='#0a0a0a';
-  ctx.fillRect(0,0,W,H);
-  // Subtelny gradient
-  var g=ctx.createRadialGradient(W*0.8,H*0.2,0,W*0.8,H*0.2,W*0.7);
-  g.addColorStop(0,'rgba(200,241,53,0.05)');
-  g.addColorStop(1,'transparent');
-  ctx.fillStyle=g;
-  ctx.fillRect(0,0,W,H);
-  // Górna linia akcentu
-  ctx.fillStyle=accentColor;
-  ctx.fillRect(0,0,W,6);
-  // Dolna linia
-  ctx.fillStyle=accentColor;
-  ctx.fillRect(0,H-6,W,6);
-}
-
-function drawLogo(ctx, W, accent, slideNum){
-  ctx.font='bold 44px Arial';
-  ctx.fillStyle=accent;
-  ctx.textAlign='left';
-  ctx.fillText('NEWS',60,78);
-  var nw=ctx.measureText('NEWS').width;
-  ctx.fillStyle='#f0ece8';
-  ctx.fillText('GYM',60+nw+8,78);
-  // numer slajdu
-  ctx.font='bold 28px Arial';
-  ctx.fillStyle='rgba(255,255,255,0.15)';
-  ctx.textAlign='right';
-  ctx.fillText(slideNum+'/5',1020,78);
-  ctx.textAlign='left';
-}
-
-function drawBottom(ctx, W, H, accent, tags){
-  ctx.fillStyle='rgba(255,255,255,0.04)';
-  ctx.fillRect(0,H-100,W,100);
-  ctx.font='bold 26px Arial';
-  ctx.fillStyle=accent;
-  ctx.textAlign='left';
-  ctx.fillText('@newsgym_pl',60,H-56);
-  ctx.font='22px Arial';
-  ctx.fillStyle='rgba(255,255,255,0.25)';
-  ctx.fillText(tags||'#fitness #trening #nauka #newsgym',60,H-20);
-}
-
-function wrapText(ctx, text, x, y, maxW, lineH){
-  if(!text) return 0;
-  var words=text.split(' ');
-  var line='';
-  var lines=[];
-  for(var i=0;i<words.length;i++){
-    var test=line+words[i]+' ';
-    if(ctx.measureText(test).width>maxW&&line!==''){lines.push(line.trim());line=words[i]+' ';}
-    else line=test;
-  }
-  if(line.trim()) lines.push(line.trim());
-  lines.forEach(function(l,i){ctx.fillText(l,x,y+i*lineH);});
-  return lines.length*lineH;
-}
-
-// SLAJD 1 — OKŁADKA
-function drawSlide1(canvas, data, article, mm){
-  if(!canvas||!data) return;
-  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
-  canvasBase(ctx, A);
-  drawLogo(ctx, W, A, 1);
-
-  // Duzy emoji w tle
-  ctx.font='420px Arial';
-  ctx.globalAlpha=0.04;
-  ctx.fillStyle='#ffffff';
-  ctx.textAlign='center';
-  ctx.fillText(mm.icon||'💪', W/2, H/2+120);
-  ctx.globalAlpha=1; ctx.textAlign='left';
-
-  // Kategoria pill
-  ctx.fillStyle='rgba(200,241,53,0.15)';
-  roundRect(ctx, 60, 120, 260, 50, 25);
-  ctx.fillStyle=A;
-  ctx.font='bold 26px Arial';
-  ctx.fillText(mm.icon+' '+article.cat.toUpperCase(), 80, 153);
-
-  // Główny tytuł — duży
-  ctx.fillStyle='#f0ece8';
-  ctx.font='bold 110px Arial';
-  var hook=(data.hook||article.title.substring(0,25).toUpperCase());
-  var words=hook.split(' ');
-  var line1=words.slice(0,Math.ceil(words.length/2)).join(' ');
-  var line2=words.slice(Math.ceil(words.length/2)).join(' ');
-  ctx.fillText(line1, 60, 330);
-  ctx.fillStyle=A;
-  ctx.fillText(line2, 60, 450);
-
-  // Podtytuł
-  ctx.fillStyle='rgba(240,236,232,0.6)';
-  ctx.font='38px Arial';
-  wrapText(ctx, data.sub||'Analiza najnowszych badań naukowych', 60, 530, W-120, 52);
-
-  // Linia
-  ctx.fillStyle=A;
-  ctx.fillRect(60, 610, 200, 4);
-
-  // Strzałka swipe
-  ctx.fillStyle='rgba(200,241,53,0.8)';
-  ctx.font='bold 34px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('Przesuń w bok, aby zobaczyć wyniki  ➡️', W/2, 820);
-  ctx.textAlign='left';
-
-  drawBottom(ctx, W, H, A, '#'+article.cat+' #fitness #newsgym');
-}
-
-// SLAJD 2 — WYNIK #1
-function drawSlide2(canvas, data, article, mm){
-  if(!canvas||!data) return;
-  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
-  canvasBase(ctx, A);
-  drawLogo(ctx, W, A, 2);
-
-  // Label
-  ctx.fillStyle=A;
-  ctx.font='bold 30px Arial';
-  ctx.fillText(data.label||'WYNIK #1', 60, 160);
-
-  // Linia
-  ctx.fillStyle='rgba(200,241,53,0.3)';
-  ctx.fillRect(60, 175, W-120, 2);
-
-  // Duża statystyka w centrum
-  ctx.fillStyle=A;
-  ctx.font='bold 220px Arial';
-  ctx.textAlign='center';
-  ctx.fillText(data.stat||'+14%', W/2, 530);
-  ctx.textAlign='left';
-
-  // Headline pod statystyką
-  ctx.fillStyle='#f0ece8';
-  ctx.font='bold 72px Arial';
-  ctx.textAlign='center';
-  wrapText(ctx, data.headline||'WZROST SIŁY', W/2-400, 600, 800, 84);
-  ctx.textAlign='left';
-
-  // Linia akcentu
-  ctx.fillStyle=A;
-  ctx.fillRect(W/2-60, 700, 120, 5);
-
-  // Opis
-  ctx.fillStyle='rgba(240,236,232,0.7)';
-  ctx.font='40px Arial';
-  ctx.textAlign='center';
-  wrapText(ctx, data.desc||'', W/2-400, 760, 800, 56);
-  ctx.textAlign='left';
-
-  drawBottom(ctx, W, H, A);
-}
-
-// SLAJD 3 — WYNIK #2
-function drawSlide3(canvas, data, article, mm){
-  if(!canvas||!data) return;
-  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#60a5fa';
-  canvasBase(ctx, A);
-
-  // Lewa połowa tła
-  ctx.fillStyle='rgba(96,165,250,0.06)';
-  ctx.fillRect(0, 0, W/2, H);
-
-  drawLogo(ctx, W, A, 3);
-
-  ctx.fillStyle=A;
-  ctx.font='bold 30px Arial';
-  ctx.fillText(data.label||'WYNIK #2', 60, 160);
-  ctx.fillStyle='rgba(96,165,250,0.3)';
-  ctx.fillRect(60, 175, W-120, 2);
-
-  // Duża statystyka
-  ctx.fillStyle=A;
-  ctx.font='bold 200px Arial';
-  ctx.textAlign='center';
-  ctx.fillText(data.stat||'+28%', W/2, 510);
-  ctx.textAlign='left';
-
-  ctx.fillStyle='#f0ece8';
-  ctx.font='bold 68px Arial';
-  ctx.textAlign='center';
-  wrapText(ctx, data.headline||'WYDOLNOŚĆ', W/2-400, 590, 800, 80);
-  ctx.textAlign='left';
-
-  ctx.fillStyle=A;
-  ctx.fillRect(W/2-60, 690, 120, 5);
-
-  ctx.fillStyle='rgba(240,236,232,0.7)';
-  ctx.font='40px Arial';
-  ctx.textAlign='center';
-  wrapText(ctx, data.desc||'', W/2-400, 750, 800, 56);
-  ctx.textAlign='left';
-
-  drawBottom(ctx, W, H, A);
-}
-
-// SLAJD 4 — PROTOKÓŁ
-function drawSlide4(canvas, data, article, mm){
-  if(!canvas||!data) return;
-  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#a78bfa';
-  canvasBase(ctx, A);
-  drawLogo(ctx, W, A, 4);
-
-  ctx.fillStyle=A;
-  ctx.font='bold 30px Arial';
-  ctx.fillText(data.label||'JAK STOSOWAĆ', 60, 160);
-  ctx.fillStyle='rgba(167,139,250,0.3)';
-  ctx.fillRect(60, 175, W-120, 2);
-
-  ctx.fillStyle='#f0ece8';
-  ctx.font='bold 82px Arial';
-  ctx.fillText('PROTOKÓŁ', 60, 300);
-  ctx.fillStyle=A;
-  ctx.fillText('PRAKTYCZNY', 60, 395);
-
-  // Punkty
-  var points=data.points||['Stosuj regularnie','Łącz z treningiem','Monitoruj efekty'];
-  var icons=['①','②','③'];
-  points.forEach(function(p,i){
-    var y=520+i*150;
-    // Kółko z numerem
-    ctx.fillStyle=A;
-    ctx.beginPath();
-    ctx.arc(100, y-18, 44, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle='#000';
-    ctx.font='bold 44px Arial';
-    ctx.textAlign='center';
-    ctx.fillText(i+1, 100, y+2);
-    ctx.textAlign='left';
-    // Tekst
-    ctx.fillStyle='#f0ece8';
-    ctx.font='44px Arial';
-    ctx.fillText(p, 170, y+2);
-    // Linia
-    if(i<points.length-1){
-      ctx.fillStyle='rgba(255,255,255,0.06)';
-      ctx.fillRect(60, y+40, W-120, 1);
-    }
-  });
-
-  drawBottom(ctx, W, H, A);
-}
-
-// SLAJD 5 — CTA
-function drawSlide5(canvas, data, article, mm){
-  if(!canvas||!data) return;
-  var ctx=canvas.getContext('2d'), W=1080, H=1080, A='#c8f135';
-  canvasBase(ctx, A);
-
-  // Specjalne tło dla CTA
-  var g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.7);
-  g.addColorStop(0,'rgba(200,241,53,0.12)');
-  g.addColorStop(1,'transparent');
-  ctx.fillStyle=g;
-  ctx.fillRect(0,0,W,H);
-
-  drawLogo(ctx, W, A, 5);
-
-  // Duże emoji telefonu
-  ctx.font='160px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('📱', W/2, 360);
-  ctx.textAlign='left';
-
-  // CTA tekst
-  ctx.fillStyle='#f0ece8';
-  ctx.font='bold 96px Arial';
-  ctx.textAlign='center';
-  wrapText(ctx, data.cta||'SPRAWDŹ NEWS GYM', W/2-440, 480, 880, 108);
-  ctx.textAlign='left';
-
-  // Linia
-  ctx.fillStyle=A;
-  ctx.fillRect(W/2-100, 620, 200, 5);
-
-  // Podtytuł
-  ctx.fillStyle='rgba(240,236,232,0.7)';
-  ctx.font='40px Arial';
-  ctx.textAlign='center';
-  wrapText(ctx, data.sub||'Codzienne badania naukowe przetłumaczone na polski', W/2-380, 680, 760, 54);
-  ctx.textAlign='left';
-
-  // Przycisk-like element
-  ctx.fillStyle=A;
-  roundRect(ctx, W/2-220, 800, 440, 90, 45);
-  ctx.fillStyle='#000';
-  ctx.font='bold 38px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('🔗 Link w bio', W/2, 855);
-  ctx.textAlign='left';
-
-  drawBottom(ctx, W, H, A, '#newsgym #fitness #trening #nauka #polska');
-}
-
-function roundRect(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.lineTo(x+w-r,y);
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r);
-  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h);
-  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r);
-  ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
-  ctx.fill();
-}
-
-function downloadSlide(canvasId, filename){
-  var canvas=document.getElementById(canvasId);
-  if(!canvas) return;
-  var link=document.createElement('a');
-  link.download=filename+'.png';
-  link.href=canvas.toDataURL('image/png');
-  link.click();
-  flash('Pobrano '+filename+' 📥');
-}
-
-function downloadAllSlides(count){
-  for(var i=0;i<count;i++){
-    (function(idx){
-      setTimeout(function(){
-        downloadSlide('sc-'+idx,'newsgym_slajd_'+(idx+1));
-      }, idx*600);
-    })(i);
   }
 }
 
@@ -1316,36 +586,24 @@ async function doGenerate(){
   var btn=document.getElementById('btn-gen');
   btn.disabled=true;
   document.getElementById('gen-status').innerHTML='<div class="gen-box"><div class="gen-icon">⚡</div><div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:var(--accent);margin-bottom:8px;letter-spacing:1px;">GENERUJE ARTYKUL</div><div style="font-size:12px;color:var(--muted);">Claude AI analizuje tekst...</div><div class="dot-loader"><span></span><span></span><span></span></div></div>';
-
-  // KROK 1: pobierz metadane (title, excerpt, tags) - prosty JSON bez HTML
-  var prompt1='Odpowiedz TYLKO tym JSON, nic wiecej:\n{"title":"'+( customTitle||'tytul po polsku max 60 znakow')+'","excerpt":"1 krotkie zdanie po polsku","tags":["tag1","tag2"],"readTime":"5 min","journal":"nazwa czasopisma","year":"2024","authors":"Autor et al.","finding":"kluczowy wynik liczbowy"}\n\nTemat: '+text.substring(0,300);
-
+  var prompt1='Odpowiedz TYLKO tym JSON, nic wiecej:\n{"title":"'+(customTitle||'tytul po polsku max 60 znakow')+'","excerpt":"1 krotkie zdanie po polsku","tags":["tag1","tag2"],"readTime":"5 min","journal":"nazwa czasopisma","year":"2024","authors":"Autor et al.","finding":"kluczowy wynik liczbowy"}\n\nTemat: '+text.substring(0,300);
   try{
     var r1=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt1}]})});
     var d1=await r1.json();
     var raw1=d1.content.map(function(i){return i.text||'';}).join('');
-    var s1=raw1.indexOf('{'), e1=raw1.lastIndexOf('}');
+    var s1=raw1.indexOf('{'),e1=raw1.lastIndexOf('}');
     var meta=JSON.parse(raw1.substring(s1,e1+1));
-
-    // KROK 2: pobierz treść artykułu jako zwykły tekst
     document.getElementById('gen-status').innerHTML='<div class="gen-box"><div class="gen-icon">⚡</div><div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:var(--accent);margin-bottom:8px;letter-spacing:1px;">PISZE ARTYKUL</div><div style="font-size:12px;color:var(--muted);">Generowanie tresci...</div><div class="dot-loader"><span></span><span></span><span></span></div></div>';
-
-    var prompt2='Napisz artykul fitness po POLSKU na temat: '+meta.title+'\n\nNapisz 3-4 akapity po polsku. Zacznij od naglowka H3, potem akapity P. Mozesz uzyc tylko tagów HTML: h3, p. Zadnych cudzyslowow w tekscie. Zwroc sam tekst HTML.';
-
+    var prompt2='Napisz artykul fitness po POLSKU na temat: '+meta.title+'\n\nNapisz 3-4 akapity po polsku. Zacznij od naglowka H3, potem akapity P. Mozesz uzyc tylko tagow HTML: h3, p. Zwroc sam tekst HTML.';
     var r2=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt2}]})});
     var d2=await r2.json();
     var content=d2.content.map(function(i){return i.text||'';}).join('').trim();
-    // Dodaj tip box na koncu
     content+='<div class="tip-box"><strong>ZASTOSOWANIE</strong>'+meta.finding+'</div>';
-
     var sources=[{journal:meta.journal||'Sports Medicine',year:meta.year||'2024',title:text.substring(0,60),authors:meta.authors||'et al.',finding:meta.finding||'',pmid:''}];
-
     var journal=(meta.journal||'').toLowerCase();
-    pending={id:'fb-'+Date.now(),cat:catId,title:meta.title,excerpt:meta.excerpt,content:content,tags:meta.tags||[],readTime:meta.readTime||'5 min',author:'Redakcja NEWS GYM',authorInit:'AI',date:'wlasnie dodano',views:0,likes:0,extraSources:sources,
-      isResearch:(catId==='badania'||journal.includes('journal')||journal.includes('med')||journal.includes('nutrients')||journal.includes('sports')||journal.includes('pubmed')||journal.includes('lancet')||journal.includes('nature'))};
-
+    pending={id:'fb-'+Date.now(),cat:catId,title:meta.title,excerpt:meta.excerpt,content:content,tags:meta.tags||[],readTime:meta.readTime||'5 min',author:'Redakcja NEWS GYM',authorInit:'AI',date:'właśnie dodano',views:0,likes:0,extraSources:sources,isResearch:(catId==='badania'||journal.includes('journal')||journal.includes('med'))};
     var srcPrev=sources.map(function(s){return '<div class="preview-source"><span class="preview-source-j">'+s.journal+' - '+s.year+'</span><div>'+s.finding+'</div></div>';}).join('');
-    document.getElementById('gen-status').innerHTML='<div class="preview-box"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">✅</span><span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:var(--accent);">ARTYKUL GOTOWY</span></div><div class="preview-title">'+meta.title+'</div><div class="preview-excerpt">'+meta.excerpt+'</div><div class="preview-sources"><div class="preview-sources-lbl">ŹRÓDŁO</div>'+srcPrev+'</div></div><button class="btn-gen" onclick="saveArticle()" style="margin-top:14px;">💾 Zapisz w Firebase i dodaj</button><button class="btn-secondary" onclick="openAdd()">Generuj ponownie</button>';
+    document.getElementById('gen-status').innerHTML='<div class="preview-box"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">✅</span><span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:var(--accent);">ARTYKUL GOTOWY</span></div><div class="preview-title">'+meta.title+'</div><div class="preview-excerpt">'+meta.excerpt+'</div><div class="preview-sources"><div class="preview-sources-lbl">ŹRÓDŁO</div>'+srcPrev+'</div></div><button class="btn-gen" onclick="saveArticle()" style="margin-top:14px;">💾 Zapisz i przygotuj post</button><button class="btn-secondary" onclick="openAdd()">Generuj ponownie</button>';
   }catch(e){
     document.getElementById('gen-status').innerHTML='<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:10px;padding:16px;margin-top:14px;"><div style="color:var(--red);font-weight:600;margin-bottom:6px;">Blad generowania</div><div style="font-size:12px;color:var(--muted);">'+e.message+'</div></div>';
   }
@@ -1357,12 +615,8 @@ async function saveArticle(){
   if(window._saveToFirebase){
     setFbStatus('loading','Zapisuje do Firebase...');
     var fbId=await window._saveToFirebase(pending);
-    if(fbId){
-      pending.id=fbId;
-      setFbStatus('ok','Artykul zapisany w Firebase!');
-    } else {
-      setFbStatus('error','Blad zapisu Firebase - artykul dodany lokalnie');
-    }
+    if(fbId){ pending.id=fbId; setFbStatus('ok','Artykul zapisany w Firebase!'); }
+    else { setFbStatus('error','Blad zapisu Firebase'); }
   }
   window.ARTICLES.unshift(pending);
   closeAdd();
@@ -1371,115 +625,319 @@ async function saveArticle(){
   pending=null;
 }
 
-function showPublishModal(article){
-  var old=document.getElementById('fb-modal');
-  if(old) old.remove();
-  var fbText='💪 '+article.title+'\n\n'+article.excerpt+'\n\n#fitness #trening #newsgym #silownia';
-  var igText='💪 '+article.title+'\n\n'+article.excerpt+'\n\n#fitness #trening #newsgym #silownia #gymlife #workout #health #sport #polska #motywacja';
-  var waText='💪 *'+article.title+'*\n\n'+article.excerpt+'\n\nWięcej na: https://teamprogress2018-droid.github.io/newsgym-auto/';
-  var modal=document.createElement('div');
-  modal.id='fb-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;';
-  modal.innerHTML=`
-  <div style="background:#111;border:1px solid rgba(200,241,53,0.3);border-radius:16px;padding:20px;max-width:480px;width:100%;">
-    <div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#c8f135;letter-spacing:1px;margin-bottom:4px;">UDOSTĘPNIJ ARTYKUŁ</div>
-    <div style="font-size:11px;color:#555;font-family:DM Mono,monospace;margin-bottom:16px;">Wybierz platformę i opublikuj</div>
-
-    <!-- TABS -->
-    <div style="display:flex;gap:6px;margin-bottom:16px;">
-      <button onclick="switchSocialTab('fb')" id="tab-fb" style="flex:1;padding:8px;background:rgba(24,119,242,0.2);border:1px solid rgba(24,119,242,0.5);color:#60a5fa;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📘 Facebook</button>
-      <button onclick="switchSocialTab('ig')" id="tab-ig" style="flex:1;padding:8px;background:#1a1a1a;border:1px solid #333;color:#777;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📸 Instagram</button>
-      <button onclick="switchSocialTab('wa')" id="tab-wa" style="flex:1;padding:8px;background:#1a1a1a;border:1px solid #333;color:#777;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">💬 WhatsApp</button>
-    </div>
-
-    <!-- FB -->
-    <div id="panel-fb">
-      <div style="font-size:11px;color:#777;margin-bottom:6px;font-family:DM Mono,monospace;">Strona: P&P Progress</div>
-      <textarea id="fb-post-text" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.5;resize:none;outline:none;font-family:DM Sans,sans-serif;" rows="5">${fbText}</textarea>
-      <div id="fb-publish-status" style="margin-top:8px;font-size:12px;min-height:16px;"></div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="document.getElementById('fb-modal').remove()" style="flex:1;padding:12px;background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:10px;font-size:13px;cursor:pointer;">Pomiń</button>
-        <button onclick="publishToFacebook()" style="flex:2;padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📘 Publikuj na FB</button>
-      </div>
-    </div>
-
-    <!-- INSTAGRAM -->
-    <div id="panel-ig" style="display:none;">
-      <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:#f97316;line-height:1.5;">
-        ⚠️ Instagram nie pozwala na automatyczne publikowanie przez API dla zwykłych kont. Skopiuj tekst i wklej ręcznie w aplikacji Instagram.
-      </div>
-      <textarea id="ig-post-text" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.5;resize:none;outline:none;font-family:DM Sans,sans-serif;" rows="6">${igText}</textarea>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="document.getElementById('fb-modal').remove()" style="flex:1;padding:12px;background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:10px;font-size:13px;cursor:pointer;">Pomiń</button>
-        <button onclick="copyToClipboard('ig-post-text')" style="flex:2;padding:12px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📋 Kopiuj do schowka</button>
-      </div>
-    </div>
-
-    <!-- WHATSAPP -->
-    <div id="panel-wa" style="display:none;">
-      <div style="font-size:11px;color:#777;margin-bottom:8px;font-family:DM Mono,monospace;">Wyślij do grupy lub kontaktu</div>
-      <textarea id="wa-post-text" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.5;resize:none;outline:none;font-family:DM Sans,sans-serif;" rows="5">${waText}</textarea>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="document.getElementById('fb-modal').remove()" style="flex:1;padding:12px;background:#1a1a1a;border:1px solid #333;color:#f0ece8;border-radius:10px;font-size:13px;cursor:pointer;">Pomiń</button>
-        <button onclick="shareWhatsApp()" style="flex:2;padding:12px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">💬 Wyślij WhatsApp</button>
-      </div>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
+function flash(msg){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;pointer-events:none;white-space:nowrap;';
+  d.textContent=msg;
+  document.body.appendChild(d);
+  setTimeout(function(){d.remove();},3000);
 }
 
-function switchSocialTab(tab){
+// ============================================================
+// ZAKŁADKA ŹRÓDŁA
+// ============================================================
+var RSS_FEEDS = [
+  {name:'T-Nation',url:'https://api.rss2json.com/v1/api.json?rss_url=https://www.t-nation.com/feed/'},
+  {name:'Stronger by Science',url:'https://api.rss2json.com/v1/api.json?rss_url=https://www.strongerbyscience.com/feed/'},
+  {name:'Examine.com',url:'https://api.rss2json.com/v1/api.json?rss_url=https://examine.com/feed/'},
+];
+var PUBMED_TOPICS = ['resistance training hypertrophy 2026','creatine supplementation strength 2026','HIIT fat loss 2026','protein intake muscle 2026','sleep athletic performance 2026','caffeine exercise performance 2026'];
+
+async function buildSourcesTab(el) {
+  el.innerHTML = '<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">📡 ŹRÓDŁA ZEWNĘTRZNE</div></div><div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"><button onclick="loadPubMed()" style="background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.4);color:#60a5fa;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">🔬 PubMed</button><button onclick="loadRSS()" style="background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:#c8f135;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">📰 Blogi Fitness</button><button onclick="loadAll()" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">⚡ WSZYSTKO</button></div><div id="sources-feed"></div></div><div style="height:20px;"></div>';
+}
+async function loadAll(){ await loadPubMed(); await loadRSS(); }
+async function loadPubMed(){
+  var box=document.getElementById('sources-feed');
+  if(!box) return;
+  box.innerHTML+='<div id="pubmed-loading" style="color:#60a5fa;font-size:12px;padding:8px 0;font-family:DM Mono,monospace;">🔬 Pobieranie z PubMed...</div>';
+  var topic=PUBMED_TOPICS[Math.floor(Math.random()*PUBMED_TOPICS.length)];
+  try{
+    var r=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term='+encodeURIComponent(topic)+'&retmax=8&sort=date&retmode=json');
+    var d=await r.json();
+    var ids=d.esearchresult.idlist;
+    if(!ids.length){document.getElementById('pubmed-loading').textContent='Brak wyników PubMed';return;}
+    var r2=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id='+ids.join(',')+'&retmode=json');
+    var d2=await r2.json();
+    var html='<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:#60a5fa;margin:12px 0 8px;">PUBMED — '+topic.toUpperCase()+'</div>';
+    ids.forEach(function(id){
+      var a=d2.result[id];
+      if(!a) return;
+      var title=a.title||'Brak tytułu';
+      var journal=a.fulljournalname||a.source||'';
+      var year=a.pubdate?a.pubdate.substring(0,4):'';
+      var authors=a.authors&&a.authors.length?a.authors.slice(0,2).map(function(x){return x.name;}).join(', '):'';
+      html+='<div style="background:linear-gradient(135deg,rgba(96,165,250,0.06),rgba(167,139,250,0.04));border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#60a5fa;font-weight:700;">🔬 PUBMED · '+year+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+journal.substring(0,25)+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+title.substring(0,120)+(title.length>120?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;font-style:italic;">'+authors+'</div><button onclick="generateFromSource(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+journal+'\',\''+year+'\',\'badania\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
+    });
+    var loading=document.getElementById('pubmed-loading');
+    if(loading) loading.remove();
+    box.innerHTML+=html;
+  }catch(e){
+    var loading=document.getElementById('pubmed-loading');
+    if(loading) loading.textContent='❌ Błąd PubMed: '+e.message;
+  }
+}
+async function loadRSS(){
+  var box=document.getElementById('sources-feed');
+  if(!box) return;
+  box.innerHTML+='<div id="rss-loading" style="color:#c8f135;font-size:12px;padding:8px 0;font-family:DM Mono,monospace;">📰 Pobieranie blogów fitness...</div>';
+  var html='<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:#c8f135;margin:12px 0 8px;">BLOGI FITNESS</div>';
+  var loaded=0;
+  for(var i=0;i<RSS_FEEDS.length;i++){
+    var feed=RSS_FEEDS[i];
+    try{
+      var r=await fetch(feed.url);
+      var d=await r.json();
+      if(d.status!=='ok'||!d.items||!d.items.length) continue;
+      d.items.slice(0,3).forEach(function(item){
+        var title=item.title||'';
+        var desc=item.description?item.description.replace(/<[^>]*>/g,'').substring(0,150):'';
+        var date=item.pubDate?item.pubDate.substring(0,10):'';
+        var cat=guessCat(title+' '+desc);
+        html+='<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><span style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;font-weight:700;">📰 '+feed.name+'</span><span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+date+'</span></div><div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+title.substring(0,100)+(title.length>100?'...':'')+'</div><div style="font-size:11px;color:#777;margin-bottom:10px;">'+desc+(desc.length>=150?'...':'')+'</div><button onclick="generateFromSource(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+feed.name+'\',\'\',\''+cat+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button></div>';
+        loaded++;
+      });
+    }catch(e){}
+  }
+  var loading=document.getElementById('rss-loading');
+  if(loading) loading.remove();
+  if(loaded===0) html+='<div style="color:#ff4444;font-size:12px;">Nie udało się pobrać blogów (CORS). Użyj PubMed.</div>';
+  box.innerHTML+=html;
+}
+function guessCat(text){
+  var t=text.toLowerCase();
+  if(t.includes('strength')||t.includes('powerlifting')||t.includes('squat')) return 'sila';
+  if(t.includes('cardio')||t.includes('running')||t.includes('hiit')) return 'cardio';
+  if(t.includes('diet')||t.includes('nutrition')||t.includes('protein')) return 'dieta';
+  if(t.includes('supplement')||t.includes('creatine')||t.includes('caffeine')) return 'supl';
+  if(t.includes('sleep')||t.includes('recovery')) return 'lifestyle';
+  if(t.includes('recipe')||t.includes('meal')) return 'przepisy';
+  if(t.includes('motivation')||t.includes('mental')) return 'motyw';
+  if(t.includes('research')||t.includes('study')||t.includes('meta')) return 'badania';
+  return 'trening';
+}
+async function generateFromSource(title,source,year,cat){
+  var text=title+'\n\nŹródło: '+source+(year?' ('+year+')':'')+'\n\nStwórz szczegółowy artykuł fitness po polsku na podstawie tego tematu/badania. Dodaj praktyczne wskazówki i naukowe podstawy.';
+  document.getElementById('add-panel').classList.add('show');
+  document.getElementById('gen-status').innerHTML='';
+  document.getElementById('add-text').value=text;
+  var sel=document.getElementById('add-cat');
+  for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===cat){sel.selectedIndex=i;break;}}
+  document.getElementById('gen-status').innerHTML='<div style="background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.2);border-radius:8px;padding:10px;font-size:12px;color:#c8f135;">✅ Tekst wklejony! Kliknij "Generuj artykuł" poniżej.</div>';
+}
+
+// ============================================================
+// ULEPSZONY SYSTEM PUBLIKOWANIA
+// ============================================================
+
+function showPublishModal(article) {
+  if(!article||!article.title){flash('Brak danych artykułu');return;}
+  var old=document.getElementById('pub-modal');
+  if(old) old.remove();
+  var mm=m(article.cat);
+
+  var modal=document.createElement('div');
+  modal.id='pub-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:999;display:flex;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+  modal.innerHTML=
+    '<div style="background:#111;border:1px solid rgba(200,241,53,0.2);border-radius:20px;width:100%;max-width:500px;overflow:hidden;margin:auto;">'
+
+    // NAGŁÓWEK
+    +'<div style="background:linear-gradient(135deg,rgba(200,241,53,0.1),rgba(200,241,53,0.03));padding:18px 18px 14px;border-bottom:1px solid rgba(200,241,53,0.12);">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+    +'<div>'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#c8f135;letter-spacing:2px;line-height:1;">📤 PUBLIKUJ POST</div>'
+    +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-top:3px;">Wybierz platformę → pobierz grafikę → wklej</div>'
+    +'</div>'
+    +'<button onclick="document.getElementById(\'pub-modal\').remove()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#777;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;">✕</button>'
+    +'</div>'
+    // mini podgląd
+    +'<div style="display:flex;gap:10px;align-items:center;margin-top:12px;background:rgba(0,0,0,0.3);border-radius:10px;padding:10px;">'
+    +'<div style="font-size:22px;">'+mm.icon+'</div>'
+    +'<div><div style="font-size:12px;font-weight:600;color:#f0ece8;line-height:1.3;">'+article.title.substring(0,55)+(article.title.length>55?'...':'')+'</div>'
+    +'<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-top:2px;">'+mm.label+' · '+(article.readTime||'5 min')+'</div></div>'
+    +'</div>'
+    +'</div>'
+
+    // TABS
+    +'<div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);">'
+    +'<button id="ptab-fb" onclick="switchPubTab(\'fb\')" style="flex:1;padding:12px 6px;background:rgba(24,119,242,0.12);border:none;border-bottom:2px solid #1877f2;color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.5px;">📘 FACEBOOK</button>'
+    +'<button id="ptab-ig" onclick="switchPubTab(\'ig\')" style="flex:1;padding:12px 6px;background:transparent;border:none;border-bottom:2px solid transparent;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.5px;">📸 INSTAGRAM</button>'
+    +'<button id="ptab-wa" onclick="switchPubTab(\'wa\')" style="flex:1;padding:12px 6px;background:transparent;border:none;border-bottom:2px solid transparent;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.5px;">💬 WHATSAPP</button>'
+    +'</div>'
+
+    +'<div style="padding:18px;">'
+
+    // === FACEBOOK PANEL ===
+    +'<div id="ppanel-fb">'
+    +'<div style="font-size:10px;color:#60a5fa;font-family:DM Mono,monospace;margin-bottom:8px;">STRONA: P&amp;P PROGRESS</div>'
+    +'<textarea id="pub-fb-text" rows="5" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;" onfocus="this.style.borderColor=\'#1877f2\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'">'+buildFbText(article)+'</textarea>'
+    +'<div style="display:flex;justify-content:space-between;margin:6px 0 14px;">'
+    +'<div id="pub-fb-counter" style="font-size:10px;color:#555;font-family:DM Mono,monospace;">'+buildFbText(article).length+' znaków</div>'
+    +'<button onclick="regenText(\'pub-fb-text\',\'fb\',\''+article.id+'\')" style="background:none;border:none;color:#60a5fa;font-size:10px;font-family:DM Mono,monospace;cursor:pointer;">↺ Przepisz AI</button>'
+    +'</div>'
+    // grafika FB
+    +'<div style="background:rgba(24,119,242,0.06);border:1px solid rgba(24,119,242,0.15);border-radius:12px;padding:14px;margin-bottom:14px;">'
+    +'<div style="font-size:10px;font-family:DM Mono,monospace;color:#60a5fa;margin-bottom:10px;">🖼️ GRAFIKA 1200×630</div>'
+    +'<canvas id="pub-fb-canvas" width="1200" height="630" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.07);display:block;"></canvas>'
+    +'<button onclick="dlCanvas(\'pub-fb-canvas\',\'newsgym_fb\')" style="width:100%;margin-top:10px;padding:10px;background:rgba(24,119,242,0.12);border:1px solid rgba(24,119,242,0.25);color:#60a5fa;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">⬇️ POBIERZ GRAFIKĘ FB</button>'
+    +'</div>'
+    +'<div id="pub-fb-status" style="min-height:16px;margin-bottom:10px;font-size:12px;"></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">'
+    +'<button onclick="document.getElementById(\'pub-modal\').remove()" style="padding:13px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);color:#777;border-radius:12px;font-size:13px;cursor:pointer;">Pomiń</button>'
+    +'<button onclick="pubToFb()" style="padding:13px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">📘 Publikuj na FB</button>'
+    +'</div>'
+    +'</div>'
+
+    // === INSTAGRAM PANEL ===
+    +'<div id="ppanel-ig" style="display:none;">'
+    +'<div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:12px;padding:12px;margin-bottom:14px;">'
+    +'<div style="font-size:10px;font-weight:700;color:#f97316;font-family:DM Mono,monospace;margin-bottom:10px;">📋 INSTRUKCJA — 3 KROKI:</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px;">'
+    +['Pobierz grafikę (kwadrat 1080×1080)','Skopiuj podpis przyciskiem poniżej','Otwórz Instagram → Nowy post → wklej'].map(function(s,i){return '<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:rgba(240,236,232,0.8);"><span style="background:#f97316;color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;margin-top:1px;">'+(i+1)+'</span>'+s+'</div>';}).join('')
+    +'</div></div>'
+    // grafika IG
+    +'<div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.12);border-radius:12px;padding:14px;margin-bottom:14px;">'
+    +'<div style="font-size:10px;font-family:DM Mono,monospace;color:#f97316;margin-bottom:10px;">🖼️ GRAFIKA 1080×1080</div>'
+    +'<canvas id="pub-ig-canvas" width="1080" height="1080" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.07);display:block;"></canvas>'
+    +'<button onclick="dlCanvas(\'pub-ig-canvas\',\'newsgym_ig\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(236,72,153,0.1));border:1px solid rgba(249,115,22,0.25);color:#f97316;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">⬇️ POBIERZ GRAFIKĘ IG</button>'
+    +'</div>'
+    // podpis
+    +'<div style="font-size:10px;color:#777;font-family:DM Mono,monospace;margin-bottom:6px;">PODPIS:</div>'
+    +'<textarea id="pub-ig-text" rows="6" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;" onfocus="this.style.borderColor=\'#f97316\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'">'+buildIgText(article)+'</textarea>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">'
+    +'<button onclick="copyTxt(\'pub-ig-text\')" style="padding:13px;background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(236,72,153,0.08));border:1px solid rgba(249,115,22,0.25);color:#f97316;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">📋 Kopiuj podpis</button>'
+    +'<button onclick="copyTxt(\'pub-ig-text\');window.open(\'https://www.instagram.com/\',\'_blank\');" style="padding:13px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">📸 Otwórz IG</button>'
+    +'</div>'
+    +'</div>'
+
+    // === WHATSAPP PANEL ===
+    +'<div id="ppanel-wa" style="display:none;">'
+    +'<div style="font-size:10px;color:#25d366;font-family:DM Mono,monospace;margin-bottom:8px;">WIADOMOŚĆ WHATSAPP:</div>'
+    +'<textarea id="pub-wa-text" rows="6" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;" onfocus="this.style.borderColor=\'#25d366\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'">'+buildWaText(article)+'</textarea>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">'
+    +'<button onclick="copyTxt(\'pub-wa-text\')" style="padding:13px;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.25);color:#25d366;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">📋 Kopiuj</button>'
+    +'<button onclick="var t=document.getElementById(\'pub-wa-text\');window.open(\'https://wa.me/?text=\'+encodeURIComponent(t?t.value:\'\'),\'_blank\');" style="padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">💬 Otwórz WhatsApp</button>'
+    +'</div>'
+    +'</div>'
+
+    +'</div></div>';
+
+  document.body.appendChild(modal);
+
+  setTimeout(function(){
+    drawFbGfx(document.getElementById('pub-fb-canvas'), article);
+    drawIgGfx(document.getElementById('pub-ig-canvas'), article);
+    var ta=document.getElementById('pub-fb-text');
+    if(ta) ta.addEventListener('input',function(){var c=document.getElementById('pub-fb-counter');if(c)c.textContent=ta.value.length+' znaków';});
+  }, 150);
+}
+
+function switchPubTab(tab){
   ['fb','ig','wa'].forEach(function(t){
-    document.getElementById('panel-'+t).style.display = t===tab ? 'block' : 'none';
-    var btn = document.getElementById('tab-'+t);
-    if(t===tab){
-      btn.style.background = t==='fb' ? 'rgba(24,119,242,0.2)' : t==='ig' ? 'rgba(249,115,22,0.15)' : 'rgba(37,211,102,0.15)';
-      btn.style.borderColor = t==='fb' ? 'rgba(24,119,242,0.5)' : t==='ig' ? 'rgba(249,115,22,0.4)' : 'rgba(37,211,102,0.4)';
-      btn.style.color = t==='fb' ? '#60a5fa' : t==='ig' ? '#f97316' : '#25d366';
+    var p=document.getElementById('ppanel-'+t);
+    var b=document.getElementById('ptab-'+t);
+    if(!p||!b) return;
+    var on=t===tab;
+    p.style.display=on?'block':'none';
+    var colors={fb:'#1877f2',ig:'#f97316',wa:'#25d366'};
+    var textColors={fb:'#60a5fa',ig:'#f97316',wa:'#25d366'};
+    if(on){
+      b.style.background='rgba('+hexToRgbStr(colors[t])+',0.12)';
+      b.style.borderBottom='2px solid '+colors[t];
+      b.style.color=textColors[t];
     } else {
-      btn.style.background = '#1a1a1a';
-      btn.style.borderColor = '#333';
-      btn.style.color = '#777';
+      b.style.background='transparent';
+      b.style.borderBottom='2px solid transparent';
+      b.style.color='#555';
+    }
+    // Rysuj grafikę IG gdy tab otwarty
+    if(on && t==='ig') {
+      setTimeout(function(){
+        var c=document.getElementById('pub-ig-canvas');
+        if(c && c.getContext('2d').getImageData(0,0,1,1).data[3]===0) {
+          // canvas pusty - pobierz artykuł z aktywnego modal
+        }
+      },100);
     }
   });
 }
 
-function copyToClipboard(id){
-  var el = document.getElementById(id);
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(el.value).then(function(){
-      flash('Skopiowano! Wklej w Instagram 📸');
-    });
-  } else {
-    el.select();
-    document.execCommand('copy');
-    flash('Skopiowano! Wklej w Instagram 📸');
-  }
+function hexToRgbStr(hex){
+  var r=parseInt(hex.slice(1,3),16);
+  var g=parseInt(hex.slice(3,5),16);
+  var b=parseInt(hex.slice(5,7),16);
+  return r+','+g+','+b;
 }
 
-function shareWhatsApp(){
-  var text = document.getElementById('wa-post-text').value.trim();
-  var url = 'https://wa.me/?text=' + encodeURIComponent(text);
-  window.open(url, '_blank');
-  flash('Otwarto WhatsApp! 💬');
+function buildFbText(a){
+  var mm=m(a.cat);
+  return mm.icon+' '+a.title+'\n\n'+(a.excerpt||'')+'\n\n'+(a.tags||[a.cat,'fitness']).map(function(t){return '#'+t.replace(/\s+/g,'');}).join(' ')+' #fitness #trening #newsgym\n\n🔗 https://teamprogress2018-droid.github.io/newsgym-auto/';
+}
+function buildIgText(a){
+  var mm=m(a.cat);
+  var tags=['#fitness','#trening','#silownia','#sport','#polska','#gymlife','#workout','#health','#motywacja','#nauka'];
+  if(a.tags) a.tags.forEach(function(t){tags.push('#'+t.replace(/\s+/g,''));});
+  tags.push('#'+a.cat,'#newsgym');
+  return mm.icon+' '+a.title.toUpperCase()+'\n\n'+(a.excerpt||'')+'\n\n👇 Pełny artykuł w bio\n\n.\n.\n.\n\n'+tags.slice(0,15).join(' ');
+}
+function buildWaText(a){
+  var mm=m(a.cat);
+  return '*'+mm.icon+' '+a.title+'*\n\n'+(a.excerpt||'')+'\n\n🔗 https://teamprogress2018-droid.github.io/newsgym-auto/\n\n_#newsgym #fitness #trening_';
 }
 
-async function publishToFacebook(){
-  var text=document.getElementById('fb-post-text').value.trim();
-  var status=document.getElementById('fb-publish-status');
-  if(!text) return;
-  status.style.color='#f97316';
-  status.textContent='Publikuję...';
+function copyTxt(id){
+  var el=document.getElementById(id);
+  if(!el) return;
+  if(navigator.clipboard){navigator.clipboard.writeText(el.value).then(function(){flash('Skopiowano! ✅');});}
+  else{el.select();document.execCommand('copy');flash('Skopiowano! ✅');}
+}
+
+function dlCanvas(id,name){
+  var c=document.getElementById(id);
+  if(!c) return;
+  var a=document.createElement('a');
+  a.download=name+'.png';
+  a.href=c.toDataURL('image/png');
+  a.click();
+  flash('Pobrano grafikę! 📥');
+}
+
+async function regenText(fieldId, platform, artId){
+  var a=window.ARTICLES.find(function(x){return x.id===artId||x.id==artId;});
+  if(!a) return;
+  var ta=document.getElementById(fieldId);
+  if(!ta) return;
+  var old=ta.value;
+  ta.value='⏳ Generuję...';
   try{
-    var resp=await fetch('https://graph.facebook.com/v25.0/377127779516613/feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,access_token:'EAAQkvWmLtUsBRVdRRCCGhNNcVJqN7rRHAMsCVqO45cWgNxdxOoUZCjLlXwLK4wmWUEOMA57gfsEqaV8RKLbdtIXqnpswj3MejAlSKedN3A6D8s1wUuQcFAmABDGCgQbyPqylVI1FDQHVFxACpCFbrIhtrGsSUOoaxgpEWCFowYBRUvxMxMXwkm3KA8l0UW09jATa4Lr0V7Gtugr8d0uDKwQL3cAuZBQKajvJMhAjDypnZBF5fRWWJOtfaIZD'})});
-    var data=await resp.json();
-    if(data.id){
+    var prompt='Napisz post na '+(platform==='fb'?'Facebook':'Instagram')+' po polsku na temat artykułu fitness. '+(platform==='fb'?'Max 3 zdania + hashtagi. Naturalny angażujący ton.':'Max 3 zdania + 10 hashtagów. Krótki chwytliwy styl.')+' Bez cudzysłowów.\n\nTytuł: '+a.title+'\nOpis: '+a.excerpt;
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    var d=await resp.json();
+    var text=d.content.map(function(i){return i.text||'';}).join('').trim();
+    if(platform==='fb') text+='\n\n🔗 https://teamprogress2018-droid.github.io/newsgym-auto/';
+    ta.value=text;
+    flash('Przepisano AI ✅');
+  }catch(e){ta.value=old;}
+}
+
+async function pubToFb(){
+  var text=document.getElementById('pub-fb-text');
+  var status=document.getElementById('pub-fb-status');
+  if(!text||!status) return;
+  status.style.color='#f97316';
+  status.textContent='⏳ Publikuję na Facebook...';
+  try{
+    var resp=await fetch('https://graph.facebook.com/v25.0/'+FB_PAGE_ID+'/feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text.value,access_token:FB_TOKEN})});
+    var d=await resp.json();
+    if(d.id){
       status.style.color='#c8f135';
-      status.textContent='✅ Opublikowano! Post ID: '+data.id;
-      setTimeout(function(){document.getElementById('fb-modal').remove();flash('Post opublikowany na Facebook! 🎉');},2000);
-    } else {
+      status.innerHTML='✅ Opublikowano! ID: <span style="color:#555;">'+d.id+'</span>';
+      setTimeout(function(){document.getElementById('pub-modal').remove();flash('Post opublikowany na Facebook! 🎉');},2000);
+    }else{
       status.style.color='#ff4444';
-      status.textContent='❌ Błąd: '+(data.error&&data.error.message||'Nieznany błąd');
+      status.textContent='❌ '+(d.error&&d.error.message||'Błąd publikacji');
     }
   }catch(e){
     status.style.color='#ff4444';
@@ -1487,169 +945,75 @@ async function publishToFacebook(){
   }
 }
 
-function flash(msg){
-  var d=document.createElement('div');
-  d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:999;pointer-events:none;white-space:nowrap;';
-  d.textContent=msg;
-  document.body.appendChild(d);
-  setTimeout(function(){d.remove();},3000);
-}
-
 // ============================================================
-// ZAKŁADKA ŹRÓDŁA - pobieranie artykułów z internetu
+// GRAFIKI CANVAS
 // ============================================================
 
-var RSS_FEEDS = [
-  {name:'T-Nation',url:'https://api.rss2json.com/v1/api.json?rss_url=https://www.t-nation.com/feed/'},
-  {name:'Bodybuilding.com',url:'https://api.rss2json.com/v1/api.json?rss_url=https://www.bodybuilding.com/rss/articles'},
-  {name:'Stronger by Science',url:'https://api.rss2json.com/v1/api.json?rss_url=https://www.strongerbyscience.com/feed/'},
-  {name:'Examine.com',url:'https://api.rss2json.com/v1/api.json?rss_url=https://examine.com/feed/'},
-  {name:'Alan Aragon',url:'https://api.rss2json.com/v1/api.json?rss_url=https://alanaragon.com/feed/'},
-];
-
-var PUBMED_TOPICS = [
-  'resistance training hypertrophy 2026',
-  'creatine supplementation strength 2026',
-  'HIIT fat loss 2026',
-  'protein intake muscle 2026',
-  'sleep athletic performance 2026',
-  'periodization strength training 2026',
-  'caffeine exercise performance 2026',
-  'omega-3 muscle recovery 2026',
-  'strength training women 2026',
-  'intermittent fasting muscle 2026',
-];
-var sourceFeed = [];
-
-async function buildSourcesTab(el) {
-  el.innerHTML = '<div class="section" style="padding-top:16px;">'
-    + '<div class="section-hdr"><div class="section-title">📡 ŹRÓDŁA ZEWNĘTRZNE</div></div>'
-    + '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">'
-    + '<button onclick="loadPubMed()" style="background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.4);color:#60a5fa;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">🔬 PubMed</button>'
-    + '<button onclick="loadRSS()" style="background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:#c8f135;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">📰 Blogi Fitness</button>'
-    + '<button onclick="loadAll()" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:DM Mono,monospace;">⚡ WSZYSTKO</button>'
-    + '</div>'
-    + '<div id="sources-feed"></div>'
-    + '</div><div style="height:20px;"></div>';
+function drawFbGfx(canvas, article){
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d'),W=1200,H=630;
+  var mm=m(article.cat),A=mm.color||'#c8f135';
+  ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
+  var g=ctx.createLinearGradient(W*0.4,0,W,H);
+  g.addColorStop(0,'transparent');g.addColorStop(1,A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.1)':'rgba(200,241,53,0.1)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=A;ctx.fillRect(0,0,6,H);
+  ctx.font='bold 52px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('NEWS',50,76);
+  var nw=ctx.measureText('NEWS').width;ctx.fillStyle='#f0ece8';ctx.fillText('GYM',50+nw+8,76);
+  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.15)':'rgba(200,241,53,0.15)';
+  roundCv(ctx,50,96,240,44,22);
+  ctx.fillStyle=A;ctx.font='bold 22px Arial';ctx.fillText(mm.icon+' '+(article.cat||'trening').toUpperCase(),70,124);
+  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.25)':'rgba(200,241,53,0.25)';
+  ctx.fillRect(50,154,W-100,2);
+  ctx.fillStyle='#f0ece8';ctx.font='bold 66px Arial';
+  var th=wrapCv(ctx,article.title,50,234,W-120,78);
+  ctx.fillStyle='rgba(240,236,232,0.55)';ctx.font='32px Arial';
+  wrapCv(ctx,article.excerpt||'',50,240+th+8,W-120,44);
+  ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(0,H-80,W,80);
+  ctx.font='bold 26px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@newsgym_pl',50,H-44);
+  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='22px Arial';ctx.fillText('#fitness #trening #newsgym',50,H-12);
+  ctx.textAlign='right';ctx.fillStyle=A;ctx.font='bold 28px Arial';ctx.fillText('⏱ '+(article.readTime||'5 min'),W-50,H-28);ctx.textAlign='left';
+  ctx.fillStyle=A;ctx.fillRect(0,H-4,W,4);
 }
 
-async function loadAll() {
-  await loadPubMed();
-  await loadRSS();
+function drawIgGfx(canvas, article){
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d'),W=1080,H=1080;
+  var mm=m(article.cat),A=mm.color||'#c8f135';
+  ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
+  var g=ctx.createRadialGradient(W,0,0,W,0,W);
+  g.addColorStop(0,A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.09)':'rgba(200,241,53,0.09)');g.addColorStop(1,'transparent');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=A;ctx.fillRect(0,0,W,6);
+  ctx.font='bold 48px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('NEWS',60,82);
+  var nw=ctx.measureText('NEWS').width;ctx.fillStyle='#f0ece8';ctx.fillText('GYM',60+nw+8,82);
+  ctx.globalAlpha=0.04;ctx.font='460px Arial';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(mm.icon,W/2,H/2+150);ctx.globalAlpha=1;ctx.textAlign='left';
+  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.14)':'rgba(200,241,53,0.14)';
+  roundCv(ctx,60,108,270,50,25);ctx.fillStyle=A;ctx.font='bold 26px Arial';ctx.fillText(mm.icon+' '+(article.cat||'trening').toUpperCase(),82,141);
+  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.28)':'rgba(200,241,53,0.28)';ctx.fillRect(60,176,W-120,2);
+  ctx.fillStyle='#f0ece8';ctx.font='bold 80px Arial';
+  var th=wrapCv(ctx,article.title,60,278,W-120,94);
+  ctx.fillStyle='rgba(240,236,232,0.6)';ctx.font='36px Arial';wrapCv(ctx,article.excerpt||'',60,296+th,W-120,50);
+  ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.18)':'rgba(200,241,53,0.18)';ctx.fillRect(60,H-170,W-120,1);
+  var tags=(article.tags||[article.cat,'fitness']).slice(0,4);
+  ctx.font='28px Arial';ctx.fillStyle=A.startsWith('#')?'rgba('+hexToRgbStr(A)+',0.65)':'rgba(200,241,53,0.65)';
+  ctx.fillText(tags.map(function(t){return '#'+t;}).join('  '),60,H-120);
+  ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(0,H-90,W,90);
+  ctx.font='bold 30px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@newsgym_pl',60,H-46);
+  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='24px Arial';ctx.fillText('👆 Link w bio – pełny artykuł',60,H-12);
+  ctx.fillStyle=A;ctx.fillRect(0,H-4,W,4);
 }
 
-async function loadPubMed() {
-  var box = document.getElementById('sources-feed');
-  if(!box) return;
-  box.innerHTML += '<div id="pubmed-loading" style="color:#60a5fa;font-size:12px;padding:8px 0;font-family:DM Mono,monospace;">🔬 Pobieranie z PubMed...</div>';
-  
-  var topic = PUBMED_TOPICS[Math.floor(Math.random() * PUBMED_TOPICS.length)];
-  try {
-    var r = await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term='+encodeURIComponent(topic)+'&retmax=8&sort=date&retmode=json');
-    var d = await r.json();
-    var ids = d.esearchresult.idlist;
-    if(!ids.length) { document.getElementById('pubmed-loading').textContent='Brak wyników PubMed'; return; }
-    var r2 = await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id='+ids.join(',')+'&retmode=json');
-    var d2 = await r2.json();
-    
-    var html = '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:#60a5fa;margin:12px 0 8px;">PUBMED — '+topic.toUpperCase()+'</div>';
-    ids.forEach(function(id) {
-      var a = d2.result[id];
-      if(!a) return;
-      var title = a.title || 'Brak tytułu';
-      var journal = a.fulljournalname || a.source || '';
-      var year = a.pubdate ? a.pubdate.substring(0,4) : '';
-      var authors = a.authors && a.authors.length ? a.authors.slice(0,2).map(function(x){return x.name;}).join(', ') : '';
-      html += '<div style="background:linear-gradient(135deg,rgba(96,165,250,0.06),rgba(167,139,250,0.04));border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:14px;margin-bottom:8px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
-        + '<span style="font-size:9px;font-family:DM Mono,monospace;color:#60a5fa;font-weight:700;">🔬 PUBMED · '+year+'</span>'
-        + '<span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+journal.substring(0,25)+'</span>'
-        + '</div>'
-        + '<div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+title.substring(0,120)+(title.length>120?'...':'')+'</div>'
-        + '<div style="font-size:11px;color:#777;margin-bottom:10px;font-style:italic;">'+authors+'</div>'
-        + '<button onclick="generateFromSource(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+journal+'\',\''+year+'\',\'badania\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button>'
-        + '</div>';
-    });
-    
-    var loading = document.getElementById('pubmed-loading');
-    if(loading) loading.remove();
-    box.innerHTML += html;
-  } catch(e) {
-    var loading = document.getElementById('pubmed-loading');
-    if(loading) loading.textContent = '❌ Błąd PubMed: ' + e.message;
-  }
+function roundCv(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();
 }
-
-async function loadRSS() {
-  var box = document.getElementById('sources-feed');
-  if(!box) return;
-  box.innerHTML += '<div id="rss-loading" style="color:#c8f135;font-size:12px;padding:8px 0;font-family:DM Mono,monospace;">📰 Pobieranie blogów fitness...</div>';
-  
-  var html = '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:#c8f135;margin:12px 0 8px;">BLOGI FITNESS</div>';
-  var loaded = 0;
-  
-  for(var i=0; i<RSS_FEEDS.length; i++) {
-    var feed = RSS_FEEDS[i];
-    try {
-      var r = await fetch(feed.url);
-      var d = await r.json();
-      if(d.status !== 'ok' || !d.items || !d.items.length) continue;
-      
-      d.items.slice(0,3).forEach(function(item) {
-        var title = item.title || '';
-        var desc = item.description ? item.description.replace(/<[^>]*>/g,'').substring(0,150) : '';
-        var date = item.pubDate ? item.pubDate.substring(0,10) : '';
-        var cat = guessCat(title + ' ' + desc);
-        html += '<div style="background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.15);border-radius:10px;padding:14px;margin-bottom:8px;">'
-          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
-          + '<span style="font-size:9px;font-family:DM Mono,monospace;color:#c8f135;font-weight:700;">📰 '+feed.name+'</span>'
-          + '<span style="font-size:9px;font-family:DM Mono,monospace;color:#555;">'+date+'</span>'
-          + '</div>'
-          + '<div style="font-size:13px;font-weight:600;color:#f0ece8;line-height:1.4;margin-bottom:6px;">'+title.substring(0,100)+(title.length>100?'...':'')+'</div>'
-          + '<div style="font-size:11px;color:#777;margin-bottom:10px;">'+desc+(desc.length>=150?'...':'')+'</div>'
-          + '<button onclick="generateFromSource(\''+title.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+feed.name+'\',\'\',\''+cat+'\')" style="background:linear-gradient(135deg,#c8f135,#a8d420);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">⚡ GENERUJ ARTYKUŁ PO POLSKU</button>'
-          + '</div>';
-        loaded++;
-      });
-    } catch(e) { /* skip failed feed */ }
-  }
-  
-  var loading = document.getElementById('rss-loading');
-  if(loading) loading.remove();
-  if(loaded === 0) html += '<div style="color:#ff4444;font-size:12px;">Nie udało się pobrać blogów (CORS). Użyj PubMed.</div>';
-  box.innerHTML += html;
-}
-
-function guessCat(text) {
-  var t = text.toLowerCase();
-  if(t.includes('strength')||t.includes('powerlifting')||t.includes('squat')||t.includes('deadlift')) return 'sila';
-  if(t.includes('cardio')||t.includes('running')||t.includes('hiit')||t.includes('endurance')) return 'cardio';
-  if(t.includes('diet')||t.includes('nutrition')||t.includes('protein')||t.includes('calorie')) return 'dieta';
-  if(t.includes('supplement')||t.includes('creatine')||t.includes('caffeine')||t.includes('vitamin')) return 'supl';
-  if(t.includes('sleep')||t.includes('recovery')||t.includes('stress')||t.includes('lifestyle')) return 'lifestyle';
-  if(t.includes('recipe')||t.includes('meal')||t.includes('food')||t.includes('cook')) return 'przepisy';
-  if(t.includes('motivation')||t.includes('mental')||t.includes('mindset')) return 'motyw';
-  if(t.includes('research')||t.includes('study')||t.includes('trial')||t.includes('meta')) return 'badania';
-  return 'trening';
-}
-
-async function generateFromSource(title, source, year, cat) {
-  // Przełącz na zakładkę DODAJ i wypełnij
-  var text = title + '\n\nŹródło: ' + source + (year ? ' (' + year + ')' : '') + '\n\nStwórz szczegółowy artykuł fitness po polsku na podstawie tego tematu/badania. Dodaj praktyczne wskazówki i naukowe podstawy.';
-  
-  // Otwórz panel DODAJ
-  document.getElementById('add-panel').classList.add('show');
-  document.getElementById('gen-status').innerHTML = '';
-  document.getElementById('add-text').value = text;
-  
-  // Ustaw kategorię
-  var sel = document.getElementById('add-cat');
-  for(var i=0; i<sel.options.length; i++) {
-    if(sel.options[i].value === cat) { sel.selectedIndex = i; break; }
-  }
-  
-  // Pokaż info
-  document.getElementById('gen-status').innerHTML = '<div style="background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.2);border-radius:8px;padding:10px;font-size:12px;color:#c8f135;">✅ Tekst wklejony! Kliknij "Generuj artykuł" poniżej.</div>';
+function wrapCv(ctx,text,x,y,maxW,lineH){
+  if(!text) return 0;
+  var words=text.split(' '),line='',lines=[];
+  for(var i=0;i<words.length;i++){var test=line+words[i]+' ';if(ctx.measureText(test).width>maxW&&line!==''){lines.push(line.trim());line=words[i]+' ';}else line=test;}
+  if(line.trim()) lines.push(line.trim());
+  lines.forEach(function(l,i){ctx.fillText(l,x,y+i*lineH);});
+  return lines.length*lineH;
 }
 
 renderCats();
