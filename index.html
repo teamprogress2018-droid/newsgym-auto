@@ -740,6 +740,29 @@ async function generateFromSource(title,source,year,cat){
 // FIX #2: switchPubTab zdefiniowana (zastępuje brakującą switchSocialTab)
 // ============================================================
 
+async function autoRegenFb(article){
+  var ta=document.getElementById('pub-fb-text');
+  var counter=document.getElementById('pub-fb-counter');
+  if(!ta) return;
+  ta.value='⏳ AI pisze pełny post...';
+  if(counter) counter.textContent='...';
+  var artBody=article.content?article.content.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').substring(0,600):'';
+  var points=article.points?article.points.join(', '):'';
+  var tip=article.practicalTip||'';
+  var prompt='Napisz PEŁNY wartościowy post na Facebooka po polsku. BEZ linków. BEZ cudzysłowów. Minimum 300 słów.\nStruktura:\n1) Mocny haczyk - pierwsze zdanie które zatrzymuje przewijanie (szokujący fakt lub pytanie)\n2) Główne fakty i dane naukowe z konkretnymi liczbami\n3) Praktyczny protokół - co konkretnie robić krok po kroku\n4) Motywujące zakończenie z wezwaniem do komentowania\n5) 6-8 hashtagów\n\nArtykuł:\nTytuł: '+article.title+'\nOpis: '+(article.excerpt||'')+'\nTreść: '+artBody+(points?'\nWyniki: '+points:'')+(tip?'\nWskazówka: '+tip:'');
+  try{
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+    var d=await resp.json();
+    var text=d.content.map(function(i){return i.text||'';}).join('').trim();
+    if(ta) ta.value=text;
+    if(counter) counter.textContent=text.length+' znaków';
+  }catch(e){
+    // Fallback do krótkiego tekstu
+    if(ta) ta.value=buildFbText(article);
+    if(counter) counter.textContent=(ta?ta.value.length:0)+' znaków';
+  }
+}
+
 function showPublishModal(article) {
   if(!article||!article.title){flash('Brak danych artykułu');return;}
   var old=document.getElementById('pub-modal');
@@ -827,6 +850,8 @@ function showPublishModal(article) {
     drawIgGfx(document.getElementById('pub-ig-canvas'), article);
     var ta=document.getElementById('pub-fb-text');
     if(ta) ta.addEventListener('input',function(){var c=document.getElementById('pub-fb-counter');if(c)c.textContent=ta.value.length+' znaków';});
+    // Auto-generuj długi post FB od razu po otwarciu modalu
+    autoRegenFb(article);
   }, 150);
 }
 
