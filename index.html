@@ -1121,12 +1121,16 @@ function initPhotoGallery(article, platform) {
       + '</div>';
   }).join('');
 
-  // Dodaj click handler przez delegację (bez onclick w HTML)
+  // Dodaj click handler - obsługa kliknięcia na div lub img wewnątrz
   gallery.onclick = function(e) {
-    var thumb = e.target.closest('.photo-thumb');
-    if(!thumb) return;
+    var thumb = e.target;
+    // Jeśli kliknięto w img lub overlay, idź do rodzica
+    if(thumb.tagName === 'IMG' || thumb.tagName === 'DIV' && !thumb.getAttribute('data-url')) {
+      thumb = thumb.parentElement;
+    }
+    if(!thumb || !thumb.getAttribute('data-url')) return;
     var url = decodeURIComponent(thumb.getAttribute('data-url'));
-    var plat = thumb.getAttribute('data-platform');
+    var plat = thumb.getAttribute('data-plat');
     selectPhoto(thumb, url, plat);
   };
 }
@@ -1215,7 +1219,7 @@ function drawFbGfxWithImg(canvas, article, bgImg) {
   // Dolny pasek
   ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, H - 80, W, 80);
   ctx.font = 'bold 26px Arial'; ctx.fillStyle = A; ctx.textAlign = 'left';
-  ctx.fillText('@newsgym_pl', 50, H - 44);
+  ctx.fillText('@progress.studio.wro', 50, H - 44);
   ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '22px Arial';
   ctx.fillText('#fitness #trening #newsgym', 50, H - 12);
   ctx.textAlign = 'right'; ctx.fillStyle = A; ctx.font = 'bold 28px Arial';
@@ -1263,7 +1267,7 @@ function drawIgGfxWithImg(canvas, article, bgImg) {
   // Dolny pasek
   ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, H - 90, W, 90);
   ctx.font = 'bold 30px Arial'; ctx.fillStyle = A; ctx.textAlign = 'left';
-  ctx.fillText('@newsgym_pl', 60, H - 46);
+  ctx.fillText('@progress.studio.wro', 60, H - 46);
   ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '24px Arial';
   ctx.fillText('👆 Link w bio – pełny artykuł', 60, H - 12);
   ctx.fillStyle = A; ctx.fillRect(0, H - 4, W, 4);
@@ -1289,7 +1293,7 @@ function drawFbGfx(canvas,article){
   ctx.fillStyle='rgba(240,236,232,0.55)';ctx.font='32px Arial';
   wrapCv(ctx,article.excerpt||'',50,240+th+8,W-120,44);
   ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(0,H-80,W,80);
-  ctx.font='bold 26px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@newsgym_pl',50,H-44);
+  ctx.font='bold 26px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@progress.studio.wro',50,H-44);
   ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='22px Arial';ctx.fillText('#fitness #trening #newsgym',50,H-12);
   ctx.textAlign='right';ctx.fillStyle=A;ctx.font='bold 28px Arial';ctx.fillText('⏱ '+(article.readTime||'5 min'),W-50,H-28);ctx.textAlign='left';
   ctx.fillStyle=A;ctx.fillRect(0,H-4,W,4);
@@ -1318,7 +1322,7 @@ function drawIgGfx(canvas,article){
   ctx.font='28px Arial';ctx.fillStyle='rgba('+hexToRgbStr(A)+',0.65)';
   ctx.fillText(tags.map(function(t){return '#'+t;}).join('  '),60,H-120);
   ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(0,H-90,W,90);
-  ctx.font='bold 30px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@newsgym_pl',60,H-46);
+  ctx.font='bold 30px Arial';ctx.fillStyle=A;ctx.textAlign='left';ctx.fillText('@progress.studio.wro',60,H-46);
   ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='24px Arial';ctx.fillText('👆 Link w bio – pełny artykuł',60,H-12);
   ctx.fillStyle=A;ctx.fillRect(0,H-4,W,4);
 }
