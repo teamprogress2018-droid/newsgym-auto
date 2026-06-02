@@ -765,6 +765,24 @@ async function autoRegenFb(article){
   }
 }
 
+async function autoRegenIg(article){
+  var ta=document.getElementById('pub-ig-text');
+  if(!ta) return;
+  ta.value='⏳ AI pisze pełny post IG...';
+  var artBody=article.content?article.content.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').substring(0,600):'';
+  var points=article.points?article.points.join(', '):'';
+  var tip=article.practicalTip||'';
+  var prompt='Napisz PEŁNY wartościowy post na Instagram po polsku. BEZ linków. BEZ cudzysłowów. Minimum 200 słów.\nStruktura:\n1) Mocny haczyk\n2) Treść merytoryczna z faktami i danymi (3-4 akapity)\n3) Praktyczna wskazówka\n4) Separatory (...)\n5) 10-12 hashtagów\n\nArtykuł:\nTytuł: '+article.title+'\nTreść: '+artBody+(points?'\nWyniki: '+points:'')+(tip?'\nWskazówka: '+tip:'');
+  try{
+    var resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    var d=await resp.json();
+    var text=d.content.map(function(i){return i.text||'';}).join('').trim();
+    if(ta) ta.value=text;
+  }catch(e){
+    if(ta) ta.value=buildIgText(article);
+  }
+}
+
 function showPublishModal(article) {
   if(!article||!article.title){flash('Brak danych artykułu');return;}
   var old=document.getElementById('pub-modal');
@@ -869,6 +887,7 @@ function showPublishModal(article) {
     if(ta) ta.addEventListener('input',function(){var c=document.getElementById('pub-fb-counter');if(c)c.textContent=ta.value.length+' znaków';});
     // Auto-generuj długi post FB od razu po otwarciu modalu
     autoRegenFb(article);
+    autoRegenIg(article);
   }, 150);
 }
 
