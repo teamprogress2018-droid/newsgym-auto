@@ -1908,7 +1908,12 @@ async function sendWiedzaAI() {
     var data = await resp.json();
     var answer = data.content.map(function(i){return i.text||'';}).join('').trim();
     var typing = document.getElementById('ai-typing');
-    if (typing) typing.outerHTML = '<div class="wiedza-ai-msg bot">'+answer.replace(/\n/g,'<br>')+'</div>';
+    var cleanAnswer = answer
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/#{1,3}\s*(.+)/g, '<strong>$1</strong>')
+    .replace(/\n/g,'<br>');
+  if (typing) typing.outerHTML = '<div class="wiedza-ai-msg bot">'+cleanAnswer+'</div>';
   } catch(e) {
     var typing = document.getElementById('ai-typing');
     if (typing) typing.outerHTML = '<div class="wiedza-ai-msg bot" style="color:#ff6b6b;">Błąd połączenia — spróbuj ponownie.</div>';
@@ -1937,61 +1942,30 @@ async function genWiedzaPost(platform) {
 }
 
 function showWiedzaPublishModal(w, defaultTab) {
-  var old = document.getElementById('pub-modal');
-  if (old) old.remove();
-
-  var tmp = document.createElement('div');
-  tmp.innerHTML = w.content;
-  var cleanContent = tmp.textContent.replace(/\s+/g,' ').substring(0, 800);
-
-  var modal = document.createElement('div');
-  modal.id = 'pub-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:999;display:flex;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
-  modal.innerHTML =
-    '<div style="background:#111;border:1px solid rgba(200,241,53,0.2);border-radius:20px;width:100%;max-width:500px;overflow:hidden;margin:auto;">' +
-    '<div style="background:linear-gradient(135deg,rgba(200,241,53,0.08),rgba(200,241,53,0.02));padding:16px;border-bottom:1px solid rgba(200,241,53,0.1);display:flex;justify-content:space-between;align-items:flex-start;">' +
-    '<div><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#c8f135;letter-spacing:1px;">📤 UDOSTĘPNIJ WIEDZĘ</div>' +
-    '<div style="font-size:10px;color:#555;font-family:DM Mono,monospace;margin-top:3px;">'+w.icon+' '+w.title.substring(0,45)+'...</div></div>' +
-    '<button onclick="document.getElementById(\'pub-modal\').remove()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#777;border-radius:8px;padding:7px 12px;cursor:pointer;">✕</button>' +
-    '</div>' +
-    '<div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);">' +
-    '<button id="wptab-fb" onclick="switchWPubTab(\'fb\')" style="flex:1;padding:11px 6px;border:none;border-bottom:2px solid #1877f2;background:rgba(24,119,242,0.1);color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">📘 FB</button>' +
-    '<button id="wptab-ig" onclick="switchWPubTab(\'ig\')" style="flex:1;padding:11px 6px;border:none;border-bottom:2px solid transparent;background:transparent;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">📸 IG</button>' +
-    '<button id="wptab-wa" onclick="switchWPubTab(\'wa\')" style="flex:1;padding:11px 6px;border:none;border-bottom:2px solid transparent;background:transparent;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:DM Mono,monospace;">💬 WA</button>' +
-    '</div>' +
-    '<div style="padding:16px;">' +
-    // FB
-    '<div id="wppanel-fb">' +
-    '<div id="wp-fb-status" style="text-align:center;padding:12px;font-size:12px;color:#60a5fa;font-family:DM Mono,monospace;">⏳ AI generuje post ekspercki...</div>' +
-    '<textarea id="wp-fb-text" rows="7" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;display:none;"></textarea>' +
-    '<div id="wp-fb-actions" style="display:none;margin-top:10px;display:grid;grid-template-columns:1fr 2fr;gap:8px;">' +
-    '<button onclick="document.getElementById(\'pub-modal\').remove()" style="padding:12px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);color:#777;border-radius:10px;cursor:pointer;">Anuluj</button>' +
-    '<button onclick="copyAndOpenFb()" style="padding:12px;background:linear-gradient(135deg,#1877f2,#0d5dbf);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📋 Kopiuj + Otwórz FB</button>' +
-    '</div></div>' +
-    // IG
-    '<div id="wppanel-ig" style="display:none;">' +
-    '<div id="wp-ig-status" style="text-align:center;padding:12px;font-size:12px;color:#f97316;font-family:DM Mono,monospace;">⏳ AI generuje post ekspercki...</div>' +
-    '<textarea id="wp-ig-text" rows="7" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;display:none;"></textarea>' +
-    '<div id="wp-ig-actions" style="display:none;margin-top:10px;display:grid;grid-template-columns:1fr 2fr;gap:8px;">' +
-    '<button onclick="document.getElementById(\'pub-modal\').remove()" style="padding:12px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);color:#777;border-radius:10px;cursor:pointer;">Anuluj</button>' +
-    '<button onclick="copyAndOpenIg()" style="padding:12px;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📋 Kopiuj + Otwórz IG</button>' +
-    '</div></div>' +
-    // WA
-    '<div id="wppanel-wa" style="display:none;">' +
-    '<textarea id="wp-wa-text" rows="5" style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:#f0ece8;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:DM Sans,sans-serif;">'+buildWiedzaWaText(w)+'</textarea>' +
-    '<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-    '<button onclick="copyWiedzaWa()" style="padding:12px;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.25);color:#25d366;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">📋 Kopiuj</button>' +
-    '<button onclick="var t=document.getElementById(\'wp-wa-text\');window.open(\'https://wa.me/?text=\'+encodeURIComponent(t?t.value:\'\'),\'_blank\');" style="padding:12px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">💬 Wyślij WA</button>' +
-    '</div></div>' +
-    '</div></div>';
-
-  document.body.appendChild(modal);
-
-  // Auto-generuj posty FB i IG
-  genWiedzaFbPost(w, cleanContent);
-  genWiedzaIgPost(w, cleanContent);
-
-  if (defaultTab === 'ig') setTimeout(function(){ switchWPubTab('ig'); }, 100);
+  // Konwertuj artykuł wiedzy na format feedowy i użyj pełnego modalu z grafiką Canvas
+  var article = {
+    id: w.id,
+    cat: w.cat || 'trening',
+    title: w.title,
+    excerpt: w.desc || '',
+    content: w.content || '',
+    tags: w.tags || [],
+    readTime: w.time || '8 min',
+    author: 'Progress Studio',
+    authorInit: 'PS',
+    date: 'dzis',
+    views: 0,
+    likes: 0,
+    imageUrl: null
+  };
+  // Użyj pełnego modalu feedowego (z Canvas, galerią zdjęć, AI postem)
+  showPublishModal(article);
+  // Przełącz na właściwą zakładkę jeśli podano
+  if (defaultTab === 'ig') {
+    setTimeout(function(){ switchPubTab('ig'); }, 300);
+  } else if (defaultTab === 'wa') {
+    setTimeout(function(){ switchPubTab('wa'); }, 300);
+  }
 }
 
 async function genWiedzaFbPost(w, cleanContent) {
