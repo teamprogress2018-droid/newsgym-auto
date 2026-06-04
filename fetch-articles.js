@@ -1,3 +1,104 @@
+Skip to content
+teamprogress2018-droid
+newsgym-auto
+Repository navigation
+Code
+Issues
+Pull requests
+Agents
+Actions
+Projects
+Security and quality
+Insights
+Settings
+newsgym-auto
+/
+fetch-articles.js
+in
+main
+
+Edit
+
+Preview
+Indent mode
+
+Spaces
+Indent size
+
+2
+Line wrap mode
+
+No wrap
+Editing fetch-articles.js file contents
+const prompt = `Napisz artykuł fitness po polsku na podstawie tytułu: "${raw.title}".
+
+Zwróć TYLKO JSON (bez markdown, bez backticks):
+{"title":"[tytuł po polsku, max 70 znaków]","excerpt":"[2 zdania, max 120 znaków]","content":"[3 akapity po polsku, max 350 słów, oddzielone \\n\\n]","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
+nextpreviousallmatch caseregexpby word
+Replace
+replacereplace all×
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
 // fetch-articles.js
 // Pobiera artykuły z PubMed i RSS, tłumaczy przez Claude AI
 // Zapisuje do auto-articles.json w repo (czytanego przez aplikację)
@@ -60,150 +161,5 @@ function postJson(url, payload, headers = {}) {
       hostname: urlObj.hostname,
       path: urlObj.pathname + urlObj.search,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body), ...headers },
-      timeout: 30000,
-    };
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve({ status: res.statusCode, body: data }));
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-async function fetchPubMed(topic) {
-  try {
-    const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic)}&retmax=3&sort=date&retmode=json&datetype=pdat&reldate=365`;
-    const searchRes = await fetchUrl(searchUrl);
-    const searchData = JSON.parse(searchRes.body);
-    const ids = searchData.esearchresult?.idlist || [];
-    if (!ids.length) return [];
-    const fetchRes = await fetchUrl(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${ids.join(',')}&retmode=xml`);
-    const xml = fetchRes.body;
-    const articles = [];
-    const titles = [...xml.matchAll(/<ArticleTitle>([\s\S]*?)<\/ArticleTitle>/g)].map(m => m[1].replace(/<[^>]+>/g, '').trim());
-    const abstracts = [...xml.matchAll(/<AbstractText[^>]*>([\s\S]*?)<\/AbstractText>/g)].map(m => m[1].replace(/<[^>]+>/g, '').trim());
-    const pmids = [...xml.matchAll(/<PMID[^>]*>(\d+)<\/PMID>/g)].map(m => m[1]);
-    for (let i = 0; i < Math.min(titles.length, 2); i++) {
-      if (titles[i] && abstracts[i] && abstracts[i].length > 100) {
-        articles.push({ title: titles[i], abstract: abstracts[i].substring(0, 1500), pmid: pmids[i] || '', topic, source: 'pubmed' });
-      }
-    }
-    return articles;
-  } catch (e) { return []; }
-}
-
-async function fetchRSS(feedUrl) {
-  try {
-    const res = await fetchUrl(feedUrl);
-    const xml = res.body;
-    const articles = [];
-    for (const match of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
-      const item = match[1];
-      const titleMatch = item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/);
-      const descMatch = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/);
-      const title = (titleMatch?.[1] || titleMatch?.[2] || '').replace(/<[^>]+>/g, '').trim();
-      const desc = (descMatch?.[1] || descMatch?.[2] || '').replace(/<[^>]+>/g, '').trim();
-      if (title && desc && desc.length > 100) {
-        articles.push({ title, abstract: desc.substring(0, 1500), source: 'rss', feedUrl });
-        if (articles.length >= 2) break;
-      }
-    }
-    return articles;
-  } catch (e) { return []; }
-}
-
-function detectCategory(text) {
-  const lower = text.toLowerCase();
-  for (const [keyword, cat] of Object.entries(TOPIC_TO_CAT)) {
-    if (lower.includes(keyword.toLowerCase())) return cat;
-  }
-  return 'trening';
-}
-
-async function generateArticle(raw) {
-  const cat = raw.topic ? detectCategory(raw.topic) : detectCategory(raw.title + ' ' + raw.abstract);
-  const prompt = `Jesteś ekspertem fitness piszącym po POLSKU dla aplikacji NEWS GYM.\n\nNa podstawie poniższego tekstu stwórz artykuł. Odpowiedz WYŁĄCZNIE czystym JSON bez backticks ani komentarzy:\n\nTYTUŁ ORYGINAŁU: ${raw.title}\nTREŚĆ: ${raw.abstract}\n${raw.pmid ? 'PMID: ' + raw.pmid : ''}\n\nWymagany format JSON:\n{\n  "title": "Chwytliwy tytuł po polsku (max 80 znaków)",\n  "excerpt": "Krótki opis 1-2 zdania po polsku",\n  "content": "Treść w HTML po polsku min 200 słów. Używaj: <h3>, <p>, <div class=\'highlight\'>, <div class=\'tip-box\'>",\n  "tags": ["tag1", "tag2", "tag3"],\n  "readTime": "X min",\n  "sources": [{"journal": "Nazwa","year": "2026","title": "Tytuł","authors": "Nazwisko et al.","finding": "Wynik","pmid": "${raw.pmid || ''}"}]\n}`;
-
-  try {
-    const res = await postJson(
-      'https://api.anthropic.com/v1/messages',
-      { model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] },
-      { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }
-    );
-    const data = JSON.parse(res.body);
-    const text = data.content?.map(c => c.text || '').join('') || '';
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    return {
-      id: 'auto-' + Date.now() + '-' + Math.random().toString(36).substr(2,6),
-      cat, title: parsed.title, excerpt: parsed.excerpt, content: parsed.content,
-      tags: parsed.tags || [], readTime: parsed.readTime || '5 min',
-      author: 'Redakcja NEWS GYM', authorInit: 'AI',
-      date: new Date().toLocaleDateString('pl-PL'),
-      views: Math.floor(Math.random() * 500) + 100,
-      likes: Math.floor(Math.random() * 50) + 10,
-      extraSources: parsed.sources || [],
-      source: raw.source, originalTitle: raw.title, featured: false,
-      createdAt: new Date().toISOString(),
-    };
-  } catch (e) { console.log('Błąd Claude:', e.message); return null; }
-}
-
-async function fetchUnsplashPhoto(query) {
-  try {
-    const res = await fetchUrl(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + ' fitness')}&per_page=1&orientation=landscape&client_id=${UNSPLASH_KEY}`);
-    const data = JSON.parse(res.body);
-    if (data.results?.length > 0) return data.results[0].urls.regular + '&w=400&q=80';
-  } catch(e) {}
-  return null;
-}
-
-async function main() {
-  console.log('NEWS GYM Auto-fetch start:', new Date().toLocaleString('pl-PL'));
-  if (!ANTHROPIC_API_KEY) { console.error('Brak ANTHROPIC_API_KEY!'); process.exit(1); }
-
-  const articlesFile = path.join(__dirname, 'auto-articles.json');
-  let existing = [];
-  try {
-    existing = JSON.parse(fs.readFileSync(articlesFile, 'utf8'));
-    console.log('Wczytano ' + existing.length + ' istniejących artykułów');
-  } catch(e) {
-    console.log('Brak pliku auto-articles.json — tworzę nowy');
-  }
-
-  let allRaw = [];
-  const shuffled = PUBMED_TOPICS.sort(() => Math.random() - 0.5).slice(0, 4);
-  for (const topic of shuffled) {
-    const arts = await fetchPubMed(topic);
-    allRaw.push(...arts);
-    await new Promise(r => setTimeout(r, 1000));
-  }
-  for (const feed of RSS_FEEDS) {
-    const arts = await fetchRSS(feed);
-    allRaw.push(...arts);
-  }
-
-  console.log('Pobrano ' + allRaw.length + ' surowych artykułów');
-
-  let newArticles = [];
-  for (const raw of allRaw.slice(0, 4)) {
-    console.log('Generuję: ' + raw.title.substring(0, 60));
-    const article = await generateArticle(raw);
-    if (!article) continue;
-    const imageUrl = await fetchUnsplashPhoto(raw.topic || article.cat);
-    if (imageUrl) article.imageUrl = imageUrl;
-    newArticles.push(article);
-    console.log('Wygenerowano: ' + article.title);
-    await new Promise(r => setTimeout(r, 2000));
-  }
-
-  const combined = [...newArticles, ...existing].slice(0, 50);
-  fs.writeFileSync(articlesFile, JSON.stringify(combined, null, 2));
-  console.log('Zapisano ' + combined.length + ' artykułów do auto-articles.json');
-  console.log('Nowych artykułów: ' + newArticles.length);
-}
-
-main().catch(e => { console.error('Błąd:', e.message); process.exit(1); });
+ const cat = raw.topic ? detectCategory(raw.topic) : detectCategory(raw.title + ' ' + (raw.abstract || ''));
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
