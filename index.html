@@ -2105,7 +2105,9 @@ window.copyWiedzaWa = copyWiedzaWa;
 
 renderCats();
 render();
-if(window._loadFromFirebase) window._loadFromFirebase();
+setTimeout(function(){
+  if(window._loadFromFirebase) window._loadFromFirebase();
+}, 500);
 </script>
 </body>
 </html>
