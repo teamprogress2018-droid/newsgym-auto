@@ -82,26 +82,36 @@ function detectCategory(title) {
 }
 
 async function fetchPubMed() {
-  const topic = PUBMED_TOPICS[Math.floor(Math.random() * PUBMED_TOPICS.length)];
-  console.log('PubMed topic: ' + topic);
-  try {
-    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic)}&retmax=10&sort=date&retmode=json`;
-    const searchData = JSON.parse(await fetchUrl(url));
-    const ids = searchData.esearchresult?.idlist || [];
-    const results = [];
-    for (const id of ids.slice(0, 5)) {
-      try {
-        const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${id}&retmode=json`;
-        const summaryData = JSON.parse(await fetchUrl(summaryUrl));
-        const art = summaryData.result?.[id];
-        if (art?.title) results.push({ title: art.title, source: 'PubMed', date: art.pubdate || new Date().toISOString().split('T')[0] });
-      } catch (e) { console.log('PubMed item error: ' + e.message); }
-    }
-    return results;
-  } catch (e) {
-    console.log('PubMed error: ' + e.message);
-    return [];
+  const topicGroups = [
+    'protein intake muscle recovery 2026',
+    'creatine supplementation strength 2026',
+    'sleep recovery athletic performance 2026',
+    'HIIT cardiovascular fitness 2026',
+    'resistance training hypertrophy 2026',
+    'omega-3 exercise performance 2026',
+    'intermittent fasting muscle 2026',
+    'caffeine exercise performance 2026',
+  ];
+  const shuffled = topicGroups.sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, 3);
+  const results = [];
+  for (const topic of selected) {
+    console.log('PubMed topic: ' + topic);
+    try {
+      const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic)}&retmax=3&sort=date&retmode=json`;
+      const searchData = JSON.parse(await fetchUrl(url));
+      const ids = searchData.esearchresult?.idlist || [];
+      for (const id of ids.slice(0, 2)) {
+        try {
+          const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${id}&retmode=json`;
+          const summaryData = JSON.parse(await fetchUrl(summaryUrl));
+          const art = summaryData.result?.[id];
+          if (art?.title) results.push({ title: art.title, source: 'PubMed', date: art.pubdate || new Date().toISOString().split('T')[0] });
+        } catch (e) { console.log('PubMed item error: ' + e.message); }
+      }
+    } catch (e) { console.log('PubMed error: ' + e.message); }
   }
+  return results;
 }
 
 async function fetchRSS() {
