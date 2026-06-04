@@ -417,7 +417,7 @@ window._loadFromFirebase = async function() {
   try {
     setFbStatus('loading','Laduje artykuly...');
     // Pobierz auto-generowane artykuły z JSON
-    const resp = await fetch('auto-articles.json?t=' + Date.now());
+    const resp = await fetch('/newsgym-auto/auto-articles.json?t=' + Date.now());
     let autoArts = [];
     if (resp.ok) {
       autoArts = await resp.json();
