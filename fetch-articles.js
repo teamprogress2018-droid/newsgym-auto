@@ -131,7 +131,7 @@ async function generateArticle(raw) {
   try {
     const res = await postJson(
       'https://api.anthropic.com/v1/messages',
-      { model: 'claude-haiku-4-5-20251001', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
+      { model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] },
       { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }
     );
     const data = JSON.parse(res.body);
