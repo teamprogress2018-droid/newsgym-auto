@@ -131,11 +131,10 @@ async function fetchRSS() {
 }
 
 async function generateArticle(raw) {
-  const cat = detectCategory(raw.title);
   const prompt = `Napisz artykuł fitness po polsku na podstawie tytułu badania naukowego: "${raw.title}".
 
 Zwróć TYLKO JSON bez żadnego dodatkowego tekstu, bez markdown, bez backticks:
-{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"${cat}","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
+{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"[JEDNA z: Trening, Dieta, Suplementy, Regeneracja, Cardio]","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
 
   try {
     const text = await callClaude(prompt);
