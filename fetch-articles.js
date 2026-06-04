@@ -7,6 +7,7 @@ const http = require('http');
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const FIREBASE_CONFIG   = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : {};
+console.log('DEBUG FIREBASE_CONFIG:', process.env.FIREBASE_CONFIG ? 'EXISTS len=' + process.env.FIREBASE_CONFIG.length : 'UNDEFINED');
 const PROJECT_ID        = FIREBASE_CONFIG.projectId;
 const FIREBASE_API_KEY  = FIREBASE_CONFIG.apiKey;
 const UNSPLASH_KEY      = 'a0UmrunrDS1E9U_LacY7PBGTgVL6KikHzeCC-Q77oMc';
