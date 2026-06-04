@@ -72,13 +72,12 @@ function extractJSON(text) {
   return JSON.parse(s);
 }
 
-
-}(title) {
+function detectCategory(title) {
   const t = title.toLowerCase();
-  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting')) return 'Dieta';
-  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta')) return 'Suplementy';
-  if (t.includes('sleep') || t.includes('recovery')) return 'Regeneracja';
-  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular')) return 'Cardio';
+  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting') || t.includes('żywien') || t.includes('białk') || t.includes('dieta')) return 'Dieta';
+  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta') || t.includes('witamin') || t.includes('magnez')) return 'Suplementy';
+  if (t.includes('sleep') || t.includes('recovery') || t.includes('regenera')) return 'Regeneracja';
+  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular') || t.includes('aerob')) return 'Cardio';
   return 'Trening';
 }
 
@@ -86,11 +85,11 @@ async function fetchPubMed() {
   const topic = PUBMED_TOPICS[Math.floor(Math.random() * PUBMED_TOPICS.length)];
   console.log('PubMed topic: ' + topic);
   try {
-    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic)}&retmax=5&sort=date&retmode=json`;
+    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic)}&retmax=10&sort=date&retmode=json`;
     const searchData = JSON.parse(await fetchUrl(url));
     const ids = searchData.esearchresult?.idlist || [];
     const results = [];
-    for (const id of ids.slice(0, 3)) {
+    for (const id of ids.slice(0, 5)) {
       try {
         const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${id}&retmode=json`;
         const summaryData = JSON.parse(await fetchUrl(summaryUrl));
@@ -122,18 +121,11 @@ async function fetchRSS() {
 }
 
 async function generateArticle(raw) {
+  const cat = detectCategory(raw.title);
   const prompt = `Napisz artykuł fitness po polsku na podstawie tytułu badania naukowego: "${raw.title}".
 
 Zwróć TYLKO JSON bez żadnego dodatkowego tekstu, bez markdown, bez backticks:
-{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"${function detectCategory(title) {
-  const t = title.toLowerCase();
-  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting') || t.includes('żywien') || t.includes('białk') || t.includes('dieta')) return 'Dieta';
-  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta') || t.includes('witamin') || t.includes('magnez')) return 'Suplementy';
-  if (t.includes('sleep') || t.includes('recovery') || t.includes('sen ') || t.includes('regenera')) return 'Regeneracja';
-  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular') || t.includes('ciśnienie') || t.includes('aerob')) return 'Cardio';
-  if (t.includes('sarkopen') || t.includes('muscle') || t.includes('strength') || t.includes('hypertro') || t.includes('silown')) return 'Trening';
-  return 'Trening';
-}(raw.title)}","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
+{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"${cat}","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
 
   try {
     const text = await callClaude(prompt);
@@ -173,7 +165,7 @@ async function main() {
   console.log('Pobrano ' + raw.length + ' surowych artykułów');
 
   const newArticles = [];
-  for (const item of raw.slice(0, 4)) {
+  for (const item of raw.slice(0, 8)) {
     const article = await generateArticle(item);
     if (article) newArticles.push(article);
     await new Promise(r => setTimeout(r, 1500));
