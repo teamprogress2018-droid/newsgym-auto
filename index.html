@@ -401,11 +401,10 @@ input,button,textarea,select{font-family:'DM Sans',sans-serif;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyAs0bULBHydizjRLfc3AQqCZokW-g1kHMc",
   authDomain: "news-gym.firebaseapp.com",
-  databaseURL: "https://news-gym-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "news-gym",
   storageBucket: "news-gym.firebasestorage.app",
   messagingSenderId: "316391075991",
@@ -413,34 +412,31 @@ const firebaseConfig = {
 };
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+
 window._loadFromFirebase = async function() {
   try {
-    setFbStatus('loading','Laduje artykuly...');
-    // Pobierz auto-generowane artykuły z JSON
+    setFbStatus('loading', 'Laduje artykuly...');
     const resp = await fetch('/newsgym-auto/auto-articles.json?t=' + Date.now());
     let autoArts = [];
-    if (resp.ok) {
-      autoArts = await resp.json();
-    }
+    if (resp.ok) { autoArts = await resp.json(); }
     window.FIREBASE_ARTICLES = autoArts;
     window.ARTICLES = autoArts.length > 0 ? autoArts : [...window.FALLBACK_ARTICLES];
     setFbStatus('ok', 'Zaladowano - ' + window.ARTICLES.length + ' artykulow w bazie');
     render();
   } catch(e) {
-    setFbStatus('error','Offline - artykuly lokalne');
+    setFbStatus('error', 'Offline - artykuly lokalne');
     window.ARTICLES = [...window.FALLBACK_ARTICLES];
     render();
   }
+};
 
 window._saveToFirebase = async function(article) {
   try {
     const ref = await addDoc(collection(db,'articles'), {...article, createdAt: serverTimestamp()});
     return ref.id;
-  } catch(e) { return null; render();
-  }
+  } catch(e) { return null; }
 };
 // setTimeout removed - using auto-articles.json only
-
 </script>
 
 <script>
