@@ -431,23 +431,7 @@ window._loadFromFirebase = async function() {
     window.ARTICLES = [...window.FALLBACK_ARTICLES];
     render();
   }
-};
-  try {
-    setFbStatus('loading','Laduje artykuly z Firebase...');
-    const q = query(collection(db,'articles'), orderBy('createdAt','desc'), limit(50));
-    const snap = await getDocs(q);
-    const arts = [];
-    snap.forEach(doc => arts.push({id: doc.id, ...doc.data()}));
-    window.FIREBASE_ARTICLES = arts;
-    window.ARTICLES = [...arts, ...window.FALLBACK_ARTICLES];
-    setFbStatus('ok', 'Firebase polaczony - ' + arts.length + ' artykulow w bazie');
-    render();
-  } catch(e) {
-    setFbStatus('error','Offline - artykuly lokalne');
-    window.ARTICLES = [...window.FALLBACK_ARTICLES];
-    render();
-  }
-};
+
 window._saveToFirebase = async function(article) {
   try {
     const ref = await addDoc(collection(db,'articles'), {...article, createdAt: serverTimestamp()});
