@@ -480,18 +480,21 @@ var UNSPLASH = {
   default:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&fit=crop',
 };
 
-function getImg(cat){
+function getImg(cat, seed){
   if(!cat) return UNSPLASH.default;
   var c=cat.toLowerCase().trim();
-  if(c==='sila'||c.includes('sil')) return UNSPLASH.sila;
-  if(c==='cardio'||c.includes('card')||c.includes('bieg')) return UNSPLASH.cardio;
-  if(c==='dieta'||c.includes('diet')||c.includes('odzy')) return UNSPLASH.dieta;
-  if(c==='supl'||c.includes('supl')) return UNSPLASH.supl;
-  if(c==='badania'||c.includes('bad')||c.includes('nauk')) return UNSPLASH.badania;
-  if(c==='lifestyle'||c.includes('life')) return UNSPLASH.lifestyle;
-  if(c==='przepisy'||c.includes('prze')) return UNSPLASH.przepisy;
-  if(c==='motyw'||c.includes('motyw')) return UNSPLASH.motyw;
-  return UNSPLASH.trening;
+  var key='trening';
+  if(c==='sila'||c.includes('sil')) key='sila';
+  else if(c==='cardio'||c.includes('card')||c.includes('bieg')) key='cardio';
+  else if(c==='dieta'||c.includes('diet')||c.includes('odzy')) key='dieta';
+  else if(c==='supl'||c.includes('supl')) key='supl';
+  else if(c==='badania'||c.includes('bad')||c.includes('nauk')) key='badania';
+  else if(c==='lifestyle'||c.includes('life')||c.includes('regen')) key='lifestyle';
+  else if(c==='przepisy'||c.includes('prze')) key='przepisy';
+  else if(c==='motyw'||c.includes('motyw')) key='motyw';
+  var photos=UNSPLASH_PHOTOS[key]||UNSPLASH_PHOTOS.trening;
+  var idx=seed?Math.abs(seed)%photos.length:Math.floor(Math.random()*photos.length);
+  return photos[idx];
 }
 
 var META = {
