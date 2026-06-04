@@ -415,6 +415,24 @@ const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 window._loadFromFirebase = async function() {
   try {
+    setFbStatus('loading','Laduje artykuly...');
+    // Pobierz auto-generowane artykuły z JSON
+    const resp = await fetch('auto-articles.json?t=' + Date.now());
+    let autoArts = [];
+    if (resp.ok) {
+      autoArts = await resp.json();
+    }
+    window.FIREBASE_ARTICLES = autoArts;
+    window.ARTICLES = [...autoArts, ...window.FALLBACK_ARTICLES];
+    setFbStatus('ok', 'Zaladowano - ' + window.ARTICLES.length + ' artykulow w bazie');
+    render();
+  } catch(e) {
+    setFbStatus('error','Offline - artykuly lokalne');
+    window.ARTICLES = [...window.FALLBACK_ARTICLES];
+    render();
+  }
+};
+  try {
     setFbStatus('loading','Laduje artykuly z Firebase...');
     const q = query(collection(db,'articles'), orderBy('createdAt','desc'), limit(50));
     const snap = await getDocs(q);
