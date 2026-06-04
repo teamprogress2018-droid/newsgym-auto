@@ -72,14 +72,7 @@ function extractJSON(text) {
   return JSON.parse(s);
 }
 
-function function detectCategory(title) {
-  const t = title.toLowerCase();
-  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting') || t.includes('żywien') || t.includes('białk') || t.includes('dieta')) return 'Dieta';
-  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta') || t.includes('witamin') || t.includes('magnez')) return 'Suplementy';
-  if (t.includes('sleep') || t.includes('recovery') || t.includes('sen ') || t.includes('regenera')) return 'Regeneracja';
-  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular') || t.includes('ciśnienie') || t.includes('aerob')) return 'Cardio';
-  if (t.includes('sarkopen') || t.includes('muscle') || t.includes('strength') || t.includes('hypertro') || t.includes('silown')) return 'Trening';
-  return 'Trening';
+
 }(title) {
   const t = title.toLowerCase();
   if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting')) return 'Dieta';
