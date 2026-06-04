@@ -1,115 +1,8 @@
-Skip to content
-teamprogress2018-droid
-newsgym-auto
-Repository navigation
-Code
-Issues
-Pull requests
-Agents
-Actions
-Projects
-Security and quality
-Insights
-Settings
-newsgym-auto
-/
-fetch-articles.js
-in
-main
-
-Edit
-
-Preview
-Indent mode
-
-Spaces
-Indent size
-
-2
-Line wrap mode
-
-No wrap
-Editing fetch-articles.js file contents
-const prompt = `Napisz artykuł fitness po polsku na podstawie tytułu: "${raw.title}".
-
-Zwróć TYLKO JSON (bez markdown, bez backticks):
-{"title":"[tytuł po polsku, max 70 znaków]","excerpt":"[2 zdania, max 120 znaków]","content":"[3 akapity po polsku, max 350 słów, oddzielone \\n\\n]","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
-nextpreviousallmatch caseregexpby word
-Replace
-replacereplace all×
-  1
-  2
-  3
-  4
-  5
-  6
-  7
-  8
-  9
- 10
- 11
- 12
- 13
- 14
- 15
- 16
- 17
- 18
- 19
- 20
- 21
- 22
- 23
- 24
- 25
- 26
- 27
- 28
- 29
- 30
- 31
- 32
- 33
- 34
- 35
- 36
- 37
- 38
- 39
- 40
- 41
- 42
- 43
- 44
- 45
- 46
- 47
- 48
- 49
- 50
- 51
- 52
- 53
- 54
- 55
- 56
- 57
- 58
- 59
- 60
- 61
- 62
-// fetch-articles.js
-// Pobiera artykuły z PubMed i RSS, tłumaczy przez Claude AI
-// Zapisuje do auto-articles.json w repo (czytanego przez aplikację)
-
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
-const path = require('path');
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const UNSPLASH_KEY = 'a0UmrunrDS1E9U_LacY7PBGTgVL6KikHzeCC-Q77oMc';
 
 const PUBMED_TOPICS = [
   'resistance training hypertrophy 2026',
@@ -118,48 +11,177 @@ const PUBMED_TOPICS = [
   'HIIT cardiovascular fitness 2026',
   'sleep recovery athletic performance 2026',
   'omega-3 exercise performance 2026',
-  'periodization strength training 2026',
   'nutrition sports performance 2026',
   'strength training women 2026',
   'intermittent fasting muscle 2026',
   'caffeine exercise performance 2026',
-  'beta-alanine endurance 2026',
 ];
-
-const RSS_FEEDS = [
-  'https://examine.com/feed/',
-  'https://www.strongerbyscience.com/feed/',
-];
-
-const TOPIC_TO_CAT = {
-  'resistance training': 'sila', 'hypertrophy': 'sila', 'strength': 'sila',
-  'creatine': 'supl', 'supplement': 'supl', 'beta-alanine': 'supl', 'caffeine': 'supl', 'omega': 'supl',
-  'protein': 'dieta', 'nutrition': 'dieta', 'intermittent fasting': 'dieta',
-  'HIIT': 'cardio', 'cardiovascular': 'cardio',
-  'sleep': 'lifestyle', 'recovery': 'lifestyle',
-  'periodization': 'trening', 'training': 'trening', 'women': 'trening',
-};
 
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith('https') ? https : http;
-    const req = lib.get(url, { timeout: 15000 }, (res) => {
+    lib.get(url, { headers: { 'User-Agent': 'NewsGym/1.0' }, timeout: 15000 }, (res) => {
       let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve({ status: res.statusCode, body: data }));
-    });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+      res.on('data', c => data += c);
+      res.on('end', () => resolve(data));
+    }).on('error', reject);
   });
 }
 
-function postJson(url, payload, headers = {}) {
+function callClaude(prompt) {
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify(payload);
-    const urlObj = new URL(url);
-    const options = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
+    const body = JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    const req = https.request({
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
       method: 'POST',
- const cat = raw.topic ? detectCategory(raw.topic) : detectCategory(raw.title + ' ' + (raw.abstract || ''));
-Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) return reject(new Error(parsed.error.message));
+          resolve(parsed.content[0].text);
+        } catch (e) { reject(new Error('API parse error: ' + e.message)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+function extractJSON(text) {
+  let s = text.trim();
+  s = s.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+  s = s.replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+  const a = s.indexOf('{');
+  const b = s.lastIndexOf('}');
+  if (a !== -1 && b > a) s = s.slice(a, b + 1);
+  return JSON.parse(s);
+}
+
+function detectCategory(title) {
+  const t = title.toLowerCase();
+  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting')) return 'Dieta';
+  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta')) return 'Suplementy';
+  if (t.includes('sleep') || t.includes('recovery')) return 'Regeneracja';
+  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular')) return 'Cardio';
+  return 'Trening';
+}
+
+async function fetchPubMed() {
+  const topic = PUBMED_TOPICS[Math.floor(Math.random() * PUBMED_TOPICS.length)];
+  console.log('PubMed topic: ' + topic);
+  try {
+    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic)}&retmax=5&sort=date&retmode=json`;
+    const searchData = JSON.parse(await fetchUrl(url));
+    const ids = searchData.esearchresult?.idlist || [];
+    const results = [];
+    for (const id of ids.slice(0, 3)) {
+      try {
+        const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${id}&retmode=json`;
+        const summaryData = JSON.parse(await fetchUrl(summaryUrl));
+        const art = summaryData.result?.[id];
+        if (art?.title) results.push({ title: art.title, source: 'PubMed', date: art.pubdate || new Date().toISOString().split('T')[0] });
+      } catch (e) { console.log('PubMed item error: ' + e.message); }
+    }
+    return results;
+  } catch (e) {
+    console.log('PubMed error: ' + e.message);
+    return [];
+  }
+}
+
+async function fetchRSS() {
+  const feeds = ['https://examine.com/feed/', 'https://www.strongerbyscience.com/feed/'];
+  const results = [];
+  for (const feed of feeds) {
+    try {
+      const xml = await fetchUrl(feed);
+      const items = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+      for (const item of items.slice(0, 2)) {
+        const title = (item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/))?.[1];
+        if (title) results.push({ title: title.trim(), source: feed.includes('examine') ? 'Examine.com' : 'StrongerByScience', date: new Date().toISOString().split('T')[0] });
+      }
+    } catch (e) { console.log('RSS error: ' + e.message); }
+  }
+  return results;
+}
+
+async function generateArticle(raw) {
+  const prompt = `Napisz artykuł fitness po polsku na podstawie tytułu badania naukowego: "${raw.title}".
+
+Zwróć TYLKO JSON bez żadnego dodatkowego tekstu, bez markdown, bez backticks:
+{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"${detectCategory(raw.title)}","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
+
+  try {
+    const text = await callClaude(prompt);
+    const article = extractJSON(text);
+    if (!article.title || !article.content) throw new Error('Brak wymaganych pól');
+    article.id = 'auto-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+    article.date = raw.date || new Date().toISOString().split('T')[0];
+    article.source = raw.source;
+    article.generated = true;
+    console.log('✅ OK: ' + article.title);
+    return article;
+  } catch (e) {
+    console.log('❌ Błąd: ' + raw.title.substring(0, 50) + ' → ' + e.message);
+    return null;
+  }
+}
+
+async function main() {
+  console.log('NEWS GYM Auto-fetch start: ' + new Date().toLocaleString('pl-PL'));
+
+  if (!ANTHROPIC_API_KEY) {
+    console.error('Brak ANTHROPIC_API_KEY!');
+    process.exit(1);
+  }
+
+  let existing = [];
+  try {
+    existing = JSON.parse(fs.readFileSync('auto-articles.json', 'utf8'));
+    console.log('Wczytano ' + existing.length + ' istniejących artykułów');
+  } catch (e) {
+    console.log('Brak istniejących artykułów');
+  }
+
+  const pubmed = await fetchPubMed();
+  const rss = await fetchRSS();
+  const raw = [...pubmed, ...rss];
+  console.log('Pobrano ' + raw.length + ' surowych artykułów');
+
+  const newArticles = [];
+  for (const item of raw.slice(0, 4)) {
+    const article = await generateArticle(item);
+    if (article) newArticles.push(article);
+    await new Promise(r => setTimeout(r, 1500));
+  }
+
+  const all = [...newArticles, ...existing].slice(0, 50);
+  const tmp = 'auto-articles.json.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(all, null, 2), 'utf8');
+  fs.renameSync(tmp, 'auto-articles.json');
+
+  console.log('Zapisano ' + all.length + ' artykułów do auto-articles.json');
+  console.log('Nowych artykułów: ' + newArticles.length);
+
+  if (newArticles.length === 0) {
+    console.error('UWAGA: 0 nowych artykułów!');
+    process.exit(1);
+  }
+}
+
+main().catch(e => { console.error('Krytyczny błąd:', e); process.exit(1); });
