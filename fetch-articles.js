@@ -72,7 +72,15 @@ function extractJSON(text) {
   return JSON.parse(s);
 }
 
-function detectCategory(title) {
+function function detectCategory(title) {
+  const t = title.toLowerCase();
+  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting') || t.includes('żywien') || t.includes('białk') || t.includes('dieta')) return 'Dieta';
+  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta') || t.includes('witamin') || t.includes('magnez')) return 'Suplementy';
+  if (t.includes('sleep') || t.includes('recovery') || t.includes('sen ') || t.includes('regenera')) return 'Regeneracja';
+  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular') || t.includes('ciśnienie') || t.includes('aerob')) return 'Cardio';
+  if (t.includes('sarkopen') || t.includes('muscle') || t.includes('strength') || t.includes('hypertro') || t.includes('silown')) return 'Trening';
+  return 'Trening';
+}(title) {
   const t = title.toLowerCase();
   if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting')) return 'Dieta';
   if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta')) return 'Suplementy';
@@ -124,7 +132,15 @@ async function generateArticle(raw) {
   const prompt = `Napisz artykuł fitness po polsku na podstawie tytułu badania naukowego: "${raw.title}".
 
 Zwróć TYLKO JSON bez żadnego dodatkowego tekstu, bez markdown, bez backticks:
-{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"${detectCategory(raw.title)}","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
+{"title":"[tytuł po polsku max 70 znaków]","excerpt":"[2 zdania po polsku max 150 znaków]","content":"[artykuł 3 akapity po polsku max 350 słów oddzielone \\n\\n]","category":"${function detectCategory(title) {
+  const t = title.toLowerCase();
+  if (t.includes('protein') || t.includes('nutrition') || t.includes('diet') || t.includes('fasting') || t.includes('żywien') || t.includes('białk') || t.includes('dieta')) return 'Dieta';
+  if (t.includes('supplement') || t.includes('creatine') || t.includes('omega') || t.includes('caffeine') || t.includes('beta') || t.includes('witamin') || t.includes('magnez')) return 'Suplementy';
+  if (t.includes('sleep') || t.includes('recovery') || t.includes('sen ') || t.includes('regenera')) return 'Regeneracja';
+  if (t.includes('cardio') || t.includes('hiit') || t.includes('cardiovascular') || t.includes('ciśnienie') || t.includes('aerob')) return 'Cardio';
+  if (t.includes('sarkopen') || t.includes('muscle') || t.includes('strength') || t.includes('hypertro') || t.includes('silown')) return 'Trening';
+  return 'Trening';
+}(raw.title)}","tags":["tag1","tag2","tag3"],"readTime":"4 min"}`;
 
   try {
     const text = await callClaude(prompt);
