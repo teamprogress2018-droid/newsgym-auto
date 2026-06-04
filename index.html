@@ -565,7 +565,19 @@ function buildHome(el,arts){
   var researchCount=window.ARTICLES.filter(isResearchArticle).length;
   var h='<div class="section" style="padding-bottom:8px;"><div class="stats-row" style="grid-template-columns:repeat(2,1fr);"><div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Artykulow</div></div><div class="stat-box"><div class="stat-val">'+researchCount+'</div><div class="stat-lbl">Badan</div></div></div></div>';
   if(feat){
-    var featImg=feat.imageUrl||getImg(feat.cat);
+    var featImg=feat.imageUrl||function getImg(cat){
+  if(!cat) return UNSPLASH.default;
+  var c=cat.toLowerCase().trim();
+  if(c==='sila'||c.includes('sil')||c.includes('strength')||c.includes('hypert')) return UNSPLASH.sila;
+  if(c==='cardio'||c.includes('card')||c.includes('bieg')||c.includes('ciśn')||c.includes('aerob')||c.includes('hiit')) return UNSPLASH.cardio;
+  if(c==='dieta'||c.includes('diet')||c.includes('odzy')||c.includes('żywi')||c.includes('białk')||c.includes('protein')||c.includes('nutri')) return UNSPLASH.dieta;
+  if(c==='supl'||c.includes('supl')||c.includes('kreat')||c.includes('omega')||c.includes('witam')||c.includes('magnez')) return UNSPLASH.supl;
+  if(c==='badania'||c.includes('bad')||c.includes('nauk')||c.includes('research')) return UNSPLASH.badania;
+  if(c==='lifestyle'||c.includes('life')||c.includes('sen')||c.includes('regen')||c.includes('sleep')) return UNSPLASH.lifestyle;
+  if(c==='przepisy'||c.includes('prze')) return UNSPLASH.przepisy;
+  if(c==='motyw'||c.includes('motyw')) return UNSPLASH.motyw;
+  return UNSPLASH.trening;
+}(feat.cat);
     h+='<div class="banner-wrap"><div class="banner" style="background-image:url('+featImg+');background-size:cover;background-position:center;" onclick="openArticle(\''+feat.id+'\')">'+'<div class="banner-content"><div class="banner-cat">'+fm.icon+' '+fm.label+'</div><div class="banner-title">'+feat.title+'</div><div class="banner-meta">⏱ '+(feat.readTime||'5 min')+' czytania · '+(feat.views||0)+' wyswietlen</div></div></div></div>';
   }
   h+='<div class="section"><div class="section-hdr"><div class="section-title">🔥 GORACE TEMATY</div><button class="section-more" onclick="goTab(\'latest\')">WIECEJ</button></div><div class="hscroll-wrap"><div class="hscroll">'+mini.map(function(a){var mm=m(a.cat);var img=a.imageUrl||getImg(a.cat);return '<div class="card-mini" onclick="openArticle(\''+a.id+'\')"><div class="card-mini-img" style="background-image:url('+img+');background-size:cover;background-position:center;"><div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.5));"></div></div><div class="card-mini-body"><div class="card-mini-cat" style="color:'+mm.color+'">'+mm.icon+' '+mm.label+'</div><div class="card-mini-title">'+a.title+'</div></div></div>';}).join('')+'</div></div></div>';
