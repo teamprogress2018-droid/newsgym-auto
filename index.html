@@ -423,7 +423,7 @@ window._loadFromFirebase = async function() {
       autoArts = await resp.json();
     }
     window.FIREBASE_ARTICLES = autoArts;
-    window.ARTICLES = [...autoArts, ...window.FALLBACK_ARTICLES];
+    window.ARTICLES = autoArts.length > 0 ? autoArts : [...window.FALLBACK_ARTICLES];
     setFbStatus('ok', 'Zaladowano - ' + window.ARTICLES.length + ' artykulow w bazie');
     render();
   } catch(e) {
@@ -438,7 +438,7 @@ window._saveToFirebase = async function(article) {
     return ref.id;
   } catch(e) { return null; }
 };
-setTimeout(() => { if(window._loadFromFirebase) window._loadFromFirebase(); }, 600);
+// setTimeout removed - using auto-articles.json only
 </script>
 
 <script>
