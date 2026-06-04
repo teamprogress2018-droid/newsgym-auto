@@ -436,9 +436,11 @@ window._saveToFirebase = async function(article) {
   try {
     const ref = await addDoc(collection(db,'articles'), {...article, createdAt: serverTimestamp()});
     return ref.id;
-  } catch(e) { return null; }
+  } catch(e) { return null; render();
+  }
 };
 // setTimeout removed - using auto-articles.json only
+</script>
 </script>
 
 <script>
