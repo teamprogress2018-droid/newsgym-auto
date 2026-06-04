@@ -420,7 +420,17 @@ window._loadFromFirebase = async function() {
     let autoArts = [];
     if (resp.ok) { autoArts = await resp.json(); }
     window.FIREBASE_ARTICLES = autoArts;
-    window.ARTICLES = autoArts.length > 0 ? autoArts : [...window.FALLBACK_ARTICLES];
+    // Mapuj category -> cat dla artykułów auto-generowanych
+autoArts = autoArts.map(function(a){
+  if(!a.cat && a.category) a.cat = a.category.toLowerCase()
+    .replace('dieta','dieta')
+    .replace('suplementy','supl')
+    .replace('regeneracja','lifestyle')
+    .replace('cardio','cardio')
+    .replace('trening','trening');
+  return a;
+});
+window.ARTICLES = autoArts.length > 0 ? autoArts : [...window.FALLBACK_ARTICLES];
     setFbStatus('ok', 'Zaladowano - ' + window.ARTICLES.length + ' artykulow w bazie');
     render();
   } catch(e) {
