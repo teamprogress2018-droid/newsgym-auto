@@ -22,6 +22,7 @@ jobs:
       - name: Pobierz i wygeneruj 4 artykuly
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
         run: node fetch-articles.js
 
       - name: Commit nowe artykuly
