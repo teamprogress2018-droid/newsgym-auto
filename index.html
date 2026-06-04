@@ -521,7 +521,11 @@ window.FIREBASE_ARTICLES = [];
 var curTab='home', curCat='all', curId=null, queryStr='', pending=null;
 var saved=JSON.parse(localStorage.getItem('ng-saved')||'[]');
 
-function m(cat){ return META[cat]||META.trening; }
+function m(cat){
+  if(!cat) return META.trening;
+  var c=cat.toLowerCase();
+  return META[c]||META.trening;
+}
 function getSrc(cat,extra){ return (SOURCES_DB[cat]||SOURCES_DB.trening||[]).concat(extra||[]); }
 
 function setFbStatus(state,text){
@@ -539,7 +543,7 @@ function setCat(id){ curCat=id; renderCats(); render(); }
 
 function filtered(){
   return window.ARTICLES.filter(function(a){
-    var mc=curCat==='all'||a.cat===curCat;
+    var mc=curCat==='all'||(a.cat||'').toLowerCase()===curCat.toLowerCase();
     var mq=!queryStr||a.title.toLowerCase().includes(queryStr)||(a.excerpt||'').toLowerCase().includes(queryStr)||(a.tags||[]).some(function(t){return t.toLowerCase().includes(queryStr);});
     return mc&&mq;
   });
