@@ -144,6 +144,7 @@ Zwróć TYLKO JSON bez żadnego dodatkowego tekstu, bez markdown, bez backticks:
     article.date = raw.date || new Date().toISOString().split('T')[0];
     article.source = raw.source;
     article.generated = true;
+article.isResearch = true;
     console.log('✅ OK: ' + article.title);
     return article;
   } catch (e) {
