@@ -422,12 +422,16 @@ window._loadFromFirebase = async function() {
     window.FIREBASE_ARTICLES = autoArts;
     // Mapuj category -> cat dla artykułów auto-generowanych
 autoArts = autoArts.map(function(a){
-  if(!a.cat && a.category) a.cat = a.category.toLowerCase()
-    .replace('dieta','dieta')
-    .replace('suplementy','supl')
-    .replace('regeneracja','lifestyle')
-    .replace('cardio','cardio')
-    .replace('trening','trening');
+  if(a.category && !a.cat) {
+    var c = a.category.toLowerCase().trim();
+    if(c.includes('suplement')) a.cat = 'supl';
+    else if(c.includes('dieta')) a.cat = 'dieta';
+    else if(c.includes('regenera')) a.cat = 'lifestyle';
+    else if(c.includes('cardio')) a.cat = 'cardio';
+    else if(c.includes('trening')) a.cat = 'trening';
+    else a.cat = c;
+  }
+  if(!a.cat) a.cat = 'trening';
   return a;
 });
 window.ARTICLES = autoArts.length > 0 ? autoArts : [...window.FALLBACK_ARTICLES];
@@ -2143,4 +2147,3 @@ setTimeout(function(){
 </body>
 </html>
 
-  
