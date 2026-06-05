@@ -613,7 +613,9 @@ function buildLatest(el,arts){
 }
 
 function buildResearch(el){
-  var rarts=window.ARTICLES.filter(function(a){return a.isResearch||a.cat==='badania';});
+  var rarts=window.ARTICLES.filter(function(a){
+    return a.isResearch||a.cat==='badania'||(a.source&&a.source==='PubMed')||a.generated;
+  });
   var extra=window.ARTICLES.filter(function(a){return !a.isResearch&&a.cat!=='badania';}).slice(0,3);
   el.innerHTML='<div class="section" style="padding-top:16px;"><div class="section-hdr"><div class="section-title">BADANIA NAUKOWE</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Streszczenia z PubMed, JSCR i innych czasopism - przetlumaczone na polski.</div>'+rarts.map(function(a){return resCard(a);}).join('')+extra.map(function(a){return '<div class="research-card" onclick="openArticle(\''+a.id+'\')"><div class="research-hdr"><div class="research-badge">POWIAZANE BADANIE</div><div class="research-source">2024-2025</div></div><div class="research-title">'+a.title+'</div><div class="research-tip"><strong>ZASTOSOWANIE</strong>'+a.excerpt+'</div></div>';}).join('')+'</div><div style="height:20px;"></div>';
 }
@@ -2140,3 +2142,5 @@ setTimeout(function(){
 </script>
 </body>
 </html>
+
+  
